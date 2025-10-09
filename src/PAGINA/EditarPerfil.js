@@ -1,148 +1,152 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { AuthContext } from "./AuthContext"; // Importar el contexto
 import "./EditarPerfil.css";
 
-// --- CAMBIO: URL de la API desde variables de entorno para Vercel ---
+// --- URL de la API desde variables de entorno ---
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-function EditarPerfil({ user, setUser }) {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    nombre: "",
-    edad: "",
-    email: "",
-    sexo: "Masculino",
-    celular: "",
-  });
+function EditarPerfil({ user }) {
+  const navigate = useNavigate();
+  
+  // Obtener la función login (setter para el usuario) y la función de URL del contexto
+  const { login, getProfileImageUrl } = useContext(AuthContext); 
 
-  const [foto, setFoto] = useState(null);
-  const [fotoPreview, setFotoPreview] = useState("/default-profile.png");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    nombre: "",
+    edad: "",
+    email: "",
+    sexo: "Masculino",
+    celular: "",
+  });
 
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        nombre: user.nombre || "",
-        edad: user.edad || "",
-        email: user.email || "",
-        sexo: user.sexo || "Masculino",
-        celular: user.celular || "",
-      });
+  const [foto, setFoto] = useState(null);
+  const [fotoPreview, setFotoPreview] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
 
-      // --- CAMBIO: Usar API_URL para construir la ruta de la imagen ---
-      setFotoPreview(
-        user.foto && !user.foto.includes("default.png")
-          ? user.foto.startsWith("http")
-            ? user.foto
-            : `${API_URL}${user.foto.startsWith("/") ? "" : "/"}${user.foto}`
-          : "/default-profile.png"
-      );
-    }
-  }, [user]);
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        nombre: user.nombre || "",
+        edad: user.edad || "",
+        email: user.email || "",
+        sexo: user.sexo || "Masculino",
+        celular: user.celular || "",
+      });
 
-  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+      // Usa la función centralizada para la previsualización
+      setFotoPreview(getProfileImageUrl(user.foto)); 
+    }
+  }, [user, getProfileImageUrl]);
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFoto(file);
-      setFotoPreview(URL.createObjectURL(file));
-    }
-  };
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFoto(file);
+      // Muestra una previsualización local inmediata
+      setFotoPreview(URL.createObjectURL(file));
+    }
+  };
 
-    const { nombre, edad, email, celular } = formData;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
 
-    if (!nombre || !edad || !email || !celular) return setError("Todos los campos son obligatorios.");
-    if (Number(edad) <= 0) return setError("La edad ingresada no es válida.");
-    if (!/^\S+@\S+\.\S+$/.test(email)) return setError("El correo electrónico ingresado no es válido.");
-    if (!/^\d+$/.test(celular)) return setError("El número de celular debe contener solo dígitos.");
+    const { nombre, edad, email, celular } = formData;
 
-    try {
-      setLoading(true);
-      const token = localStorage.getItem("token");
-      if (!token) return setError("No estás autenticado. Por favor, inicia sesión nuevamente.");
+    if (!nombre || !edad || !email || !celular) return setError("Todos los campos son obligatorios.");
+    if (Number(edad) <= 0) return setError("La edad ingresada no es válida.");
+    if (!/^\S+@\S+\.\S+$/.test(email)) return setError("El correo electrónico ingresado no es válido.");
+    if (!/^\d+$/.test(celular)) return setError("El número de celular debe contener solo dígitos.");
 
-      const data = new FormData();
-      Object.keys(formData).forEach((key) => data.append(key, formData[key]));
-      if (foto) data.append("foto", foto);
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      if (!token) return setError("No estás autenticado. Por favor, inicia sesión nuevamente.");
 
-      // --- CAMBIO: Usar API_URL para la petición de actualización ---
-      const res = await axios.put(`${API_URL}/profesores/editar-perfil`, data, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const data = new FormData();
+      Object.keys(formData).forEach((key) => data.append(key, formData[key]));
+      if (foto) data.append("foto", foto); // 'foto' es el nombre que espera Multer en el backend
 
-      const updatedUser = res.data.user || res.data;
-      setUser(updatedUser);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
-      setSuccess("Perfil actualizado correctamente.");
+      // --- RUTA CORREGIDA: Se asume que la ruta es /auth/editar-perfil ---
+      const res = await axios.put(`${API_URL}/auth/editar-perfil`, data, {
+        headers: {
+          // No es necesario Content-Type: "multipart/form-data" con FormData y Axios, 
+          // pero lo dejo ya que el código original lo tenía.
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      setTimeout(() => navigate("/perfil"), 1500);
-    } catch (err) {
-      console.error(err);
-      const backendMsg = err.response?.data?.msg || "";
-      if (backendMsg.includes("Email already in use")) {
-        setError("El correo ingresado ya está registrado. Por favor, utiliza otro.");
-      } else if (backendMsg.includes("Celular already in use")) {
-        setError("El número de celular ya está registrado. Por favor, utiliza otro.");
-      } else {
-        setError("Error al actualizar perfil. Intenta nuevamente.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+      const updatedUser = res.data.user || res.data;
+      
+      // CRÍTICO: Usar la función login/setter del contexto para actualizar el estado global.
+      // Se pasa el token actual para mantener la sesión.
+      login(updatedUser, token); 
 
-  return (
-    <div className="editar-perfil-page">
-      <div className="editar-perfil-card">
-        <h2>Editar Perfil</h2>
+      setSuccess("Perfil actualizado correctamente.");
 
-        {error && <p className="error">{error}</p>}
-        {success && <p className="success">{success}</p>}
+      setTimeout(() => navigate("/perfil"), 1500);
+    } catch (err) {
+      console.error(err);
+      const backendMsg = err.response?.data?.msg || "";
+      if (backendMsg.includes("Email already in use")) {
+        setError("El correo ingresado ya está registrado. Por favor, utiliza otro.");
+      } else if (backendMsg.includes("Celular already in use")) {
+        setError("El número de celular ya está registrado. Por favor, utiliza otro.");
+      } else {
+        setError("Error al actualizar perfil. Intenta nuevamente.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        <img src={fotoPreview} alt="Preview" className="profile-img-large" />
+  return (
+    <div className="editar-perfil-page">
+      <div className="editar-perfil-card">
+        <h2>Editar Perfil</h2>
 
-        <div style={{ marginBottom: "15px" }}>
-          <label className="btn-edit" style={{ marginRight: "10px", cursor: "pointer" }}>
-            Cambiar Foto
-            <input type="file" onChange={handleFileChange} accept="image/*" style={{ display: "none" }} />
-          </label>
-        </div>
+        {error && <p className="error">{error}</p>}
+        {success && <p className="success">{success}</p>}
 
-        <form onSubmit={handleSubmit}>
-          <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} placeholder="Nombre" />
-          <input type="number" name="edad" value={formData.edad} onChange={handleChange} placeholder="Edad" />
-          <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email" />
-          <select name="sexo" value={formData.sexo} onChange={handleChange}>
-            <option value="Masculino">Masculino</option>
-            <option value="Femenino">Femenino</option>
-            <option value="Otro">Otro</option>
-          </select>
-          <input type="text" name="celular" value={formData.celular} onChange={handleChange} placeholder="Celular" />
+        <img src={fotoPreview} alt="Preview" className="profile-img-large" />
 
-          <div className="editar-perfil-buttons">
-            <button type="submit" className="btn-save" disabled={loading}>
-              {loading ? "Guardando..." : "Guardar cambios"}
-            </button>
-            <button type="button" className="btn-cancel" onClick={() => navigate("/perfil")}>
-              Cancelar
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
+        <div style={{ marginBottom: "15px" }}>
+          <label className="btn-edit" style={{ marginRight: "10px", cursor: "pointer" }}>
+            Cambiar Foto
+            <input type="file" onChange={handleFileChange} accept="image/*" style={{ display: "none" }} />
+          </label>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} placeholder="Nombre" />
+          <input type="number" name="edad" value={formData.edad} onChange={handleChange} placeholder="Edad" />
+          <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email" />
+          <select name="sexo" value={formData.sexo} onChange={handleChange}>
+            <option value="Masculino">Masculino</option>
+            <option value="Femenino">Femenino</option>
+            <option value="Otro">Otro</option>
+          </select>
+          <input type="text" name="celular" value={formData.celular} onChange={handleChange} placeholder="Celular" />
+
+          <div className="editar-perfil-buttons">
+            <button type="submit" className="btn-save" disabled={loading}>
+              {loading ? "Guardando..." : "Guardar cambios"}
+            </button>
+            <button type="button" className="btn-cancel" onClick={() => navigate("/perfil")}>
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 }
 
 export default EditarPerfil;
