@@ -2,12 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./EditarPerfil.css";
+
 // --- CAMBIO: URL de la API desde variables de entorno para Vercel ---
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 // Función auxiliar para construir la URL de la foto (reutilizada de Perfil.jsx)
 const resolvePhotoUrl = (user, API_URL) => {
-    if (!user || !user.foto) return "https://placehold.co/150x150/f9f9f9/38a169?text=Sin+Foto";
+    // Si no hay usuario o no hay campo de foto, devuelve el placeholder
+    if (!user || !user.foto) return "https://placehold.co/120x120/f9f9f9/38a169?text=H";
 
     const foto = user.foto;
     
@@ -35,13 +37,13 @@ function EditarPerfil({ user, setUser }) {
   });
 
   const [foto, setFoto] = useState(null); // Archivo de foto a subir
-  const [fotoPreview, setFotoPreview] = useState("https://placehold.co/150x150/f9f9f9/38a169?text=Sin+Foto"); // URL para mostrar la imagen
+  const [fotoPreview, setFotoPreview] = useState("https://placehold.co/120x120/f9f9f9/38a169?text=H"); // URL para mostrar la imagen
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (user) {
+    if (user && (user._id || user.id)) { // Esperamos a que el usuario tenga un ID
       setFormData({
         nombre: user.nombre || "",
         edad: user.edad || "",
@@ -53,6 +55,9 @@ function EditarPerfil({ user, setUser }) {
       // --- CORRECCIÓN: Resolver la URL de la foto actual ---
       setFotoPreview(resolvePhotoUrl(user, API_URL));
       
+    } else if (!user) {
+        // En caso de que se acceda a la ruta sin usuario, redirigimos
+        setTimeout(() => navigate('/login'), 0);
     }
   }, [user]);
 
@@ -72,9 +77,12 @@ function EditarPerfil({ user, setUser }) {
     setError("");
     setSuccess("");
 
-    if (!user || !user._id) {
+    // FIX PRINCIPAL: Usar el ID que esté disponible (_id o id)
+    const userId = user?._id || user?.id;
+
+    if (!user || !userId) {
       setLoading(false);
-      return setError("Error: ID de usuario no encontrado.");
+      return setError("Error: ID de usuario no encontrado. Por favor, inicia sesión de nuevo.");
     }
     
     const { nombre, edad, email, celular } = formData;
@@ -96,10 +104,9 @@ function EditarPerfil({ user, setUser }) {
       // Agregar el archivo de foto si ha sido seleccionado
       if (foto) data.append("foto", foto); 
 
-      // --- CORRECCIÓN: Petición PUT a la API con FormData ---
-      const res = await axios.put(`${API_URL}/profesores/editar-perfil/${user._id}`, data, { // Asumo que tu backend espera el ID en la URL
+      // --- CORRECCIÓN: Petición PUT a la API con FormData, usando el ID dinámico ---
+      const res = await axios.put(`${API_URL}/profesores/editar-perfil/${userId}`, data, {
         headers: {
-          // El Content-Type se establece automáticamente como multipart/form-data al enviar FormData
           Authorization: `Bearer ${token}`,
         },
       });
@@ -116,7 +123,7 @@ function EditarPerfil({ user, setUser }) {
 
       setTimeout(() => navigate("/perfil"), 1500);
     } catch (err) {
-      console.error("Error al actualizar:", err.response || err);
+      console.error("Error al actualizar:", err.response?.data?.msg || err);
       const backendMsg = err.response?.data?.msg || "";
       if (backendMsg.includes("Email already in use")) {
         setError("El correo ingresado ya está registrado. Por favor, utiliza otro.");
@@ -133,6 +140,7 @@ function EditarPerfil({ user, setUser }) {
   return (
     <div className="editar-perfil-page">
       {/* Estilos asumidos para EditarPerfil.css */}
+     
 
       <div className="editar-perfil-card">
         <h2>Editar Perfil</h2>
