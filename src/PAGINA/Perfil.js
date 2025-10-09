@@ -11,7 +11,6 @@ function Perfil({ user, logout, getProfileImageUrl }) {
 	const navigate = useNavigate();
 
 	// Si no se recibe el objeto 'user' (es null o undefined), redirigir a login.
-	// Esto simula la protección de la ruta, aunque PrivateRoute ya lo hace.
 	if (!user) {
 		navigate('/login');
 		return null;
@@ -19,18 +18,24 @@ function Perfil({ user, logout, getProfileImageUrl }) {
 
 	const handleEdit = () => navigate("/editar-perfil");
 	
-	// Usamos la función de logout proporcionada por props
 	const handleLogout = logout || (() => { console.log("Logout simulado."); navigate('/'); });
+
+	// Determinar la URL de la imagen
+	const imageUrl = getProfileImageUrl 
+		? getProfileImageUrl(user.foto) 
+		: 'https://placehold.co/150x150/AAAAAA/FFFFFF?text=Perfil';
 
 	return (
 		<div className="perfil-page">
 			<div className="perfil-container">
 				<h2>Perfil de Usuario</h2>
 				<img 
-					// CLOUDINARY FIX: Usa la función getProfileImageUrl para obtener la URL correcta
-					src={getProfileImageUrl ? getProfileImageUrl(user.foto) : 'https://placehold.co/100x100/38a169/ffffff?text=Perfil'} 
+					// Usamos la URL determinada arriba.
+					src={imageUrl} 
 					alt="Perfil" 
 					className="profile-img-large" 
+					// Agregar un estilo inline de fallback para asegurar dimensiones.
+					style={{ width: '150px', height: '150px', borderRadius: '50%', objectFit: 'cover' }}
 				/>
 
 				<div className="perfil-info">
@@ -44,7 +49,6 @@ function Perfil({ user, logout, getProfileImageUrl }) {
 
 				<div className="perfil-buttons">
 					<button className="btn-edit" onClick={handleEdit}>EDITAR PERFIL</button>
-					{/* Llama a la función logout proporcionada por props */}
 					<button className="btn-logout" onClick={handleLogout}>CERRAR SESIÓN</button>
 				</div>
 			</div>
