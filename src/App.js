@@ -2,9 +2,9 @@ import React, { useEffect, useContext } from "react";
 import { Routes, Route, useNavigate, useLocation, Navigate } from "react-router-dom";
 
 // Componentes y Contexto
-// RUTA CORREGIDA: Ahora apunta a la carpeta PAGINA/ donde está ubicado AuthContext.js
+// RUTA CORREGIDA: Apunta a la subcarpeta PAGINA/
 import { AuthProvider, AuthContext } from "./PAGINA/AuthContext"; 
-import PrivateRoute from "./PAGINA/PrivateRoute"; // RUTA CORREGIDA
+import PrivateRoute from "./PAGINA/PrivateRoute"; 
 
 import Home from "./PAGINA/Home"; // Asumimos que todos los componentes están en PAGINA
 import Login from "./PAGINA/Login";
@@ -17,9 +17,9 @@ import Grupo from "./PAGINA/Grupo";
 import Trabajos from "./PAGINA/Trabajos";
 import Calificaciones from "./PAGINA/Calificaciones";
 
-// Estilos y logo
-import "./App.css"; // Asumiendo que App.css sigue en src/
-import logo from "./logo.png"; // Asumiendo que logo.png sigue en src/
+// Estilos y logo (asumiendo que están en la raíz src/)
+import "./App.css"; 
+import logo from "./logo.png"; 
 
 
 function App() {
@@ -27,6 +27,16 @@ function App() {
   const { user, loading, getProfileImageUrl, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // 1. Se llama al Hook useEffect ANTES del return condicional para evitar el error de Hooks.
+  useEffect(() => {
+    if (location.state?.scrollTo) {
+      const section = document.getElementById(location.state.scrollTo);
+      if (section) {
+        window.scrollTo({ top: section.offsetTop - 70, behavior: "smooth" });
+      }
+    }
+  }, [location]);
 
   // Muestra un loader mientras se verifica si el usuario está logueado
   if (loading) {
@@ -93,7 +103,7 @@ function App() {
               <button className="nav-button nav-link-button" onClick={() => navigate("/login")}>
                 INICIAR SESIÓN
               </button>
-            </li>
+              </li>
           ) : (
                 <>
                     <li className="nav-profile">
@@ -116,15 +126,6 @@ function App() {
       </div>
     );
   };
-
-  useEffect(() => {
-    if (location.state?.scrollTo) {
-      const section = document.getElementById(location.state.scrollTo);
-      if (section) {
-        window.scrollTo({ top: section.offsetTop - 70, behavior: "smooth" });
-      }
-    }
-  }, [location]);
 
   return (
     <div>
