@@ -1,37 +1,55 @@
 import React from "react";
-// Se eliminó 'useContext'
 import { useNavigate } from "react-router-dom";
-
-import "./Perfil.css"; // Importa tu archivo de estilos
+import axios from "axios"; // Necesario si logout hace una llamada a la API
+import "./Perfil.css";
 
 /**
  * Componente Perfil. Muestra la información del usuario.
- * Ahora recibe 'user', 'logout', y 'getProfileImageUrl' como props,
-
+ * Recibe 'user', 'logout', y 'getProfileImageUrl' como props.
  */
 function Perfil({ user, logout, getProfileImageUrl }) {
   const navigate = useNavigate();
 
   // Si no se recibe el objeto 'user' (es null o undefined), redirigir a login.
-  // Esto simula la protección de la ruta.
   if (!user) {
-    navigate('/login');
+    // Si no hay usuario, redirigimos inmediatamente (simula protección de ruta)
+    setTimeout(() => navigate('/login'), 0); 
     return null;
   }
 
   const handleEdit = () => navigate("/editar-perfil");
   
-  // Usamos una función de logout simulada si no se proporciona, para evitar errores
-  const handleLogout = logout || (() => { console.log("Logout simulado."); navigate('/'); });
+  // Usamos la función de logout proporcionada o una función segura por defecto
+  const handleLogout = logout || (() => { 
+      console.log("Logout simulado."); 
+      localStorage.removeItem("token");
+      navigate('/'); 
+  });
+
+  // Determina la URL de la foto. Si getProfileImageUrl existe, la usa.
+  // Si no, usa el valor de user.foto para intentar mostrar la imagen, o un placeholder.
+  const profileSrc = getProfileImageUrl 
+    ? getProfileImageUrl(user.foto) 
+    : user.foto || 'https://placehold.co/100x100/38a169/ffffff?text=H';
+
 
   return (
     <div className="perfil-page">
+      {/* Estilos asumidos para Perfil.css - deben ser provistos por el usuario en su archivo */}
+     
       <div className="perfil-container">
         <h2>Perfil de Usuario</h2>
         <img 
-          src={getProfileImageUrl ? getProfileImageUrl(user.foto) : 'https://placehold.co/100x100/38a169/ffffff?text=Perfil'} 
+          src={profileSrc} 
           alt="Perfil" 
           className="profile-img-large" 
+          // Si la imagen falla (es inválida o no existe), mostramos un avatar por defecto
+          onError={(e) => {
+              e.target.onerror = null; // Evitar loop infinito
+              // Muestra la inicial del nombre o un placeholder genérico
+              const initial = user.nombre ? user.nombre.charAt(0).toUpperCase() : 'H';
+              e.target.src = `https://placehold.co/120x120/38a169/ffffff?text=${initial}`;
+          }}
         />
 
         <div className="perfil-info">
@@ -45,7 +63,6 @@ function Perfil({ user, logout, getProfileImageUrl }) {
 
         <div className="perfil-buttons">
           <button className="btn-edit" onClick={handleEdit}>EDITAR PERFIL</button>
-          {/* Llama a la función logout proporcionada por props */}
           <button className="btn-logout" onClick={handleLogout}>CERRAR SESIÓN</button>
         </div>
       </div>

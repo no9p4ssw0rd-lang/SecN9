@@ -2,9 +2,27 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./EditarPerfil.css";
-
 // --- CAMBIO: URL de la API desde variables de entorno para Vercel ---
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+// Función auxiliar para construir la URL de la foto (reutilizada de Perfil.jsx)
+const resolvePhotoUrl = (user, API_URL) => {
+    if (!user || !user.foto) return "https://placehold.co/150x150/f9f9f9/38a169?text=Sin+Foto";
+
+    const foto = user.foto;
+    
+    // 1. Si es una URL completa (Cloudinary), la usamos
+    if (foto.startsWith("http")) {
+        return foto;
+    }
+    // 2. Si es una ruta relativa (backend local/Render), la construimos
+    if (foto.startsWith("/")) {
+        return `${API_URL}${foto}`;
+    }
+    // 3. Caso general:
+    return `${API_URL}/${foto}`;
+};
+
 
 function EditarPerfil({ user, setUser }) {
   const navigate = useNavigate();
@@ -16,8 +34,8 @@ function EditarPerfil({ user, setUser }) {
     celular: "",
   });
 
-  const [foto, setFoto] = useState(null);
-  const [fotoPreview, setFotoPreview] = useState("/default-profile.png");
+  const [foto, setFoto] = useState(null); // Archivo de foto a subir
+  const [fotoPreview, setFotoPreview] = useState("https://placehold.co/150x150/f9f9f9/38a169?text=Sin+Foto"); // URL para mostrar la imagen
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
@@ -32,14 +50,9 @@ function EditarPerfil({ user, setUser }) {
         celular: user.celular || "",
       });
 
-      // --- CAMBIO: Usar API_URL para construir la ruta de la imagen ---
-      setFotoPreview(
-        user.foto && !user.foto.includes("default.png")
-          ? user.foto.startsWith("http")
-            ? user.foto
-            : `${API_URL}${user.foto.startsWith("/") ? "" : "/"}${user.foto}`
-          : "/default-profile.png"
-      );
+      // --- CORRECCIÓN: Resolver la URL de la foto actual ---
+      setFotoPreview(resolvePhotoUrl(user, API_URL));
+      
     }
   }, [user]);
 
@@ -49,7 +62,8 @@ function EditarPerfil({ user, setUser }) {
     const file = e.target.files[0];
     if (file) {
       setFoto(file);
-      setFotoPreview(URL.createObjectURL(file));
+      // Previsualización de la nueva imagen
+      setFotoPreview(URL.createObjectURL(file)); 
     }
   };
 
@@ -58,6 +72,11 @@ function EditarPerfil({ user, setUser }) {
     setError("");
     setSuccess("");
 
+    if (!user || !user._id) {
+      setLoading(false);
+      return setError("Error: ID de usuario no encontrado.");
+    }
+    
     const { nombre, edad, email, celular } = formData;
 
     if (!nombre || !edad || !email || !celular) return setError("Todos los campos son obligatorios.");
@@ -71,25 +90,33 @@ function EditarPerfil({ user, setUser }) {
       if (!token) return setError("No estás autenticado. Por favor, inicia sesión nuevamente.");
 
       const data = new FormData();
+      // Agregar datos del formulario
       Object.keys(formData).forEach((key) => data.append(key, formData[key]));
-      if (foto) data.append("foto", foto);
+      
+      // Agregar el archivo de foto si ha sido seleccionado
+      if (foto) data.append("foto", foto); 
 
-      // --- CAMBIO: Usar API_URL para la petición de actualización ---
-      const res = await axios.put(`${API_URL}/profesores/editar-perfil`, data, {
+      // --- CORRECCIÓN: Petición PUT a la API con FormData ---
+      const res = await axios.put(`${API_URL}/profesores/editar-perfil/${user._id}`, data, { // Asumo que tu backend espera el ID en la URL
         headers: {
-          "Content-Type": "multipart/form-data",
+          // El Content-Type se establece automáticamente como multipart/form-data al enviar FormData
           Authorization: `Bearer ${token}`,
         },
       });
 
       const updatedUser = res.data.user || res.data;
+      
+      // Actualizar el estado global del usuario y localStorage
       setUser(updatedUser);
       localStorage.setItem("user", JSON.stringify(updatedUser));
       setSuccess("Perfil actualizado correctamente.");
+      
+      // Limpiar el archivo de foto para evitar re-subidas accidentales
+      setFoto(null); 
 
       setTimeout(() => navigate("/perfil"), 1500);
     } catch (err) {
-      console.error(err);
+      console.error("Error al actualizar:", err.response || err);
       const backendMsg = err.response?.data?.msg || "";
       if (backendMsg.includes("Email already in use")) {
         setError("El correo ingresado ya está registrado. Por favor, utiliza otro.");
@@ -105,13 +132,21 @@ function EditarPerfil({ user, setUser }) {
 
   return (
     <div className="editar-perfil-page">
+      {/* Estilos asumidos para EditarPerfil.css */}
+
       <div className="editar-perfil-card">
         <h2>Editar Perfil</h2>
 
         {error && <p className="error">{error}</p>}
         {success && <p className="success">{success}</p>}
 
-        <img src={fotoPreview} alt="Preview" className="profile-img-large" />
+        <img src={fotoPreview} alt="Preview" className="profile-img-large" 
+            onError={(e) => {
+                e.target.onerror = null;
+                const initial = user?.nombre ? user.nombre.charAt(0).toUpperCase() : 'H';
+                e.target.src = `https://placehold.co/120x120/f9f9f9/38a169?text=${initial}`;
+            }}
+        />
 
         <div style={{ marginBottom: "15px" }}>
           <label className="btn-edit" style={{ marginRight: "10px", cursor: "pointer" }}>
