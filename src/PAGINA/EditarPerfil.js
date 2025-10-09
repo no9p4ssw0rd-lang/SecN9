@@ -78,11 +78,13 @@ function EditarPerfil({ user, setUser }) {
     setSuccess("");
 
     // FIX PRINCIPAL: Usar el ID que esté disponible (_id o id)
+    // Usamos el id del usuario que llega por props
     const userId = user?._id || user?.id;
 
     if (!user || !userId) {
       setLoading(false);
-      return setError("Error: ID de usuario no encontrado. Por favor, inicia sesión de nuevo.");
+      // FIX: Mensaje más claro para el usuario
+      return setError("Error: No se pudo obtener el ID de la sesión. Por favor, cierra sesión y vuelve a iniciar.");
     }
     
     const { nombre, edad, email, celular } = formData;
@@ -105,8 +107,10 @@ function EditarPerfil({ user, setUser }) {
       if (foto) data.append("foto", foto); 
 
       // --- CORRECCIÓN: Petición PUT a la API con FormData, usando el ID dinámico ---
+      // La ruta final es: http://tuserver.com/profesores/editar-perfil/{userId}
       const res = await axios.put(`${API_URL}/profesores/editar-perfil/${userId}`, data, {
         headers: {
+          // El Content-Type se establece automáticamente como multipart/form-data al enviar FormData
           Authorization: `Bearer ${token}`,
         },
       });
@@ -123,12 +127,17 @@ function EditarPerfil({ user, setUser }) {
 
       setTimeout(() => navigate("/perfil"), 1500);
     } catch (err) {
+      // Registrar error detallado
       console.error("Error al actualizar:", err.response?.data?.msg || err);
+
       const backendMsg = err.response?.data?.msg || "";
       if (backendMsg.includes("Email already in use")) {
         setError("El correo ingresado ya está registrado. Por favor, utiliza otro.");
       } else if (backendMsg.includes("Celular already in use")) {
         setError("El número de celular ya está registrado. Por favor, utiliza otro.");
+      } else if (err.response?.status === 404) {
+        // Error específico 404: La ruta de la API no se encontró.
+        setError("Error de conexión: Ruta de actualización no encontrada en el servidor (404).");
       } else {
         setError("Error al actualizar perfil. Intenta nuevamente.");
       }
@@ -140,7 +149,7 @@ function EditarPerfil({ user, setUser }) {
   return (
     <div className="editar-perfil-page">
       {/* Estilos asumidos para EditarPerfil.css */}
-     
+   
 
       <div className="editar-perfil-card">
         <h2>Editar Perfil</h2>
