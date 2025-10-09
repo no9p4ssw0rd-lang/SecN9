@@ -132,12 +132,8 @@ function App() {
                                     style={{ cursor: "pointer" }}
                                 />
                             </li>
-                            {/* Opcional: Agregar el botón de cerrar sesión aquí o en el perfil */}
-                            <li>
-                                <button className="nav-button nav-link-button nav-logout-button" onClick={logout}>
-                                    SALIR
-                                </button>
-                            </li>
+                          
+                           
                         </>
                     )}
                 </ul>
