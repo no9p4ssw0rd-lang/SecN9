@@ -2,20 +2,22 @@ import React, { useEffect, useContext } from "react";
 import { Routes, Route, useNavigate, useLocation, Navigate } from "react-router-dom";
 
 // Componentes y Contexto (Asegúrate de que AuthContext.js y PrivateRoute.js estén en la carpeta PAGINA/)
-import { AuthProvider, AuthContext } from "./PAGINA/AuthContext"; 
-import PrivateRoute from "./PAGINA/PrivateRoute"; 
+// Se ajustan las extensiones a .js
+import { AuthProvider, AuthContext } from "./PAGINA/AuthContext.js"; 
+import PrivateRoute from "./PAGINA/PrivateRoute.js"; 
 
 // Componentes de Páginas
-import Home from "./PAGINA/Home"; 
-import Login from "./PAGINA/Login";
-import RegisterProfesor from "./PAGINA/RegisterProfesor";
-import Perfil from "./PAGINA/Perfil";
-import EditarPerfil from "./PAGINA/EditarPerfil";
-import Password from "./PAGINA/Password"; // Usado para restablecer contraseña
-import Horario from "./PAGINA/Horario";
-import Grupo from "./PAGINA/Grupo";
-import Trabajos from "./PAGINA/Trabajos";
-import Calificaciones from "./PAGINA/Calificaciones";
+// Se ajustan las extensiones a .js
+import Home from "./PAGINA/Home.js"; 
+import Login from "./PAGINA/Login.js";
+import RegisterProfesor from "./PAGINA/RegisterProfesor.js";
+import Perfil from "./PAGINA/Perfil.js";
+import EditarPerfil from "./PAGINA/EditarPerfil.js";
+import Password from "./PAGINA/Password.js"; // Usado para restablecer contraseña
+import Horario from "./PAGINA/Horario.js";
+import Grupo from "./PAGINA/Grupo.js";
+import Trabajos from "./PAGINA/Trabajos.js";
+import Calificaciones from "./PAGINA/Calificaciones.js";
 
 // Estilos y logo (Asegúrate de que Home.css esté en PAGINA/ y logo.png en src/)
 import "./PAGINA/Home.css"; 
@@ -27,10 +29,25 @@ import logo from "./logo.png";
  */
 function App() {
     // Obtenemos el estado y las funciones del Contexto de Autenticación
-    // Este hook solo funciona porque App está envuelto en AuthProvider (ver AppWrapper al final)
-    const { user, loading, getProfileImageUrl, logout } = useContext(AuthContext);
+    // Se elimina getProfileImageUrl del contexto ya que la lógica se maneja aquí
+    const { user, loading, logout } = useContext(AuthContext); 
     const navigate = useNavigate();
     const location = useLocation();
+
+    /**
+     * Lógica para determinar la fuente de la imagen de perfil.
+     * Utiliza la URL completa de Cloudinary si está disponible, o un placeholder.
+     * @param {string} foto - La URL de la foto almacenada en el objeto de usuario.
+     * @returns {string} La URL final de la imagen.
+     */
+    const getProfileImageSrc = (foto) => {
+        // 1. Verifica si 'foto' existe, es una cadena y comienza con 'http' (Cloudinary URL)
+        if (foto && typeof foto === 'string' && foto.startsWith("http")) {
+            return foto; 
+        }
+        // 2. Si no es válida o no existe, devuelve una imagen genérica (placeholder 50x50)
+        return `https://placehold.co/50x50/34495e/ffffff?text=PF`; 
+    };
 
     // Hook para manejar el scroll a secciones específicas después de la navegación
     useEffect(() => {
@@ -43,7 +60,7 @@ function App() {
         }
     }, [location]);
 
-    // Muestra un loader mientras se verifica la sesión inicial (especialmente útil para Firebase/Auth)
+    // Muestra un loader mientras se verifica la sesión inicial
     if (loading) {
         return (
             <div className="loading-screen flex items-center justify-center h-screen bg-gray-50 text-xl text-gray-700">
@@ -124,17 +141,19 @@ function App() {
                             {/* Imagen de perfil que navega a /perfil */}
                             <li className="nav-profile">
                                 <img
-                                    // Usamos getProfileImageUrl de AuthContext que debe manejar la URL de Cloudinary/servidor
-                                    src={getProfileImageUrl(user.foto)} 
+                                    // *** USO DE LA FUNCIÓN LOCAL ***
+                                    src={getProfileImageSrc(user.foto)} 
                                     alt="Perfil"
                                     className="profile-img-small"
                                     onClick={() => navigate("/perfil")}
                                     style={{ cursor: "pointer" }}
                                 />
                             </li>
-                            {/* Opcional: Agregar el botón de cerrar sesión aquí o en el perfil */}
+                            {/* Botón de cerrar sesión */}
                             <li>
-                                
+                                <button className="nav-button nav-link-button" onClick={logout}>
+                                    SALIR
+                                </button>
                             </li>
                         </>
                     )}
@@ -169,7 +188,15 @@ function App() {
                     <Route path="/no-autorizado" element={<div>No tienes permiso para ver esta página.</div>} />
 
                     {/* Rutas Protegidas (Requieren autenticación) */}
-                    <Route path="/perfil" element={<PrivateRoute><Perfil user={user} logout={logout} getProfileImageUrl={getProfileImageUrl} /></PrivateRoute>} />
+                    <Route 
+                        path="/perfil" 
+                        element={
+                            <PrivateRoute>
+                                {/* Pasamos la función local como prop para que Perfil pueda mostrar la imagen */}
+                                <Perfil user={user} logout={logout} getProfileImageUrl={getProfileImageSrc} />
+                            </PrivateRoute>
+                        } 
+                    />
                     <Route path="/editar-perfil" element={<PrivateRoute><EditarPerfil user={user} /></PrivateRoute>} />
                     
                     {/* Rutas con Rol Específico (Usan el componente PrivateRoute con requiredRole) */}
