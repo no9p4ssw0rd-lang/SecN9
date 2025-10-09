@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import './Trabajos.css'; 
-import Notificacion from './Notificacion'; 
+
 
 
 // La URL de la API se obtiene de las variables de entorno para Vercel/Render
