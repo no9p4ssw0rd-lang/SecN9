@@ -103,9 +103,10 @@ function App() {
               <button className="nav-button nav-link-button" onClick={() => navigate("/login")}>
                 INICIAR SESIÓN
               </button>
-              </li>
+            </li>
           ) : (
                 <>
+                    {/* Elemento de la imagen de perfil (clic dirige al perfil) */}
                     <li className="nav-profile">
                         <img
                             src={getProfileImageUrl(user.foto)}
@@ -115,6 +116,7 @@ function App() {
                             style={{ cursor: "pointer" }}
                         />
                     </li>
+                    {/* Botón de CERRAR SESIÓN como un elemento de menú aparte */}
                     <li>
                         <button className="nav-button nav-link-button" onClick={logout}>
                             CERRAR SESIÓN
