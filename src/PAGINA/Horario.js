@@ -310,8 +310,7 @@ function Horario({ user }) {
     }
   }, [user.role, anio, horario, leyenda, isLoading, mostrarAlerta]);
 
-  // --- Funciones para SUBIR PDF (del código viejo, usando API_URL) ---
-  const abrirExploradorPDF = () => fileInputRef.current.click();
+ 
 
   const handleArchivoChange = useCallback(async (e) => {
     const file = e.target.files[0];
@@ -381,7 +380,7 @@ function Horario({ user }) {
             <button onClick={exportarPDF} className="btn-admin" disabled={isLoading}> 📄 Exportar PDF </button> 
             <button onClick={enviarHorarioProfesores} className="btn-admin" disabled={isLoading}> 📧 Enviar </button> 
             {/* Opción de subir PDF del código viejo */}
-            <button onClick={abrirExploradorPDF} className="btn-admin" disabled={isLoading}> ⬆️ Subir PDF</button> 
+           
             <input type="file" accept="application/pdf" ref={fileInputRef} style={{ display: "none" }} onChange={handleArchivoChange} disabled={isLoading} />
         </div> 
       )}

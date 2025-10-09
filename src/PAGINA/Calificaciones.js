@@ -215,7 +215,7 @@ function Calificaciones({ user }) {
         styles: { fontSize: 8, halign: 'center' },
         columnStyles: { 0: { halign: 'left', fontStyle: 'bold' } }
     });
-    doc.save(`Reporte_Consolidado_${selectedGrupo.nombre.replace(/\s/g, '_')}.pdf`);
+   
   };
 
   const handleSendPdf = async (platform, recipient, alumno) => {
@@ -322,7 +322,7 @@ function Calificaciones({ user }) {
           
           <div className="header-controls">
             <button onClick={() => setSelectedGrupo(null)} className="back-button">&larr; Volver a Grupos</button>
-            <button onClick={generatePdfConsolidado} className="button">Descargar Reporte del Grupo</button>
+            
           </div>
 
           <div className="calificaciones-header">
