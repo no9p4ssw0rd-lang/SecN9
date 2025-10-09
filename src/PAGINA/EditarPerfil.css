@@ -1,26 +1,29 @@
+/* Estilos principales del contenedor de la página */
 .editar-perfil-page {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-start; /* Alinea la tarjeta en la parte superior del viewport */
   justify-content: center;
-  min-height: 100vh;
+  min-height: 100vh; /* Asegura que ocupe todo el alto del viewport */
   padding: 20px;
- 
+  background-color: #f0f2f5; /* Un fondo suave para la página */
 }
 
+/* Estilos de la tarjeta principal del formulario */
 .editar-perfil-card {
   background-color: #ffffff;
   padding: 30px 40px;
   border-radius: 20px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  max-width: 400px;
+  max-width: 450px; /* Incrementé ligeramente el ancho máximo para mejor espaciado */
   width: 100%;
   margin-top: 80px;
   text-align: center;
 }
 
 .editar-perfil-card h2 {
-  margin-bottom: 20px;
+  margin-bottom: 25px; /* Más espacio bajo el título */
   color: #000000;
+  font-size: 1.8rem;
 }
 
 .editar-perfil-card form {
@@ -28,44 +31,129 @@
   flex-direction: column;
 }
 
+/* Estilos para los campos de entrada y selección */
 .editar-perfil-card input,
 .editar-perfil-card select {
   margin-bottom: 15px;
   padding: 12px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  border: 1px solid #ddd; /* Borde más sutil */
+  border-radius: 8px; /* Bordes un poco más redondeados */
   font-size: 16px;
+  outline: none; /* Quita el contorno por defecto */
+  transition: border-color 0.3s ease;
 }
 
+.editar-perfil-card input:focus,
+.editar-perfil-card select:focus {
+  border-color: #000000; /* Borde al enfocarse */
+}
+
+/* Contenedor de botones (Guardar y Cancelar) */
 .editar-perfil-buttons {
   display: flex;
   justify-content: space-between;
-  margin-top: 20px;
+  gap: 15px; /* Espacio entre los botones */
+  margin-top: 25px;
 }
 
+/* Estilos base para los botones */
 .btn-save, .btn-cancel {
-  padding: 10px 20px;
+  flex-grow: 1; /* Hace que los botones compartan el espacio por igual */
+  padding: 12px 20px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: bold;
-  transition: background-color 0.3s ease;
+  font-size: 16px;
+  transition: background-color 0.3s ease, opacity 0.3s ease;
 }
 
+/* Estilos específicos para el botón de Guardar */
 .btn-save {
   background-color: #000000;
   color: #ffffff;
 }
 
-.btn-save:hover {
+.btn-save:hover:not(:disabled) {
   background-color: #333333;
 }
 
+/* Estilos para el botón cuando está deshabilitado (cargando) */
+.btn-save:disabled {
+  background-color: #757575; /* Gris suave */
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+/* Estilos específicos para el botón de Cancelar */
 .btn-cancel {
-  background-color: #000000;
-  color: #ffffff;
+  background-color: #e0e0e0; /* Fondo gris para Cancelar */
+  color: #000000;
 }
 
 .btn-cancel:hover {
-  background-color: #333333;
+  background-color: #cccccc;
+}
+
+/* --- Nuevos Estilos Agregados --- */
+
+/* Imagen de Perfil Grande */
+.profile-img-large {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%; /* Circular */
+  object-fit: cover;
+  margin-bottom: 20px;
+  border: 3px solid #000000; /* Borde para resaltarla */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Botón/Label para Cambiar Foto */
+.btn-edit {
+  display: inline-block;
+  padding: 8px 15px;
+  background-color: #f0f0f0; /* Color claro para el botón de la foto */
+  color: #000000;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: normal;
+  transition: background-color 0.3s ease;
+}
+
+.btn-edit:hover {
+  background-color: #e0e0e0;
+}
+
+/* Mensajes de Estado (Error y Éxito) */
+.error, .success {
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.error {
+  background-color: #ffebee; /* Rojo muy claro */
+  color: #c62828; /* Rojo oscuro */
+  border: 1px solid #e57373;
+}
+
+.success {
+  background-color: #e8f5e9; /* Verde muy claro */
+  color: #388e3c; /* Verde oscuro */
+  border: 1px solid #81c784;
+}
+
+/* Media Query para pantallas más pequeñas (móviles) */
+@media (max-width: 600px) {
+  .editar-perfil-card {
+    padding: 20px 25px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .editar-perfil-buttons {
+    flex-direction: column;
+  }
 }
