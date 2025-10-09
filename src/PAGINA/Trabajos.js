@@ -254,21 +254,6 @@ function Trabajos({ user }) {
             padding: 1rem 0;
         }
         
-        .grupo-componente .asistencia-header {
-            display: flex;
-            align-items: center;
-            padding: 0 10px 10px 10px;
-            gap: 1rem;
-            border-bottom: 1px solid #444;
-            font-weight: var(--font-semi-bold);
-            color: #aaa;
-            font-size: 0.9rem;
-        }
-        
-        .grupo-componente .asistencia-header .bimestres-container {
-            text-align: center;
-        }
-        
         .grupo-componente .asistencia-body {
             max-height: 75vh;
             overflow-y: auto;
@@ -293,6 +278,37 @@ function Trabajos({ user }) {
             text-overflow: ellipsis;
             font-weight: 500;
         }
+        
+        /* --- NUEVOS ESTILOS PARA EL RESUMEN DE CRITERIO --- */
+        .grupo-componente .criterio-resumen-wrapper {
+            display: flex;
+            justify-content: center; /* Centra el contenedor */
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .grupo-componente .criterio-resumen {
+            background-color: var(--main-color);
+            color: var(--dark-color);
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px; /* Limita el ancho del cuadro */
+            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .grupo-componente .criterio-resumen .criterio-info {
+            flex-grow: 1;
+            text-align: left;
+        }
+        .grupo-componente .criterio-resumen .criterio-prom {
+            font-size: 1.1em;
+            margin-left: 10px;
+        }
+        /* ---------------------------------------------------- */
+
 
         .grupo-componente .bimestres-container {
             display: flex;
@@ -758,13 +774,20 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                                     </div>
                                     {criterioAbierto?.alumnoId === alumno._id && (
                                         <div className={`bimestre-desplegable desplegado`}>
-                                            {/* Opcional: Mostrar promedio del criterio en el desplegable */}
-                                            <div style={{marginBottom: '10px', fontWeight: 'bold'}}>
-                                                Promedio "{criterioAbierto.criterioNombre}": 
-                                                <span style={{color: calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre) >= 6 ? '#27ae60' : '#d32f2f', marginLeft: '5px'}}>
-                                                    {calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre).toFixed(2)}
-                                                </span>
+                                            
+                                            {/* FIX: Contenedor para centrar el cuadro de resumen del criterio */}
+                                            <div className="criterio-resumen-wrapper">
+                                                <div className="criterio-resumen">
+                                                    <span className="criterio-info">
+                                                        {criterioAbierto.criterioNombre} ({criterios.find(c => c.nombre === criterioAbierto.criterioNombre)?.porcentaje}%)
+                                                    </span>
+                                                    <span className="criterio-prom" style={{color: calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre) >= 6 ? 'var(--dark-color)' : 'var(--danger-color)'}}>
+                                                        Prom: {calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre).toFixed(2)}
+                                                    </span>
+                                                </div>
                                             </div>
+                                            {/* FIN FIX */}
+
                                             <div className="cuadritos-grid">
                                                 {/* Usamos numTareas[criterioAbierto.criterioNombre] para determinar cuántos inputs mostrar */}
                                                 {Array.from({ length: numTareas[criterioAbierto.criterioNombre] || 10 }).map((_, tareaIndex) => {
