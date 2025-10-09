@@ -64,7 +64,7 @@ function App() {
       roleSections = [
         { id: "trabajos", label: "TRABAJOS", path: "/trabajos" },
         { id: "grupo", label: "ASISTENCIA", path: "/grupo" },
-        { id: "horario", label: "HORARIO GENERAL", path: "/horario" },
+        
       ];
     } else if (user?.role === "admin") {
       roleSections = [
@@ -106,12 +106,7 @@ function App() {
             </li>
           ) : (
                 <>
-                    {/* Botón de CERRAR SESIÓN como un elemento de menú aparte */}
-                    <li>
-                        <button className="nav-button nav-link-button" onClick={logout}>
-                            CERRAR SESIÓN
-                        </button>
-                    </li>
+                    
                     {/* Imagen de perfil */}
                     <li className="nav-profile">
                         <img
