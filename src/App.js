@@ -132,7 +132,7 @@ function App() {
                                     style={{ cursor: "pointer" }}
                                 />
                             </li>
-                            {/* Opcional: Agregar el botón de cerrar sesión aquí o en el perfil */}
+                      
                             <li>
                                 
                             </li>

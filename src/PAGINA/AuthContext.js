@@ -1,11 +1,19 @@
 import React, { createContext, useState, useEffect } from 'react';
+import apiClient from '../api/apiClient'; // IMPORTANTE: Asegúrate de que existe este archivo
 
-// Se crea el contexto con valores por defecto
+// ----------------------------------------------------
+// VARIABLES DE ENTORNO Y CONSTANTES
+// ----------------------------------------------------
+// Estas constantes son útiles, aunque la lógica de la imagen no las use directamente si Cloudinary devuelve URL completa
+const DEFAULT_FALLBACK_URL = "https://placehold.co/150x150/EFEFEF/AAAAAA&text=Sin+Foto";
+
+// Crea el contexto con valores por defecto
 export const AuthContext = createContext({
     user: null,
     loading: true,
     login: () => {},
     logout: () => {},
+    updateUser: () => {}, // Agregamos updateUser
     getProfileImageUrl: () => ""
 });
 
@@ -16,8 +24,6 @@ export const AuthContext = createContext({
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null); 
     const [loading, setLoading] = useState(true);
-    // Nota: El token no se almacena en el estado, solo en localStorage para seguridad,
-    // pero se verifica al inicio para cargar el usuario.
 
     // 1. Efecto para verificar la sesión al cargar la aplicación
     useEffect(() => {
@@ -27,11 +33,13 @@ export const AuthProvider = ({ children }) => {
             
             if (storedUser && token) {
                 try {
-                    // Si encontramos datos válidos, cargamos el usuario
-                    setUser(JSON.parse(storedUser));
+                    const userData = JSON.parse(storedUser);
+                    setUser(userData);
+                    // CONFIGURACIÓN API: Seteamos el header de autorización para que funcione apiClient
+                    apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
                 } catch (error) {
-                    // Si falla el parseo, la sesión es inválida
-                    console.error("Error parsing user data from localStorage:", error);
+                    console.error("Error parsing user data or setting API token:", error);
+                    // Sesión inválida, limpiar
                     localStorage.removeItem('user');
                     localStorage.removeItem('token');
                     setUser(null);
@@ -48,6 +56,9 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(userData));
         
+        // Seteamos el header del cliente API
+        apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
         // Actualiza el estado global
         setUser(userData);
     };
@@ -58,19 +69,28 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         
+        // Limpia el header del cliente API
+        delete apiClient.defaults.headers.common['Authorization'];
+
         // Limpia el estado global
         setUser(null);
     };
+    
+    // 4. Función de Actualización de Perfil (usada por EditarPerfil)
+    const updateUser = (updatedUser) => {
+        setUser(updatedUser);
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+    };
 
-    // 4. Función de utilidad para obtener la URL de la imagen (manteniendo la lógica que usabas)
+    // 5. Función de utilidad para obtener la URL de la imagen (CORREGIDA)
     const getProfileImageUrl = (foto) => {
-        // Usa una URL de placeholder si la foto no está disponible
-        if (foto && typeof foto === 'string' && foto.length > 0) {
-            // Esto solo es un fallback por si no funciona la API
-            return `https://placehold.co/100x100/38a169/ffffff?text=${foto.substring(0,1).toUpperCase()}`;
+        // Verificamos si la foto es una URL completa (Cloudinary o externa)
+        if (foto && typeof foto === 'string' && (foto.startsWith("http://") || foto.startsWith("https://"))) {
+            return foto; 
         }
-        // URL por defecto si no hay foto
-        return "http://localhost:5000/uploads/fotos/default.png";
+        
+        // Si no es una URL completa o si es nula, usamos el placeholder
+        return DEFAULT_FALLBACK_URL;
     };
 
     const contextValue = {
@@ -78,6 +98,7 @@ export const AuthProvider = ({ children }) => {
         loading,
         login,
         logout,
+        updateUser, // Exportamos la función updateUser
         getProfileImageUrl,
     };
 
@@ -87,4 +108,3 @@ export const AuthProvider = ({ children }) => {
         </AuthContext.Provider>
     );
 };
-
