@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect } from 'react';
 // Importa apiClient si lo usas para obtener el baseURL de tu API
 // Asegúrate de que este path sea correcto
-import apiClient from '../api/apiClient'; 
+import apiClient from '../../api/apiClient'; 
 
 // Ruta por defecto que existe en el servidor (para fallback)
 const DEFAULT_IMG_PATH = "/uploads/fotos/default.png";
