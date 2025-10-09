@@ -180,9 +180,18 @@ function Trabajos({ user }) {
         }
         
         /* --- TABLA DE SELECCIÓN DE GRUPO --- */
+        /* FIX: NUEVO CONTENEDOR PARA CENTRAR LA TABLA */
+        .grupos-table-wrapper {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+
         .grupo-componente .grupos-table {
-          width: 100%;
-          margin-top: 2rem;
+          width: 90%; /* Ajustamos el ancho para que no sea 100% del contenedor */
+          max-width: 800px; /* Limitamos el ancho en pantallas grandes */
           border-collapse: collapse;
           box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
           border-radius: 10px;
@@ -544,6 +553,10 @@ function Trabajos({ user }) {
             .grupo-componente .modal-content {
                 max-width: 95%;
             }
+            .grupo-componente .grupos-table {
+                width: 100%;
+                max-width: none;
+            }
         }
       `}</style>
       <div className="trabajos-container grupo-componente">
@@ -798,33 +811,37 @@ const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => {
         <>
             <header className="main-header" style={{ justifyContent: 'center', paddingTop: '0' }}><h1>Gestión de Calificaciones</h1></header>
             <h3 className="subtitulo">Selecciona un grupo y asignatura para calificar</h3>
-            <table className="grupos-table">
-                <thead><tr><th>Grupo</th><th>Mi Asignatura</th><th>Acciones</th></tr></thead>
-                <tbody>
-                    {grupos.map(grupo => {
-                        // FIX 2: Usar el ID del usuario actual (userId) para encontrar la asignación.
-                        const miAsignacion = grupo.profesoresAsignados.find(asig => asig.profesor?._id === userId); 
-                        const miAsignatura = miAsignacion ? miAsignacion.asignatura : 'N/A';
-                        
-                        return (
-                            <tr key={grupo._id}>
-                                <td>{grupo.nombre}</td>
-                                <td>{miAsignatura}</td>
-                                <td className="acciones-cell">
-                                    <button 
-                                        className="btn btn-primary" 
-                                        onClick={() => onSeleccionarGrupo(grupo, miAsignatura)}
-                                        // FIX 3: Solo deshabilitar si la asignatura es 'N/A'
-                                        disabled={miAsignatura === 'N/A'}
-                                    >
-                                        Calificar
-                                    </button>
-                                </td>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-            </table>
+            
+            {/* FIX: Contenedor para centrar la tabla y limitar su ancho */}
+            <div className="grupos-table-wrapper">
+                <table className="grupos-table">
+                    <thead><tr><th>Grupo</th><th>Mi Asignatura</th><th>Acciones</th></tr></thead>
+                    <tbody>
+                        {grupos.map(grupo => {
+                            // FIX 2: Usar el ID del usuario actual (userId) para encontrar la asignación.
+                            const miAsignacion = grupo.profesoresAsignados.find(asig => asig.profesor?._id === userId); 
+                            const miAsignatura = miAsignacion ? miAsignacion.asignatura : 'N/A';
+                            
+                            return (
+                                <tr key={grupo._id}>
+                                    <td>{grupo.nombre}</td>
+                                    <td>{miAsignatura}</td>
+                                    <td className="acciones-cell">
+                                        <button 
+                                            className="btn btn-primary" 
+                                            onClick={() => onSeleccionarGrupo(grupo, miAsignatura)}
+                                            // FIX 3: Solo deshabilitar si la asignatura es 'N/A'
+                                            disabled={miAsignatura === 'N/A'}
+                                        >
+                                            Calificar
+                                        </button>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
         </>
     );
 };
