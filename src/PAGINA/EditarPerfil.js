@@ -4,6 +4,7 @@ import axios from "axios";
 import "./EditarPerfil.css";
 
 // --- CAMBIO: URL de la API desde variables de entorno para Vercel ---
+// (Debe ser solo el dominio base, ej: https://sec-n9.render.com)
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 // Función auxiliar para construir la URL de la foto (reutilizada de Perfil.jsx)
@@ -78,7 +79,6 @@ function EditarPerfil({ user, setUser }) {
     setSuccess("");
 
     // FIX PRINCIPAL: Usar el ID que esté disponible (_id o id)
-    // Usamos el id del usuario que llega por props
     const userId = user?._id || user?.id;
 
     if (!user || !userId) {
@@ -106,9 +106,8 @@ function EditarPerfil({ user, setUser }) {
       // Agregar el archivo de foto si ha sido seleccionado
       if (foto) data.append("foto", foto); 
 
-      // --- CORRECCIÓN: Petición PUT a la API con FormData, usando el ID dinámico ---
-      // La ruta final es: http://tuserver.com/profesores/editar-perfil/{userId}
-      const res = await axios.put(`${API_URL}/profesores/editar-perfil/${userId}`, data, {
+      // --- CORRECCIÓN FINAL: Añadir /api/ al inicio de la ruta del endpoint ---
+      const res = await axios.put(`${API_URL}/api/profesores/editar-perfil/${userId}`, data, {
         headers: {
           // El Content-Type se establece automáticamente como multipart/form-data al enviar FormData
           Authorization: `Bearer ${token}`,
@@ -149,7 +148,7 @@ function EditarPerfil({ user, setUser }) {
   return (
     <div className="editar-perfil-page">
       {/* Estilos asumidos para EditarPerfil.css */}
-   
+     
 
       <div className="editar-perfil-card">
         <h2>Editar Perfil</h2>
