@@ -5,11 +5,10 @@ import html2canvas from "html2canvas";
 import "./Horario.css";
 
 // --- CONSTANTES Y CONFIGURACIÓN ---
-// La URL de la API se obtiene de las variables de entorno para Vercel.
+// Uso de process.env.REACT_APP_API_URL para compatibilidad con Vercel/Render
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
-// Se usan URLs de placeholders para las imágenes para evitar errores de compilación.
-// En tu proyecto real, puedes volver a usar los imports locales.
+// URLs de placeholders para Vercel/Render (de tu código nuevo)
 const logoAgs = "https://placehold.co/200x80/ffffff/000000?text=Logo+Estado";
 const logoDerecho = "https://placehold.co/120x120/ffffff/000000?text=Logo+Escuela";
 
@@ -35,6 +34,7 @@ function Horario({ user }) {
   const [loadingMessage, setLoadingMessage] = useState("");
   const [progress, setProgress] = useState(0);
   const horarioTableRef = useRef(null);
+  const fileInputRef = useRef(null); // Del código viejo
 
   const mostrarAlerta = useCallback((mensaje, tipo = "success") => {
     setAlerta({ mensaje, tipo });
@@ -48,6 +48,7 @@ function Horario({ user }) {
     }
   }, [isLoading]);
 
+  // --- Carga de profesores (Usando API_URL) ---
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -58,6 +59,7 @@ function Horario({ user }) {
     }).catch(console.error);
   }, []);
 
+  // --- Carga de horario (Usando API_URL) ---
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -69,6 +71,8 @@ function Horario({ user }) {
         setProgress(75);
         if (res.data?.datos) setHorario(res.data.datos);
         if (res.data?.leyenda) setLeyenda(res.data.leyenda);
+        // Si tienes el estado pdfHorario del código viejo, úsalo aquí:
+        // if (res.data?.pdfUrl) setPdfHorario(res.data.pdfUrl); 
       }).catch(error => {
         console.error("Error al cargar el horario:", error);
         mostrarAlerta("Error al cargar el horario ❌", "error");
@@ -80,6 +84,7 @@ function Horario({ user }) {
   
   const generarHorarioVacio = useCallback(() => {
     if (isLoading) return;
+    // Agregamos la confirmación que estaba en el código nuevo para evitar borrados accidentales
     if (!window.confirm("¿Estás seguro de que quieres limpiar todo el horario? Esta acción es irreversible.")) return;
 
     const nuevoHorario = {};
@@ -119,6 +124,7 @@ function Horario({ user }) {
     mostrarAlerta("Color eliminado de la leyenda", "info");
   }, [isLoading, mostrarAlerta]);
   
+  // Función auxiliar para obtener Base64 de las imágenes (usada en ambos códigos)
   const getBase64Image = (imgPath) => new Promise((resolve, reject) => {
     const img = new Image();
     img.src = imgPath;
@@ -133,9 +139,9 @@ function Horario({ user }) {
     img.onerror = (error) => reject(error);
   });
   
-  // --- Lógica de generación de PDF refactorizada en una función auxiliar ---
+  // --- Lógica de generación de PDF refactorizada (basada en el nuevo, es más limpia) ---
   const generarContenidoPDF = async (doc) => {
-    doc.setFont("helvetica", "normal"); // Reset font
+    doc.setFont("helvetica", "normal");
     const [logoAgsBase64, logoDerBase64] = await Promise.all([ getBase64Image(logoAgs), getBase64Image(logoDerecho) ]);
     doc.addImage(logoAgsBase64, "PNG", 15, 8, 40, 16);
     doc.addImage(logoDerBase64, "PNG", 255, 8, 25, 25);
@@ -150,7 +156,48 @@ function Horario({ user }) {
     const tablaElement = horarioTableRef.current;
     if (!tablaElement) throw new Error("Tabla de horario no encontrada.");
 
-    const canvas = await html2canvas(tablaElement, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
+    // Ajuste para el canvas: Usar el ajuste de estilos del código viejo para el PDF
+    const canvas = await html2canvas(tablaElement, { 
+        scale: 2, 
+        backgroundColor: "#ffffff", 
+        useCORS: true,
+        // Usamos el 'onclone' para modificar la tabla solo para la exportación de PDF
+        onclone: (clonedDocument) => {
+            clonedDocument.querySelectorAll('.asignaturas-cell').forEach(cell => {
+                // Forzar el ancho y el wrap en la copia para el PDF
+                cell.style.maxWidth = '150px';
+                cell.style.wordBreak = 'break-word';
+                cell.style.whiteSpace = 'normal';
+                cell.style.fontSize = '10px'; 
+            });
+            clonedDocument.querySelectorAll('.horas-row-horizontal').forEach(row => {
+                row.style.justifyContent = 'space-around';
+                row.style.display = 'flex';
+                row.style.width = '100%';
+            });
+            // Reemplazar inputs con divs de valor para exportación limpia
+            clonedDocument.querySelectorAll('.hora-box-horizontal').forEach(box => { 
+                const color = box.style.backgroundColor; 
+                const input = box.querySelector('input'); 
+                const value = input ? input.value : ''; 
+                box.style.backgroundColor = 'transparent'; 
+                const valueDiv = clonedDocument.createElement('div'); 
+                valueDiv.textContent = value;
+                valueDiv.style.backgroundColor = color === 'transparent' ? '#fff' : color; 
+                
+                // Estilos de cuadro pequeño para PDF (tomado del código viejo)
+                valueDiv.style.cssText += `
+                    width: 22px; height: 20px; text-align: center; font-size: 10px; 
+                    border: 1px solid ${color === 'transparent' ? '#bbb' : 'grey'};
+                    border-radius: 3px; padding: 0; box-sizing: border-box;
+                    display: flex; align-items: center; justify-content: center;
+                    font-weight: bold; color: black; text-shadow: none;
+                `;
+                if (input && input.parentNode) { input.parentNode.replaceChild(valueDiv, input); } 
+            });
+        }
+    });
+
     const imgData = canvas.toDataURL("image/png");
     const pdfWidth = doc.internal.pageSize.getWidth() - 20;
     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
@@ -195,10 +242,11 @@ function Horario({ user }) {
         setLoadingMessage("");
     }
   }, [anio, leyenda, isLoading, mostrarAlerta]);
-
+  
+  // --- Función de ENVÍO por correo (SendGrid) ---
   const enviarHorarioProfesores = useCallback(async () => {
     if (user.role !== "admin" || isLoading) return;
-    const correos = profesores.map(p => p.correo).filter(Boolean);
+    const correos = profesores.map(p => p.email).filter(Boolean); // Usamos 'email'
     if (correos.length === 0) {
         return mostrarAlerta("No hay correos de profesores registrados para enviar.", "error");
     }
@@ -223,6 +271,7 @@ function Horario({ user }) {
         };
 
         const token = localStorage.getItem("token");
+        // Uso de API_URL para Vercel/Render
         await axios.post(`${API_URL}/api/enviar-horario`, payload, { headers: { Authorization: `Bearer ${token}` } });
         
         setProgress(100);
@@ -235,7 +284,8 @@ function Horario({ user }) {
         setLoadingMessage("");
     }
   }, [user.role, isLoading, profesores, anio, leyenda, mostrarAlerta]);
-  
+
+  // --- Función para GUARDAR horario (Unificada) ---
   const guardarHorario = useCallback(async () => {
     if (user.role !== "admin" || isLoading) return;
     const token = localStorage.getItem("token");
@@ -244,7 +294,8 @@ function Horario({ user }) {
     setLoadingMessage("Guardando horario...");
     setProgress(10);
     try {
-        const payload = { anio, datos: horario, leyenda };
+        // Usamos el formato JSON (código nuevo) ya que es más limpio y adecuado para una API REST
+        const payload = { anio, datos: horario, leyenda }; 
         await axios.post(`${API_URL}/horario`, payload, { 
             headers: { Authorization: `Bearer ${token}` },
             onUploadProgress: (e) => setProgress(Math.min(90, Math.round((e.loaded * 100) / (e.total || 1))))
@@ -258,6 +309,35 @@ function Horario({ user }) {
         setTimeout(() => { setIsLoading(false); setLoadingMessage(""); }, 500);
     }
   }, [user.role, anio, horario, leyenda, isLoading, mostrarAlerta]);
+
+  // --- Funciones para SUBIR PDF (del código viejo, usando API_URL) ---
+  const abrirExploradorPDF = () => fileInputRef.current.click();
+
+  const handleArchivoChange = useCallback(async (e) => {
+    const file = e.target.files[0];
+    if (!file || isLoading) return;
+    setIsLoading(true);
+    setLoadingMessage("Subiendo PDF...");
+    setProgress(10);
+    try {
+        const formData = new FormData();
+        formData.append("pdf", file);
+        formData.append("anio", anio);
+        const token = localStorage.getItem("token");
+        // Uso de API_URL para Vercel/Render
+        await axios.post(`${API_URL}/horario`, formData, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" }, onUploadProgress: (progressEvent) => { const percentCompleted = Math.min(90, Math.round((progressEvent.loaded * 100) / progressEvent.total)); setProgress(percentCompleted); } });
+        setProgress(100);
+        // Aquí deberías recargar o actualizar el estado si quieres mostrar el PDF
+        mostrarAlerta("PDF subido correctamente ✅", "success");
+    } catch (err) {
+        console.error(err);
+        mostrarAlerta("Error al subir PDF ❌", "error");
+    } finally {
+        e.target.value = null; // Limpiar input file
+        setTimeout(() => { setIsLoading(false); setLoadingMessage(""); }, 500);
+    }
+  }, [anio, isLoading, mostrarAlerta]);
+
 
   return (
     <div className="horario-page">
@@ -276,6 +356,7 @@ function Horario({ user }) {
       
       {alerta && <div className={`alerta ${alerta.tipo}`}>{alerta.mensaje}</div>}
       
+      {/* Estructura Header del código nuevo */}
       <header className="horario-header">
         <h1>Gestión de Horarios</h1>
         <div className="titulo-anio">
@@ -285,6 +366,7 @@ function Horario({ user }) {
         </div>
       </header>
       
+      {/* Panel de administración unificado */}
       {user.role === "admin" && ( 
         <div className="admin-panel"> 
             <button className={`btn-admin ${modoBorrador ? "activo" : ""}`} onClick={() => setModoBorrador(!modoBorrador)} disabled={isLoading}>🧹 Borrador</button> 
@@ -298,6 +380,9 @@ function Horario({ user }) {
             <button onClick={guardarHorario} className="btn-admin" disabled={isLoading}> 💾 Guardar</button> 
             <button onClick={exportarPDF} className="btn-admin" disabled={isLoading}> 📄 Exportar PDF </button> 
             <button onClick={enviarHorarioProfesores} className="btn-admin" disabled={isLoading}> 📧 Enviar </button> 
+            {/* Opción de subir PDF del código viejo */}
+            <button onClick={abrirExploradorPDF} className="btn-admin" disabled={isLoading}> ⬆️ Subir PDF</button> 
+            <input type="file" accept="application/pdf" ref={fileInputRef} style={{ display: "none" }} onChange={handleArchivoChange} disabled={isLoading} />
         </div> 
       )}
       
@@ -311,18 +396,22 @@ function Horario({ user }) {
                 </tr> 
             </thead> 
             <tbody> 
+                {/* Ordenar profesores alfabéticamente para una vista más limpia */}
                 {profesores.sort((a,b) => a.nombre.localeCompare(b.nombre)).map(prof => ( 
                     <tr key={prof._id}> 
                         <td>{prof.nombre}</td> 
+                        {/* APLICAMOS LA CLASE DE CORRECCIÓN AQUÍ */}
                         <td className="asignaturas-cell">{(prof.asignaturas || ["General"]).join(", ")}</td> 
                         {dias.map(d => ( 
                             <td key={`${prof._id}-${d}`}> 
                                 <div className="horas-row-horizontal"> 
                                     {horas.map(h => { 
+                                        // La clave usa 'General' como prefijo de asignatura, coherente con tu lógica
                                         const cell = horario?.[prof.nombre]?.[`General-${d}-${h}`] || { text: "", color: "transparent" }; 
                                         return ( 
                                             <div key={`${d}-${h}`} className="hora-box-horizontal" style={{ backgroundColor: cell.color }} onClick={() => !isLoading && pintarHora(prof.nombre, "General", d, h)}> 
                                                 <div className="hora-num">{h}</div> 
+                                                {/* Limitamos el input a 7 caracteres para prevenir desbordamiento dentro de la caja */}
                                                 <input type="text" maxLength={7} value={cell.text} onChange={e => handleCellChange(prof.nombre, "General", d, h, e.target.value)} disabled={isLoading || user.role !== 'admin'} /> 
                                             </div> 
                                         ); 
@@ -336,6 +425,7 @@ function Horario({ user }) {
         </table> 
       </div>
       
+      {/* Leyenda */}
       {user.role === "admin" && Object.keys(leyenda).length > 0 && ( 
         <div className="leyenda"> 
             <h3>Leyenda</h3> 
@@ -355,4 +445,3 @@ function Horario({ user }) {
 }
 
 export default Horario;
-
