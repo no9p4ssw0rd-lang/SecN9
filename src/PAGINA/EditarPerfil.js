@@ -3,8 +3,6 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 // --- CORRECCIÓN FINAL: Añadimos el prefijo /api/ al API_URL ---
-// Esto asegura que todas las llamadas (ej: ${API_URL}/profesores/...) funcionen,
-// asumiendo que el backend de Render espera /api.
 const baseApiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const API_URL = baseApiUrl.endsWith('/api') ? baseApiUrl : `${baseApiUrl}/api`;
 
@@ -20,14 +18,12 @@ const resolvePhotoUrl = (user, API_URL) => {
         return foto;
     }
     // 2. Si es una ruta relativa (backend local/Render), la construimos
-    // NOTA: Si API_URL ya incluye /api, no necesitamos agregarlo aquí.
+    // NOTA: Usamos el dominio base sin el /api para construir la ruta estática
+    const baseUrl = API_URL.replace('/api', ''); 
     if (foto.startsWith("/")) {
-        // Removemos el '/api' temporalmente para evitar doble barra si API_URL lo trae
-        const baseUrl = API_URL.replace('/api', ''); 
         return `${baseUrl}${foto}`;
     }
     // 3. Caso general:
-    const baseUrl = API_URL.replace('/api', ''); 
     return `${baseUrl}/${foto}`;
 };
 
@@ -112,7 +108,8 @@ function EditarPerfil({ user, setUser }) {
       if (foto) data.append("foto", foto); 
 
       // --- CORRECCIÓN FINAL: Usamos API_URL que ahora termina en /api ---
-      const res = await axios.put(`${API_URL}/profesores/editar-perfil/${userId}`, data, {
+      // La ruta correcta del backend es: PUT /api/profesores/editar-perfil
+      const res = await axios.put(`${API_URL}/profesores/editar-perfil`, data, {
         headers: {
           // El Content-Type se establece automáticamente como multipart/form-data al enviar FormData
           Authorization: `Bearer ${token}`,
@@ -141,7 +138,7 @@ function EditarPerfil({ user, setUser }) {
         setError("El número de celular ya está registrado. Por favor, utiliza otro.");
       } else if (err.response?.status === 404) {
         // Error específico 404: La ruta de la API no se encontró.
-        setError("Error de conexión: Ruta de actualización no encontrada en el servidor (404).");
+        setError("Error de conexión: Verifica que tu backend de Render esté ejecutándose y que la ruta /api/profesores/editar-perfil esté montada.");
       } else {
         setError("Error al actualizar perfil. Intenta nuevamente.");
       }
