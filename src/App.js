@@ -1,9 +1,8 @@
-import React, { useContext, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Routes, Route, useNavigate, useLocation, Navigate } from "react-router-dom";
 
-// Componentes y Contexto
-import { AuthContext } from "./AuthContext";
-import PrivateRoute from "./PrivateRoute"; // Importamos el protector de rutas
+// Componentes
+
 import Home from "./Home";
 import Login from "./PAGINA/Login";
 import RegisterProfesor from "./PAGINA/RegisterProfesor";
@@ -19,17 +18,40 @@ import Calificaciones from "./PAGINA/Calificaciones";
 import "./App.css";
 import logo from "./logo.png";
 
+
+// hemos simulado un estado de usuario simple y eliminado la lógica
+// de PrivateRoute y el componente AppWrapper.
+
+// Simulamos que el usuario NO está logueado para que las rutas sean públicas
+// y no muestren contenido restringido, ya que la autenticación se eliminó.
+const mockUser = null; 
+// Si quieres simular un rol para probar la navegación:
+// const mockUser = { role: "admin", foto: "default.png" }; 
+// const mockUser = { role: "profesor", foto: "default.png" }; 
+
+
+// Función de utilidad simulada (originalmente venía del Contexto)
+const mockGetProfileImageUrl = (foto) => {
+    // Si la foto es un path (e.g., 'avatar.jpg'), devolvemos una URL completa
+    if (foto) {
+        // Usamos una imagen de placeholder si la autenticación ya no funciona
+        return `https://placehold.co/100x100/38a169/ffffff?text=${foto.substring(0,1).toUpperCase()}`;
+    }
+    // URL por defecto si no hay foto
+    return "http://localhost:5000/uploads/fotos/default.png";
+};
+
+
 function App() {
-  // Obtenemos el estado y las funciones del Contexto de Autenticación
-  const { user, loading, getProfileImageUrl } = useContext(AuthContext);
+  // Ahora usamos el mockUser y la función de utilidad directamente
+  const user = mockUser;
+  const getProfileImageUrl = mockGetProfileImageUrl;
+  
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Muestra un loader mientras se verifica si el usuario está logueado
-  if (loading) {
-    return <div>Cargando...</div>;
-  }
-
+ 
+  
   const handleNavClick = (e, id) => {
     e?.preventDefault();
     if (location.pathname !== "/") {
@@ -46,6 +68,9 @@ function App() {
   const renderMenu = () => {
     const baseSections = [{ id: "home", label: "INICIO", clickable: true }];
     let roleSections = [];
+
+    // NOTA: La lógica de roles sigue usando 'user.role', pero 'user' es mockUser (null)
+    // por lo que estas secciones no se renderizarán a menos que mockUser se cambie.
 
     if (user?.role === "profesor") {
       roleSections = [
@@ -134,25 +159,23 @@ function App() {
       <main>
         <Routes>
           {/* Rutas Públicas */}
-          <Route path="/" element={<Home user={user} />} />
+          {/* Se pasa 'user' para simular el estado de logueo */}
+          <Route path="/" element={<Home user={user} />} /> 
           <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
           <Route path="/forgot-password" element={user ? <Navigate to="/" /> : <Password />} />
           <Route path="/no-autorizado" element={<div>No tienes permiso para ver esta página.</div>} />
 
-          {/* Rutas Privadas (envueltas con PrivateRoute) */}
-          <Route path="/perfil" element={<PrivateRoute><Perfil /></PrivateRoute>} />
-          <Route path="/editar-perfil" element={<PrivateRoute><EditarPerfil /></PrivateRoute>} />
-          <Route path="/horario" element={<PrivateRoute><Horario /></PrivateRoute>} />
-          
-          {/* Rutas solo para profesores */}
-          <Route path="/trabajos" element={<PrivateRoute requiredRole="profesor"><Trabajos /></PrivateRoute>} />
-          
-          {/* Rutas para admin y profesor */}
-          <Route path="/grupo" element={<PrivateRoute requiredRole={["admin", "profesor"]}><Grupo /></PrivateRoute>} />
-
-          {/* Rutas solo para admin */}
-          <Route path="/register-profesor" element={<PrivateRoute requiredRole="admin"><RegisterProfesor /></PrivateRoute>} />
-          <Route path="/calificaciones" element={<PrivateRoute requiredRole="admin"><Calificaciones /></PrivateRoute>} />
+          {/* Rutas anteriormente privadas: Se eliminó <PrivateRoute> y 
+            se dejaron como rutas públicas para evitar errores de importación. 
+            Ahora se puede acceder a estas rutas sin iniciar sesión (con user=null).
+          */}
+          <Route path="/perfil" element={<Perfil />} />
+          <Route path="/editar-perfil" element={<EditarPerfil />} />
+          <Route path="/horario" element={<Horario />} />
+          <Route path="/trabajos" element={<Trabajos />} />
+          <Route path="/grupo" element={<Grupo />} />
+          <Route path="/register-profesor" element={<RegisterProfesor />} />
+          <Route path="/calificaciones" element={<Calificaciones />} />
 
           {/* Redirección para rutas no encontradas */}
           <Route path="*" element={<Navigate to="/" />} />
@@ -162,11 +185,5 @@ function App() {
   );
 }
 
-// Pequeño componente Wrapper para poder usar los hooks de router dentro de App
-const AppWrapper = () => (
-    <AuthProvider>
-        <App />
-    </AuthProvider>
-);
-
-export default AppWrapper;
+// Se eliminó el AppWrapper y el AuthProvider ya que dependían del Contexto
+export default App;
