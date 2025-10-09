@@ -18,7 +18,7 @@ import Trabajos from "./PAGINA/Trabajos";
 import Calificaciones from "./PAGINA/Calificaciones";
 
 // Estilos y logo (asumiendo que están en la raíz src/)
-import "./App.css"; 
+import "./PAGINA/Home.css"; 
 import logo from "./logo.png"; 
 
 
@@ -106,7 +106,13 @@ function App() {
             </li>
           ) : (
                 <>
-                    {/* Elemento de la imagen de perfil (clic dirige al perfil) */}
+                    {/* Botón de CERRAR SESIÓN como un elemento de menú aparte */}
+                    <li>
+                        <button className="nav-button nav-link-button" onClick={logout}>
+                            CERRAR SESIÓN
+                        </button>
+                    </li>
+                    {/* Imagen de perfil */}
                     <li className="nav-profile">
                         <img
                             src={getProfileImageUrl(user.foto)}
@@ -115,12 +121,6 @@ function App() {
                             onClick={() => navigate("/perfil")}
                             style={{ cursor: "pointer" }}
                         />
-                    </li>
-                    {/* Botón de CERRAR SESIÓN como un elemento de menú aparte */}
-                    <li>
-                        <button className="nav-button nav-link-button" onClick={logout}>
-                            CERRAR SESIÓN
-                        </button>
                     </li>
                 </>
           )}

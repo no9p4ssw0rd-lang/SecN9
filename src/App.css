@@ -79,14 +79,16 @@ button { cursor: pointer; border: none; outline: none; }
 .nav { 
     height: calc(var(--header-height) + 1.5rem); 
     display: flex; 
-    justify-content: space-between; 
-    align-items: center;
-    position: relative; /* Contenedor para posicionar elementos */
+    justify-content: space-between; /* Mantiene el logo a la izquierda y el menú a la derecha */
+    align-items: center; /* Alineación vertical */
+    position: relative; 
 }
 
 .nav-logo {
     display: flex;
     align-items: center;
+    /* Reducimos el margen para acercar el logo a los enlaces */
+    margin-right: 1.5rem; 
 }
 
 .nav-logo-img {
@@ -97,23 +99,35 @@ button { cursor: pointer; border: none; outline: none; }
 }
 
 .nav-menu {
-    flex: 1;
+    /* CAMBIO CLAVE: Permite que el menú lista use todo el espacio restante sin forzar el espaciado */
     display: flex;
-    justify-content: center;
+    justify-content: flex-end; /* Alinea los ítems a la derecha */
+    flex: 1; /* Permite que el menú crezca para empujar los ítems hacia los extremos */
 }
+
+/* Modificación clave para asegurar que el contenido del menú flote correctamente */
+.nav-menu-right {
+    /* El contenedor del menú lista debe usar Flexbox */
+    display: flex;
+    justify-content: flex-end;
+    width: 100%; /* Ocupa el espacio restante en el nav-menu */
+}
+
 
 .nav-list { 
     display: flex; 
-    align-items: center;
-    gap: 15px; 
+    align-items: center; /* Alinea los ítems verticalmente */
+    gap: 1.5rem; /* Espaciado entre elementos del menú (este valor ya es bueno) */
+    /* Nos aseguramos de que la lista no tenga margen extra que lo separe de los bordes */
+    margin: 0; 
+    padding: 0;
 }
 
-/* Posiciona el contenedor del perfil a la derecha del todo */
+/* Remoción de la posición absoluta para nav-profile ya que el flexbox lo maneja */
 .nav-profile {
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
+    /* Mantiene el estilo de la imagen del perfil */
+    display: flex;
+    align-items: center;
 }
 /* <-- FIN DE CAMBIOS --> */
 
@@ -123,7 +137,7 @@ button { cursor: pointer; border: none; outline: none; }
     color: var(--white-color);
     cursor: pointer;
     font-weight: 500;
-    padding: 0.3rem 1rem;
+    padding: 0.3rem 0; 
     transition: color 0.3s;
 }
 .nav-link-button:hover {
@@ -381,4 +395,3 @@ button { cursor: pointer; border: none; outline: none; }
     .show-menu { right: 0; }
     .section { padding: 5.5rem 0 1rem; }
 }
-
