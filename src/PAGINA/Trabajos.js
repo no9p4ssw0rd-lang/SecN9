@@ -363,10 +363,21 @@ function Trabajos({ user }) {
             border: 1px solid #777;
             border-radius: 4px;
             color: white;
-            text-align: center;
+            text-align: center; /* Centrar texto horizontalmente */
             font-weight: bold;
             font-family: var(--body-font);
         }
+        /* --- FIX: OCULTAR FLECHITAS DE INPUT TYPE=NUMBER Y CENTRAR TEXTO --- */
+        .grupo-componente .cuadrito-calificacion {
+            -moz-appearance: textfield; /* Para Firefox */
+        }
+        .grupo-componente .cuadrito-calificacion::-webkit-outer-spin-button,
+        .grupo-componente .cuadrito-calificacion::-webkit-inner-spin-button {
+            -webkit-appearance: none; /* Para Chrome, Safari, Edge */
+            margin: 0;
+        }
+        /* ------------------------------------------------------------------- */
+
         .grupo-componente .cuadrito-calificacion::placeholder {
             color: #999;
             font-size: 0.8em;
