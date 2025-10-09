@@ -1,5 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
+import React, { useContext, useEffect } from "react";
+import { Routes, Route, useNavigate, useLocation, Navigate } from "react-router-dom";
+
+// Componentes y Contexto
+import { AuthContext } from "./AuthContext";
+import PrivateRoute from "./PrivateRoute"; // Importamos el protector de rutas
 import Home from "./Home";
 import Login from "./PAGINA/Login";
 import RegisterProfesor from "./PAGINA/RegisterProfesor";
@@ -10,42 +14,21 @@ import Horario from "./PAGINA/Horario";
 import Grupo from "./PAGINA/Grupo";
 import Trabajos from "./PAGINA/Trabajos";
 import Calificaciones from "./PAGINA/Calificaciones";
+
+// Estilos y logo
 import "./App.css";
 import logo from "./logo.png";
 
 function App() {
-  const [user, setUser] = useState(null);
+  // Obtenemos el estado y las funciones del Contexto de Autenticación
+  const { user, loading, getProfileImageUrl } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    const token = localStorage.getItem("token");
-    if (savedUser && token) {
-      setUser(JSON.parse(savedUser));
-    }
-  }, []);
-
-  const handleLogin = (loggedUser, token) => {
-    setUser(loggedUser);
-    if (token) {
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(loggedUser));
-    }
-    navigate("/");
-  };
-
-  const handleLogout = () => {
-    setUser(null);
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/login");
-  };
-
-  const handleUserUpdate = (updatedUser) => {
-    setUser(updatedUser);
-    localStorage.setItem("user", JSON.stringify(updatedUser));
-  };
+  // Muestra un loader mientras se verifica si el usuario está logueado
+  if (loading) {
+    return <div>Cargando...</div>;
+  }
 
   const handleNavClick = (e, id) => {
     e?.preventDefault();
@@ -59,28 +42,26 @@ function App() {
     }
   };
 
+  // Función para renderizar el menú de navegación dinámicamente
   const renderMenu = () => {
-    const sections = [
-      { id: "home", label: "INICIO", clickable: true },
-      // Menú para el rol de profesor
-      ...(user?.role === "profesor"
-        ? [
-            { id: "trabajos", label: "TRABAJOS", path: "/trabajos" },
-            { id: "grupo", label: "ASISTENCIA", path: "/grupo" },
-            { id: "horario", label: "HORARIO GENERAL", path: "/horario" },
-          ]
-        : []),
-      // Menú para el rol de administrador
-      ...(user?.role === "admin"
-        ? [
-           
-            { id: "grupo", label: "GRUPOS", path: "/grupo" },
-            // <-- CAMBIO: Orden definido aquí consistentemente -->
-            { id: "horario", label: "HORARIO GENERAL", path: "/horario" },
-            { id: "calificaciones", label: "CALIFICACIONES", path: "/calificaciones" },
-          ]
-        : []),
-    ];
+    const baseSections = [{ id: "home", label: "INICIO", clickable: true }];
+    let roleSections = [];
+
+    if (user?.role === "profesor") {
+      roleSections = [
+        { id: "trabajos", label: "TRABAJOS", path: "/trabajos" },
+        { id: "grupo", label: "ASISTENCIA", path: "/grupo" },
+        { id: "horario", label: "HORARIO GENERAL", path: "/horario" },
+      ];
+    } else if (user?.role === "admin") {
+      roleSections = [
+        { id: "grupo", label: "GRUPOS", path: "/grupo" },
+        { id: "horario", label: "HORARIO GENERAL", path: "/horario" },
+        { id: "calificaciones", label: "CALIFICACIONES", path: "/calificaciones" },
+      ];
+    }
+
+    const sections = [...baseSections, ...roleSections];
 
     return (
       <div className="nav-menu-right">
@@ -89,13 +70,7 @@ function App() {
             <li key={sec.id}>
               <button
                 className="nav-button nav-link-button"
-                onClick={(e) => {
-                  if (sec.path) {
-                    navigate(sec.path);
-                  } else if (sec.clickable) {
-                    handleNavClick(e, sec.id);
-                  }
-                }}
+                onClick={(e) => sec.path ? navigate(sec.path) : handleNavClick(e, sec.id)}
               >
                 {sec.label}
               </button>
@@ -121,11 +96,7 @@ function App() {
           {user && (
             <li className="nav-profile">
               <img
-                src={
-                  user.foto
-                    ? `http://localhost:5000${user.foto.startsWith("/") ? "" : "/"}${user.foto}`
-                    : "http://localhost:5000/uploads/fotos/default.png"
-                }
+                src={getProfileImageUrl(user.foto)}
                 alt="Perfil"
                 className="profile-img-small"
                 onClick={() => navigate("/perfil")}
@@ -152,12 +123,7 @@ function App() {
       <header className="header" id="header">
         <nav className="nav container">
           <a href="#home" className="nav-logo" onClick={(e) => handleNavClick(e, "home")}>
-            <img
-              src={logo}
-              alt="logo"
-              className="nav-logo-img"
-              style={{ height: "120px", marginLeft: "0", display: "block" }}
-            />
+            <img src={logo} alt="logo" className="nav-logo-img" style={{ height: "120px" }} />
           </a>
           <div className="nav-menu" id="nav-menu">
             {renderMenu()}
@@ -167,16 +133,28 @@ function App() {
 
       <main>
         <Routes>
-          <Route path="/" element={<Home user={user} onLogout={handleLogout} handleNavClick={handleNavClick} />} />
-          <Route path="/login" element={user ? <Navigate to="/" /> : <Login onLogin={handleLogin} />} />
+          {/* Rutas Públicas */}
+          <Route path="/" element={<Home user={user} />} />
+          <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
           <Route path="/forgot-password" element={user ? <Navigate to="/" /> : <Password />} />
-          <Route path="/register-profesor" element={user?.role === "admin" ? <RegisterProfesor user={user} onLogout={handleLogout} /> : <Navigate to="/" />} />
-          <Route path="/perfil" element={user ? <Perfil user={user} onLogout={handleLogout} /> : <Navigate to="/login" />} />
-          <Route path="/editar-perfil" element={user ? <EditarPerfil user={user} setUser={handleUserUpdate} /> : <Navigate to="/login" />} />
-          <Route path="/horario" element={user ? <Horario user={user} /> : <Navigate to="/login" />} />
-          <Route path="/grupo" element={user ? <Grupo user={user} /> : <Navigate to="/login" />} />
-          <Route path="/trabajos" element={user ? <Trabajos user={user} /> : <Navigate to="/login" />} />
-          <Route path="/calificaciones" element={user ? <Calificaciones user={user} /> : <Navigate to="/login" />} />
+          <Route path="/no-autorizado" element={<div>No tienes permiso para ver esta página.</div>} />
+
+          {/* Rutas Privadas (envueltas con PrivateRoute) */}
+          <Route path="/perfil" element={<PrivateRoute><Perfil /></PrivateRoute>} />
+          <Route path="/editar-perfil" element={<PrivateRoute><EditarPerfil /></PrivateRoute>} />
+          <Route path="/horario" element={<PrivateRoute><Horario /></PrivateRoute>} />
+          
+          {/* Rutas solo para profesores */}
+          <Route path="/trabajos" element={<PrivateRoute requiredRole="profesor"><Trabajos /></PrivateRoute>} />
+          
+          {/* Rutas para admin y profesor */}
+          <Route path="/grupo" element={<PrivateRoute requiredRole={["admin", "profesor"]}><Grupo /></PrivateRoute>} />
+
+          {/* Rutas solo para admin */}
+          <Route path="/register-profesor" element={<PrivateRoute requiredRole="admin"><RegisterProfesor /></PrivateRoute>} />
+          <Route path="/calificaciones" element={<PrivateRoute requiredRole="admin"><Calificaciones /></PrivateRoute>} />
+
+          {/* Redirección para rutas no encontradas */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </main>
@@ -184,4 +162,11 @@ function App() {
   );
 }
 
-export default App;
+// Pequeño componente Wrapper para poder usar los hooks de router dentro de App
+const AppWrapper = () => (
+    <AuthProvider>
+        <App />
+    </AuthProvider>
+);
+
+export default AppWrapper;

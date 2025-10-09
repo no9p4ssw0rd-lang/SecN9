@@ -4,19 +4,23 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import "./Horario.css";
 
-// Importa tus logos aquí (asegúrate de que las rutas sean correctas)
-import logoAgs from "./Ags.png";
-import logoDerecho from "./Logoescuela.png";
+// --- CONSTANTES Y CONFIGURACIÓN ---
+// La URL de la API se obtiene de las variables de entorno para Vercel.
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
+// Se usan URLs de placeholders para las imágenes para evitar errores de compilación.
+// En tu proyecto real, puedes volver a usar los imports locales.
+const logoAgs = "https://placehold.co/200x80/ffffff/000000?text=Logo+Estado";
+const logoDerecho = "https://placehold.co/120x120/ffffff/000000?text=Logo+Escuela";
 
 const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
 const horas = [1, 2, 3, 4, 5, 6, 7];
 const paletaColores = [
-  "#f44336", "#e91e63", "#9c27b0", "#673ab7",
-  "#3f51b5", "#2196f3", "#03a9f4", "#00bcd4",
-  "#009688", "#4caf50", "#8bc34a", "#cddc39",
+  "#f44336", "#e91e63", "#9c27b0", "#673ab7", "#3f51b5", "#2196f3", 
+  "#03a9f4", "#00bcd4", "#009688", "#4caf50", "#8bc34a", "#cddc39", 
   "#ffeb3b", "#ffc107", "#ff9800", "#ff5722"
 ];
+
 
 function Horario({ user }) {
   const [profesores, setProfesores] = useState([]);
@@ -47,8 +51,7 @@ function Horario({ user }) {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
-    // Se asume que esta ruta devuelve los profesores incluyendo su email en la propiedad 'correo'
-    axios.get("http://localhost:5000/auth/profesores", {
+    axios.get(`${API_URL}/auth/profesores`, {
       headers: { Authorization: `Bearer ${token}` }
     }).then(res => {
       if (Array.isArray(res.data)) setProfesores(res.data);
@@ -61,8 +64,7 @@ function Horario({ user }) {
     setLoadingMessage("Cargando horario...");
     setIsLoading(true);
     setProgress(20);
-    const timer = setTimeout(() => {
-      axios.get(`http://localhost:5000/horario/${anio}`, { headers: { Authorization: `Bearer ${token}` } })
+    axios.get(`${API_URL}/horario/${anio}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => {
         setProgress(75);
         if (res.data?.datos) setHorario(res.data.datos);
@@ -74,12 +76,12 @@ function Horario({ user }) {
       }).finally(() => {
         setTimeout(() => { setIsLoading(false); setLoadingMessage(""); }, 300);
       });
-    }, 400);
-    return () => clearTimeout(timer);
   }, [anio, mostrarAlerta]);
   
   const generarHorarioVacio = useCallback(() => {
     if (isLoading) return;
+    if (!window.confirm("¿Estás seguro de que quieres limpiar todo el horario? Esta acción es irreversible.")) return;
+
     const nuevoHorario = {};
     profesores.forEach(prof => {
       nuevoHorario[prof.nombre] = {};
@@ -90,6 +92,7 @@ function Horario({ user }) {
       });
     });
     setHorario(nuevoHorario);
+    setLeyenda({});
     mostrarAlerta("Horario limpiado correctamente ✅", "success");
   }, [isLoading, profesores, mostrarAlerta]);
 
@@ -113,7 +116,7 @@ function Horario({ user }) {
   const eliminarLeyenda = useCallback(color => {
     if (isLoading) return;
     setLeyenda(prev => { const copia = { ...prev }; delete copia[color]; return copia; });
-    mostrarAlerta("Color eliminado de la leyenda ❌", "error");
+    mostrarAlerta("Color eliminado de la leyenda", "info");
   }, [isLoading, mostrarAlerta]);
   
   const getBase64Image = (imgPath) => new Promise((resolve, reject) => {
@@ -129,62 +132,58 @@ function Horario({ user }) {
     };
     img.onerror = (error) => reject(error);
   });
+  
+  // --- Lógica de generación de PDF refactorizada en una función auxiliar ---
+  const generarContenidoPDF = async (doc) => {
+    doc.setFont("helvetica", "normal"); // Reset font
+    const [logoAgsBase64, logoDerBase64] = await Promise.all([ getBase64Image(logoAgs), getBase64Image(logoDerecho) ]);
+    doc.addImage(logoAgsBase64, "PNG", 15, 8, 40, 16);
+    doc.addImage(logoDerBase64, "PNG", 255, 8, 25, 25);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text("ESCUELA SECUNDARIA GENERAL, No. 9", doc.internal.pageSize.getWidth() / 2, 15, { align: "center" });
+    doc.setFontSize(11);
+    doc.text("“AMADO NERVO”", doc.internal.pageSize.getWidth() / 2, 22, { align: "center" });
+    doc.setFontSize(10);
+    doc.text(`HORARIO GENERAL ${anio}`, doc.internal.pageSize.getWidth() / 2, 29, { align: "center" });
+    
+    const tablaElement = horarioTableRef.current;
+    if (!tablaElement) throw new Error("Tabla de horario no encontrada.");
+
+    const canvas = await html2canvas(tablaElement, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
+    const imgData = canvas.toDataURL("image/png");
+    const pdfWidth = doc.internal.pageSize.getWidth() - 20;
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    doc.addImage(imgData, "PNG", 10, 35, pdfWidth, pdfHeight);
+    
+    let leyendaY = 35 + pdfHeight + 10;
+    if (leyendaY > doc.internal.pageSize.getHeight() - 20 && Object.keys(leyenda).length > 0) { doc.addPage(); leyendaY = 15; }
+    
+    if (Object.keys(leyenda).length > 0) { 
+        doc.setFontSize(10); 
+        doc.setFont("helvetica", "bold"); 
+        doc.text("Leyenda:", 10, leyendaY); 
+        leyendaY += 7; 
+        Object.entries(leyenda).forEach(([color, desc]) => { 
+            if (leyendaY + 8 > doc.internal.pageSize.getHeight() - 10) { doc.addPage(); leyendaY = 15; } 
+            doc.setFillColor(color); 
+            doc.rect(10, leyendaY, 6, 6, "F"); 
+            doc.setTextColor(0); 
+            doc.setFont("helvetica", "normal"); 
+            doc.text(desc || "Sin descripción", 18, leyendaY + 5); 
+            leyendaY += 8; 
+        }); 
+    }
+  };
 
   const exportarPDF = useCallback(async () => {
     if (isLoading) return;
     setIsLoading(true);
-    setLoadingMessage("Exportando PDF... por favor espera.");
+    setLoadingMessage("Exportando PDF...");
     setProgress(10);
-    mostrarAlerta("Generando PDF, esto puede tomar un momento... ⏳", "info");
     try {
         const doc = new jsPDF("landscape");
-        setProgress(20);
-        const [logoAgsBase64, logoDerBase64] = await Promise.all([ getBase64Image(logoAgs), getBase64Image(logoDerecho) ]);
-        doc.addImage(logoAgsBase64, "PNG", 15, 8, 40, 16);
-        doc.addImage(logoDerBase64, "PNG", 255, 8, 25, 25);
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(12);
-        doc.text("ESCUELA SECUNDARIA GENERAL, No. 9", doc.internal.pageSize.getWidth() / 2, 15, { align: "center" });
-        doc.setFontSize(11);
-        doc.text("“AMADO NERVO”", doc.internal.pageSize.getWidth() / 2, 22, { align: "center" });
-        doc.setFontSize(10);
-        doc.text(`HORARIO GENERAL ${anio}`, doc.internal.pageSize.getWidth() / 2, 29, { align: "center" });
-        setProgress(40);
-        const tablaElement = horarioTableRef.current;
-        if (!tablaElement) { throw new Error("Tabla de horario no encontrada."); }
-        const canvas = await html2canvas(tablaElement, { scale: 2, backgroundColor: "#ffffff", useCORS: true, onclone: (clonedDocument) => {
-            clonedDocument.querySelectorAll('.horas-row-horizontal').forEach(row => {
-                row.style.justifyContent = 'space-around';
-                row.style.display = 'flex';
-                row.style.width = '100%';
-            });
-            clonedDocument.querySelectorAll('.hora-box-horizontal').forEach(box => { 
-                const color = box.style.backgroundColor; 
-                const input = box.querySelector('input'); 
-                const value = input ? input.value : ''; 
-                box.style.backgroundColor = 'transparent'; 
-                const valueDiv = clonedDocument.createElement('div'); 
-                valueDiv.textContent = value;
-                valueDiv.style.backgroundColor = color === 'transparent' ? '#fff' : color; 
-                valueDiv.style.cssText += `
-                    width: 22px; height: 20px; text-align: center; font-size: 10px; 
-                    border: 1px solid ${color === 'transparent' ? '#bbb' : 'grey'};
-                    border-radius: 3px; padding: 0; box-sizing: border-box;
-                    display: flex; align-items: center; justify-content: center;
-                    font-weight: bold; color: black;
-                    text-shadow: none;
-                `;
-                if (input && input.parentNode) { input.parentNode.replaceChild(valueDiv, input); } }); 
-            } 
-        });
-        setProgress(75);
-        const imgData = canvas.toDataURL("image/png");
-        const pdfWidth = doc.internal.pageSize.getWidth() - 20;
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        doc.addImage(imgData, "PNG", 10, 35, pdfWidth, pdfHeight);
-        let leyendaY = 35 + pdfHeight + 10;
-        if (leyendaY > doc.internal.pageSize.getHeight() - 20 && Object.keys(leyenda).length > 0) { doc.addPage(); leyendaY = 15; }
-        if (Object.keys(leyenda).length > 0) { doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.text("Leyenda:", 10, leyendaY); leyendaY += 7; Object.entries(leyenda).forEach(([color, desc]) => { if (leyendaY + 8 > doc.internal.pageSize.getHeight() - 10) { doc.addPage(); leyendaY = 15; } doc.setFillColor(color); doc.rect(10, leyendaY, 6, 6, "F"); doc.setTextColor(0); doc.setFont("helvetica", "normal"); doc.text(desc || "", 18, leyendaY + 5); leyendaY += 8; }); }
+        await generarContenidoPDF(doc);
         setProgress(95);
         doc.save(`Horario_${anio}.pdf`);
         mostrarAlerta("PDF exportado correctamente 📄✅", "success");
@@ -199,89 +198,38 @@ function Horario({ user }) {
 
   const enviarHorarioProfesores = useCallback(async () => {
     if (user.role !== "admin" || isLoading) return;
-
     const correos = profesores.map(p => p.correo).filter(Boolean);
     if (correos.length === 0) {
-        mostrarAlerta("No hay correos de profesores registrados para enviar el horario.", "error");
-        return;
+        return mostrarAlerta("No hay correos de profesores registrados para enviar.", "error");
     }
 
     setIsLoading(true);
-    setLoadingMessage("Generando y enviando PDF a profesores...");
+    setLoadingMessage(`Enviando a ${correos.length} profesores...`);
     setProgress(10);
-    mostrarAlerta(`Iniciando envío a ${correos.length} profesores...`, "info");
-
     try {
-        // 1. Generar el PDF en memoria (misma lógica que exportarPDF)
         const doc = new jsPDF("landscape");
-        setProgress(20);
-        const [logoAgsBase64, logoDerBase64] = await Promise.all([getBase64Image(logoAgs), getBase64Image(logoDerecho)]);
-        doc.addImage(logoAgsBase64, "PNG", 15, 8, 40, 16);
-        doc.addImage(logoDerBase64, "PNG", 255, 8, 25, 25);
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(12);
-        doc.text("ESCUELA SECUNDARIA GENERAL, No. 9", doc.internal.pageSize.getWidth() / 2, 15, { align: "center" });
-        doc.setFontSize(11);
-        doc.text("“AMADO NERVO”", doc.internal.pageSize.getWidth() / 2, 22, { align: "center" });
-        doc.setFontSize(10);
-        doc.text(`HORARIO GENERAL ${anio}`, doc.internal.pageSize.getWidth() / 2, 29, { align: "center" });
-        setProgress(40);
-        const tablaElement = horarioTableRef.current;
-        if (!tablaElement) { throw new Error("Tabla de horario no encontrada."); }
-        const canvas = await html2canvas(tablaElement, { scale: 2, backgroundColor: "#ffffff", useCORS: true, onclone: (clonedDocument) => {
-            clonedDocument.querySelectorAll('.horas-row-horizontal').forEach(row => { row.style.justifyContent = 'space-around'; row.style.display = 'flex'; row.style.width = '100%'; });
-            clonedDocument.querySelectorAll('.hora-box-horizontal').forEach(box => {
-                const color = box.style.backgroundColor;
-                const input = box.querySelector('input');
-                const value = input ? input.value : '';
-                box.style.backgroundColor = 'transparent';
-                const valueDiv = clonedDocument.createElement('div');
-                valueDiv.textContent = value;
-                valueDiv.style.backgroundColor = color === 'transparent' ? '#fff' : color;
-                valueDiv.style.cssText += `width: 22px; height: 20px; text-align: center; font-size: 10px; border: 1px solid ${color === 'transparent' ? '#bbb' : 'grey'}; border-radius: 3px; padding: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-weight: bold; color: black; text-shadow: none;`;
-                if (input && input.parentNode) { input.parentNode.replaceChild(valueDiv, input); }
-            });
-        }});
-        setProgress(75);
-        const imgData = canvas.toDataURL("image/png");
-        const pdfWidth = doc.internal.pageSize.getWidth() - 20;
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        doc.addImage(imgData, "PNG", 10, 35, pdfWidth, pdfHeight);
-        let leyendaY = 35 + pdfHeight + 10;
-        if (leyendaY > doc.internal.pageSize.getHeight() - 20 && Object.keys(leyenda).length > 0) { doc.addPage(); leyendaY = 15; }
-        if (Object.keys(leyenda).length > 0) {
-            doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.text("Leyenda:", 10, leyendaY); leyendaY += 7;
-            Object.entries(leyenda).forEach(([color, desc]) => {
-                if (leyendaY + 8 > doc.internal.pageSize.getHeight() - 10) { doc.addPage(); leyendaY = 15; }
-                doc.setFillColor(color); doc.rect(10, leyendaY, 6, 6, "F"); doc.setTextColor(0); doc.setFont("helvetica", "normal"); doc.text(desc || "", 18, leyendaY + 5); leyendaY += 8;
-            });
-        }
-        
-        const pdfDataUri = doc.output('datauristring');
-        const base64Pdf = pdfDataUri.split(',')[1];
+        await generarContenidoPDF(doc);
         setProgress(85);
 
-        // 2. Enviar el PDF al backend
+        const pdfDataUri = doc.output('datauristring');
+        const base64Pdf = pdfDataUri.split(',')[1];
+        
         const payload = {
-            to: correos, // El backend debe poder manejar un array de correos
+            to: correos,
             subject: `Horario Escolar General ${anio}`,
-            body: `Estimados profesores,<br><br>Se adjunta el horario general para el ciclo escolar <strong>${anio}</strong>.<br><br>Saludos cordiales,<br>Administración Escolar.`,
+            body: `Estimados profesores,<br><br>Se adjunta el horario general para el ciclo escolar <strong>${anio}</strong>.<br><br>Saludos cordiales,<br>Administración.`,
             pdfData: base64Pdf,
             fileName: `Horario_${anio}.pdf`
         };
 
         const token = localStorage.getItem("token");
-        // Asegúrate de que esta ruta exista en tu backend y pueda manejar múltiples destinatarios
-        await axios.post('http://localhost:5000/api/enviar-horario', payload, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-
+        await axios.post(`${API_URL}/api/enviar-horario`, payload, { headers: { Authorization: `Bearer ${token}` } });
+        
         setProgress(100);
-        mostrarAlerta(`Horario enviado exitosamente a ${correos.length} profesores. ✅`, "success");
-
+        mostrarAlerta(`Horario enviado a ${correos.length} profesores ✅`, "success");
     } catch (error) {
-        console.error("Error al enviar el horario por correo:", error);
-        mostrarAlerta("Hubo un error al enviar el horario. Revisa la consola y el backend. ❌", "error");
+        console.error("Error al enviar el horario:", error);
+        mostrarAlerta("Error al enviar el horario por correo ❌", "error");
     } finally {
         setIsLoading(false);
         setLoadingMessage("");
@@ -296,11 +244,11 @@ function Horario({ user }) {
     setLoadingMessage("Guardando horario...");
     setProgress(10);
     try {
-        const formData = new FormData();
-        formData.append("anio", anio);
-        formData.append("datos", JSON.stringify(horario));
-        formData.append("leyenda", JSON.stringify(leyenda));
-        await axios.post("http://localhost:5000/horario", formData, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, onUploadProgress: (progressEvent) => { const percentCompleted = Math.min(90, Math.round((progressEvent.loaded * 100) / progressEvent.total)); setProgress(percentCompleted); } });
+        const payload = { anio, datos: horario, leyenda };
+        await axios.post(`${API_URL}/horario`, payload, { 
+            headers: { Authorization: `Bearer ${token}` },
+            onUploadProgress: (e) => setProgress(Math.min(90, Math.round((e.loaded * 100) / (e.total || 1))))
+        });
         setProgress(100);
         mostrarAlerta("Horario guardado correctamente ✅", "success");
     } catch (err) {
@@ -327,14 +275,84 @@ function Horario({ user }) {
       )}
       
       {alerta && <div className={`alerta ${alerta.tipo}`}>{alerta.mensaje}</div>}
-      <div className="titulo-anio">
-        {user.role === "admin" ? ( <input type="text" value={anio} onChange={e => setAnio(e.target.value)} className="anio-input" disabled={isLoading} /> ) : <h2>{anio}</h2>}
+      
+      <header className="horario-header">
+        <h1>Gestión de Horarios</h1>
+        <div className="titulo-anio">
+            {user.role === "admin" ? ( 
+                <input type="text" value={anio} onChange={e => setAnio(e.target.value)} className="anio-input" disabled={isLoading} /> 
+            ) : <h2>Ciclo Escolar: {anio}</h2>}
+        </div>
+      </header>
+      
+      {user.role === "admin" && ( 
+        <div className="admin-panel"> 
+            <button className={`btn-admin ${modoBorrador ? "activo" : ""}`} onClick={() => setModoBorrador(!modoBorrador)} disabled={isLoading}>🧹 Borrador</button> 
+            <button className="btn-admin" onClick={() => setMostrarPaleta(!mostrarPaleta)} disabled={isLoading}>🖌️ Pincel</button> 
+            {mostrarPaleta && ( 
+                <div className="paleta-colores"> 
+                    {paletaColores.map(c => ( <div key={c} className="color-cuadro" style={{ backgroundColor: c }} onClick={() => { setColorSeleccionado(c); setModoBorrador(false); }} /> ))} 
+                </div> 
+            )} 
+            <button onClick={generarHorarioVacio} className="btn-admin" disabled={isLoading}>🗑️ Limpiar</button> 
+            <button onClick={guardarHorario} className="btn-admin" disabled={isLoading}> 💾 Guardar</button> 
+            <button onClick={exportarPDF} className="btn-admin" disabled={isLoading}> 📄 Exportar PDF </button> 
+            <button onClick={enviarHorarioProfesores} className="btn-admin" disabled={isLoading}> 📧 Enviar </button> 
+        </div> 
+      )}
+      
+      <div className="horario-table-container"> 
+        <table className="horario-table" ref={horarioTableRef}> 
+            <thead> 
+                <tr> 
+                    <th>Profesor</th> 
+                    <th>Asignaturas</th> 
+                    {dias.map(d => <th key={d}>{d}</th>)} 
+                </tr> 
+            </thead> 
+            <tbody> 
+                {profesores.sort((a,b) => a.nombre.localeCompare(b.nombre)).map(prof => ( 
+                    <tr key={prof._id}> 
+                        <td>{prof.nombre}</td> 
+                        <td className="asignaturas-cell">{(prof.asignaturas || ["General"]).join(", ")}</td> 
+                        {dias.map(d => ( 
+                            <td key={`${prof._id}-${d}`}> 
+                                <div className="horas-row-horizontal"> 
+                                    {horas.map(h => { 
+                                        const cell = horario?.[prof.nombre]?.[`General-${d}-${h}`] || { text: "", color: "transparent" }; 
+                                        return ( 
+                                            <div key={`${d}-${h}`} className="hora-box-horizontal" style={{ backgroundColor: cell.color }} onClick={() => !isLoading && pintarHora(prof.nombre, "General", d, h)}> 
+                                                <div className="hora-num">{h}</div> 
+                                                <input type="text" maxLength={7} value={cell.text} onChange={e => handleCellChange(prof.nombre, "General", d, h, e.target.value)} disabled={isLoading || user.role !== 'admin'} /> 
+                                            </div> 
+                                        ); 
+                                    })} 
+                                </div> 
+                            </td> 
+                        ))} 
+                    </tr> 
+                ))} 
+            </tbody> 
+        </table> 
       </div>
-      {user.role === "admin" && ( <div className="admin-panel"> <button className={`btn-add ${modoBorrador ? "activo" : ""}`} onClick={() => setModoBorrador(!modoBorrador)} disabled={isLoading}>🧹 Borrador</button> <button className="btn-add" onClick={() => setMostrarPaleta(!mostrarPaleta)} disabled={isLoading}>🖌 Pincel</button> {mostrarPaleta && ( <div className="paleta-colores"> {paletaColores.map(c => ( <div key={c} className="color-cuadro" style={{ backgroundColor: c }} onClick={() => { setColorSeleccionado(c); setModoBorrador(false); }} /> ))} </div> )} <button onClick={generarHorarioVacio} className="btn-add" disabled={isLoading}>Limpiar Horario</button> <button onClick={guardarHorario} className="btn-add" disabled={isLoading}> 💾 Guardar horario </button> <button onClick={exportarPDF} className="btn-add" disabled={isLoading}> 📄 Exportar PDF </button> <button onClick={enviarHorarioProfesores} className="btn-add" disabled={isLoading}> 📧 Enviar a Profesores </button> </div> )}
-      <div className="horario-table-container"> <table className="horario-table" ref={horarioTableRef}> <thead> <tr> <th>Profesor</th> <th>Asignaturas</th> {dias.map(d => <th key={d}>{d}</th>)} </tr> </thead> <tbody> {profesores.map(prof => ( <tr key={prof._id}> <td>{prof.nombre}</td> <td style={{ maxWidth: '200px', whiteSpace: 'normal', wordBreak: 'break-word', textAlign: 'left' }}>{(prof.asignaturas || ["General"]).join(", ")}</td> {dias.map(d => ( <td key={`${prof._id}-${d}`}> <div className="horas-row-horizontal"> {horas.map(h => { const cell = horario?.[prof.nombre]?.[`General-${d}-${h}`] || { text: "", color: "transparent" }; return ( <div key={`${d}-${h}`} className="hora-box-horizontal" style={{ backgroundColor: cell.color }} onClick={() => !isLoading && pintarHora(prof.nombre, "General", d, h)}> <div className="hora-num">{h}</div> <input type="text" maxLength={7} value={cell.text} onChange={e => handleCellChange(prof.nombre, "General", d, h, e.target.value)} disabled={isLoading} /> </div> ); })} </div> </td> ))} </tr> ))} </tbody> </table> </div>
-      {user.role === "admin" && Object.keys(leyenda).length > 0 && ( <div className="leyenda"> <h3>Leyenda</h3> <div className="leyenda-colores"> {Object.entries(leyenda).map(([color, significado]) => ( <div key={color} className="leyenda-item"> <div className="color-cuadro-leyenda" style={{ backgroundColor: color }} /> <input type="text" placeholder="Significado" value={significado} onChange={e => handleLeyendaChange(color, e.target.value)} disabled={isLoading} /> <button className="btn-add" onClick={() => eliminarLeyenda(color)} disabled={isLoading}>❌</button> </div> ))} </div> </div> )}
+      
+      {user.role === "admin" && Object.keys(leyenda).length > 0 && ( 
+        <div className="leyenda"> 
+            <h3>Leyenda</h3> 
+            <div className="leyenda-colores"> 
+                {Object.entries(leyenda).map(([color, significado]) => ( 
+                    <div key={color} className="leyenda-item"> 
+                        <div className="color-cuadro-leyenda" style={{ backgroundColor: color }} /> 
+                        <input type="text" placeholder="Significado" value={significado} onChange={e => handleLeyendaChange(color, e.target.value)} disabled={isLoading} /> 
+                        <button className="btn-eliminar" onClick={() => eliminarLeyenda(color)} disabled={isLoading}>❌</button> 
+                    </div> 
+                ))} 
+            </div> 
+        </div> 
+      )}
     </div>
   );
 }
 
 export default Horario;
+

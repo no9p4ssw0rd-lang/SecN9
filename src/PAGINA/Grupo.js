@@ -9,6 +9,9 @@ import Notificacion from './Notificacion';
 import ConfirmacionModal from './ConfirmacionModal';
 import logoImage from './Logoescuela.png'; // Asegúrate que esta ruta sea correcta
 
+// --- URL de la API desde variables de entorno para Vercel ---
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
 // --- CONSTANTES DE CONFIGURACIÓN ---
 const NUM_BIMESTRES = 3;
 const DIAS_INICIALES = 30;
@@ -44,13 +47,13 @@ function Grupo({ user }) {
       try {
         if (user.role === 'admin') {
           const [gruposRes, profesoresRes] = await Promise.all([
-            axios.get('/grupos', axiosConfig),
-            axios.get('/profesores', axiosConfig)
+            axios.get(`${API_URL}/grupos`, axiosConfig),
+            axios.get(`${API_URL}/profesores`, axiosConfig)
           ]);
           setGrupos(gruposRes.data);
           setProfesores(profesoresRes.data);
         } else if (user.role === 'profesor') {
-          const gruposRes = await axios.get('/grupos/mis-grupos', axiosConfig);
+          const gruposRes = await axios.get(`${API_URL}/grupos/mis-grupos`, axiosConfig);
           setGrupos(gruposRes.data);
         }
       } catch (err) {
@@ -91,7 +94,7 @@ function Grupo({ user }) {
         return mostrarNotificacion("No tienes una asignatura asignada para este grupo.", "error");
       }
       try {
-        const res = await axios.get(`/asistencia?grupoId=${data._id}&asignatura=${miAsignacion.asignatura}`, getAxiosConfig());
+        const res = await axios.get(`${API_URL}/asistencia?grupoId=${data._id}&asignatura=${miAsignacion.asignatura}`, getAxiosConfig());
         const asistenciaData = res.data;
         if (asistenciaData) {
           setAsistencia(asistenciaData.registros || {});
@@ -171,7 +174,7 @@ function Grupo({ user }) {
   const handleGuardarGrupo = async () => {
     if (!nuevoGrupo.nombre.trim()) return mostrarNotificacion("El nombre del grupo es requerido.", 'error');
     try {
-      const response = await axios.post('/grupos', nuevoGrupo, getAxiosConfig());
+      const response = await axios.post(`${API_URL}/grupos`, nuevoGrupo, getAxiosConfig());
       setGrupos(prev => [...prev, response.data]);
       mostrarNotificacion(`Grupo "${nuevoGrupo.nombre}" guardado.`);
       cerrarModal();
@@ -183,7 +186,7 @@ function Grupo({ user }) {
   const handleUpdateGrupo = async () => {
     if (!grupoSeleccionado) return;
     try {
-      const response = await axios.put(`/grupos/${grupoSeleccionado._id}`, nuevoGrupo, getAxiosConfig());
+      const response = await axios.put(`${API_URL}/grupos/${grupoSeleccionado._id}`, nuevoGrupo, getAxiosConfig());
       setGrupos(prev => prev.map(g => g._id === grupoSeleccionado._id ? response.data : g));
       mostrarNotificacion(`Grupo "${nuevoGrupo.nombre}" actualizado.`);
       cerrarModal();
@@ -199,7 +202,7 @@ function Grupo({ user }) {
       asignatura: asignaciones[profesorId]
     }));
     try {
-      const response = await axios.put(`/grupos/${grupoSeleccionado._id}/asignar-profesores`, { asignaciones: asignacionesParaEnviar }, getAxiosConfig());
+      const response = await axios.put(`${API_URL}/grupos/${grupoSeleccionado._id}/asignar-profesores`, { asignaciones: asignacionesParaEnviar }, getAxiosConfig());
       setGrupos(grupos.map(g => g._id === grupoSeleccionado._id ? response.data : g));
       mostrarNotificacion("Asignación guardada.");
       cerrarModal();
@@ -213,7 +216,7 @@ function Grupo({ user }) {
   const confirmarEliminacionGrupo = async () => {
     if (!grupoParaEliminar) return;
     try {
-      await axios.delete(`/grupos/${grupoParaEliminar._id}`, getAxiosConfig());
+      await axios.delete(`${API_URL}/grupos/${grupoParaEliminar._id}`, getAxiosConfig());
       setGrupos(grupos.filter(g => g._id !== grupoParaEliminar._id));
       mostrarNotificacion(`Grupo "${grupoParaEliminar.nombre}" eliminado.`);
     } catch (error) {
@@ -272,7 +275,7 @@ function Grupo({ user }) {
     const miAsignacion = grupoSeleccionado.profesoresAsignados.find(asig => asig.profesor?._id === user.id);
     if (!miAsignacion) return mostrarNotificacion("Error: no se encontró tu asignatura para este grupo.", 'error');
     try {
-      await axios.put(`/asistencia`, { 
+      await axios.put(`${API_URL}/asistencia`, { 
         grupoId: grupoSeleccionado._id,
         asignatura: miAsignacion.asignatura,
         registros: asistencia, 
@@ -342,7 +345,7 @@ function Grupo({ user }) {
             }
             const grupoParaGuardar = { nombre: nombreGrupoImport, alumnos: alumnosImportados };
             
-            const response = await axios.post('/grupos', grupoParaGuardar, getAxiosConfig());
+            const response = await axios.post(`${API_URL}/grupos`, grupoParaGuardar, getAxiosConfig());
             setGrupos(prev => [...prev, response.data]);
             mostrarNotificacion(`Grupo "${nombreGrupoImport}" importado con ${alumnosImportados.length} alumnos.`);
             cerrarModal();
@@ -368,7 +371,7 @@ function Grupo({ user }) {
     }
 
     try {
-        const res = await axios.get(`/asistencia?grupoId=${grupo._id}&asignatura=${miAsignacion.asignatura}`, getAxiosConfig());
+        const res = await axios.get(`${API_URL}/asistencia?grupoId=${grupo._id}&asignatura=${miAsignacion.asignatura}`, getAxiosConfig());
         const asistenciaData = res.data?.registros || {};
         const diasData = res.data?.diasPorBimestre || {};
 
@@ -456,13 +459,11 @@ function Grupo({ user }) {
     }
   };
 
-  // --- INICIO DE CAMBIO ---
   if (loading) return (
     <div className="grupo-componente" style={{ paddingTop: '100px', textAlign: 'center' }}>
         <p className="loading-message">Cargando...</p>
     </div>
   );
-  // --- FIN DE CAMBIO ---
   
   if (error) return <div className="grupo-componente"><p className="error-message">{error}</p></div>;
   if (!user) return <div className="grupo-componente"><p className="error-message">No se puede mostrar la información.</p></div>;

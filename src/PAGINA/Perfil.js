@@ -1,15 +1,19 @@
-import React from "react";
+import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import "./Perfil.css";
+import { AuthContext } from "../AuthContext"; // Importa el contexto de autenticación
+import "./Perfil.css"; // Importa tu archivo de estilos
 
-function Perfil({ user, setUser, onLogout }) {
+function Perfil() {
+  // Obtiene los datos y funciones del contexto, en lugar de recibirlos por props
+  const { user, logout, getProfileImageUrl } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  if (!user) return null;
-
-  const profileImgUrl = user.foto
-    ? `http://localhost:5000${user.foto}`
-    : `http://localhost:5000/uploads/fotos/default.png`;
+  // Si no hay usuario, PrivateRoute ya debería haber redirigido,
+  // pero esta es una capa extra de seguridad.
+  if (!user) {
+    navigate('/login');
+    return null;
+  }
 
   const handleEdit = () => navigate("/editar-perfil");
 
@@ -17,7 +21,11 @@ function Perfil({ user, setUser, onLogout }) {
     <div className="perfil-page">
       <div className="perfil-container">
         <h2>Perfil de Usuario</h2>
-        <img src={profileImgUrl} alt="Perfil" className="profile-img-large" />
+        <img 
+          src={getProfileImageUrl(user.foto)} 
+          alt="Perfil" 
+          className="profile-img-large" 
+        />
 
         <div className="perfil-info">
           <p><strong>Nombre:</strong> {user.nombre || "N/A"}</p>
@@ -30,7 +38,8 @@ function Perfil({ user, setUser, onLogout }) {
 
         <div className="perfil-buttons">
           <button className="btn-edit" onClick={handleEdit}>EDITAR PERFIL</button>
-          <button className="btn-logout" onClick={onLogout}>CERRAR SESIÓN</button>
+          {/* Llama a la función logout del contexto al hacer clic */}
+          <button className="btn-logout" onClick={logout}>CERRAR SESIÓN</button>
         </div>
       </div>
     </div>

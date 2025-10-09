@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./EditarPerfil.css";
 
+// --- CAMBIO: URL de la API desde variables de entorno para Vercel ---
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 function EditarPerfil({ user, setUser }) {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -29,11 +32,12 @@ function EditarPerfil({ user, setUser }) {
         celular: user.celular || "",
       });
 
+      // --- CAMBIO: Usar API_URL para construir la ruta de la imagen ---
       setFotoPreview(
         user.foto && !user.foto.includes("default.png")
           ? user.foto.startsWith("http")
             ? user.foto
-            : `http://localhost:5000${user.foto.startsWith("/") ? "" : "/"}${user.foto}`
+            : `${API_URL}${user.foto.startsWith("/") ? "" : "/"}${user.foto}`
           : "/default-profile.png"
       );
     }
@@ -70,7 +74,8 @@ function EditarPerfil({ user, setUser }) {
       Object.keys(formData).forEach((key) => data.append(key, formData[key]));
       if (foto) data.append("foto", foto);
 
-      const res = await axios.put("http://localhost:5000/profesores/editar-perfil", data, {
+      // --- CAMBIO: Usar API_URL para la petición de actualización ---
+      const res = await axios.put(`${API_URL}/profesores/editar-perfil`, data, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,

@@ -5,6 +5,9 @@ import autoTable from 'jspdf-autotable';
 import './Calificaciones.css'; 
 import logoImage from './Logoescuela.png'; 
 
+// --- CAMBIO: URL de la API desde variables de entorno para Vercel ---
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 // --- Componente de Notificación (Utilidad) ---
 function Notificacion({ mensaje, tipo, onClose }) {
   useEffect(() => {
@@ -48,7 +51,8 @@ function Calificaciones({ user }) {
   useEffect(() => {
     const fetchGrupos = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/grupos?populate=alumnos,profesoresAsignados', getAxiosConfig());
+        // --- CAMBIO: Usar API_URL ---
+        const res = await axios.get(`${API_URL}/grupos?populate=alumnos,profesoresAsignados`, getAxiosConfig());
         setGrupos(res.data);
       } catch (err) {
         console.error("Error al cargar grupos:", err);
@@ -71,7 +75,8 @@ function Calificaciones({ user }) {
     setMaterias(materiasAsignadas);
 
     try {
-      const res = await axios.get(`http://localhost:5000/grupos/${grupo._id}/calificaciones-admin`, getAxiosConfig());
+      // --- CAMBIO: Usar API_URL ---
+      const res = await axios.get(`${API_URL}/grupos/${grupo._id}/calificaciones-admin`, getAxiosConfig());
       setCalificaciones(res.data || {});
     } catch (err) {
       console.error("Error detallado al cargar calificaciones:", err.response || err);
@@ -228,7 +233,8 @@ function Calificaciones({ user }) {
                 pdfData: base64Pdf 
             };
             
-            await axios.post('http://localhost:5000/api/enviar-boleta', payload, getAxiosConfig());
+            // --- CAMBIO: Usar API_URL ---
+            await axios.post(`${API_URL}/api/enviar-boleta`, payload, getAxiosConfig());
             mostrarNotificacion(`Boleta enviada a ${recipient} exitosamente.`, 'exito');
         
         } catch (error) {
@@ -316,7 +322,7 @@ function Calificaciones({ user }) {
           
           <div className="header-controls">
             <button onClick={() => setSelectedGrupo(null)} className="back-button">&larr; Volver a Grupos</button>
-           
+            <button onClick={generatePdfConsolidado} className="button">Descargar Reporte del Grupo</button>
           </div>
 
           <div className="calificaciones-header">
@@ -387,7 +393,7 @@ function Calificaciones({ user }) {
   );
 }
 
-// --- NUEVO COMPONENTE: Modal para Compartir ---
+// --- Componente: Modal para Compartir ---
 function ModalShare({ alumno, onClose, onSend }) {
     const [recipientEmail, setRecipientEmail] = useState('');
     const [recipientPhone, setRecipientPhone] = useState('');
@@ -434,7 +440,7 @@ function ModalShare({ alumno, onClose, onSend }) {
                             type="tel"
                             value={recipientPhone}
                             onChange={(e) => setRecipientPhone(e.target.value)}
-                            placeholder="1234567890 (número)"
+                            placeholder="521234567890 (cód. país + número)"
                             required
                         />
                         <button type="submit" className="button whatsapp">Enviar WhatsApp</button>
@@ -450,4 +456,3 @@ function ModalShare({ alumno, onClose, onSend }) {
 }
 
 export default Calificaciones;
-
