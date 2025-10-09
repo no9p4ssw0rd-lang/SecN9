@@ -4,13 +4,15 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import "./Horario.css";
 
+// --- IMPORTACIONES DE LOGOS LOCALES ---
+// Se asume que estos archivos están en el mismo directorio o accesibles
+import logoAgs from "./Ags.png";
+import logoDerecho from "./Logoescuela.png";
+// ------------------------------------
+
 // --- CONSTANTES Y CONFIGURACIÓN ---
 // Uso de process.env.REACT_APP_API_URL para compatibilidad con Vercel/Render
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
-
-// URLs de placeholders para Vercel/Render (de tu código nuevo)
-const logoAgs = "https://placehold.co/200x80/ffffff/000000?text=Logo+Estado";
-const logoDerecho = "https://placehold.co/120x120/ffffff/000000?text=Logo+Escuela";
 
 const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
 const horas = [1, 2, 3, 4, 5, 6, 7];
@@ -34,7 +36,7 @@ function Horario({ user }) {
   const [loadingMessage, setLoadingMessage] = useState("");
   const [progress, setProgress] = useState(0);
   const horarioTableRef = useRef(null);
-  const fileInputRef = useRef(null); // Del código viejo
+  const fileInputRef = useRef(null);
 
   const mostrarAlerta = useCallback((mensaje, tipo = "success") => {
     setAlerta({ mensaje, tipo });
@@ -71,8 +73,6 @@ function Horario({ user }) {
         setProgress(75);
         if (res.data?.datos) setHorario(res.data.datos);
         if (res.data?.leyenda) setLeyenda(res.data.leyenda);
-        // Si tienes el estado pdfHorario del código viejo, úsalo aquí:
-        // if (res.data?.pdfUrl) setPdfHorario(res.data.pdfUrl); 
       }).catch(error => {
         console.error("Error al cargar el horario:", error);
         mostrarAlerta("Error al cargar el horario ❌", "error");
@@ -84,7 +84,6 @@ function Horario({ user }) {
   
   const generarHorarioVacio = useCallback(() => {
     if (isLoading) return;
-    // Agregamos la confirmación que estaba en el código nuevo para evitar borrados accidentales
     if (!window.confirm("¿Estás seguro de que quieres limpiar todo el horario? Esta acción es irreversible.")) return;
 
     const nuevoHorario = {};
@@ -124,7 +123,7 @@ function Horario({ user }) {
     mostrarAlerta("Color eliminado de la leyenda", "info");
   }, [isLoading, mostrarAlerta]);
   
-  // Función auxiliar para obtener Base64 de las imágenes (usada en ambos códigos)
+  // Función auxiliar para obtener Base64 de las imágenes (usando las importaciones locales)
   const getBase64Image = (imgPath) => new Promise((resolve, reject) => {
     const img = new Image();
     img.src = imgPath;
@@ -139,12 +138,15 @@ function Horario({ user }) {
     img.onerror = (error) => reject(error);
   });
   
-  // --- Lógica de generación de PDF refactorizada (basada en el nuevo, es más limpia) ---
+  // --- Lógica de generación de PDF refactorizada (con logos locales) ---
   const generarContenidoPDF = async (doc) => {
     doc.setFont("helvetica", "normal");
+    
+    // USANDO LAS VARIABLES DE LOGO IMPORTADAS LOCALMENTE
     const [logoAgsBase64, logoDerBase64] = await Promise.all([ getBase64Image(logoAgs), getBase64Image(logoDerecho) ]);
     doc.addImage(logoAgsBase64, "PNG", 15, 8, 40, 16);
     doc.addImage(logoDerBase64, "PNG", 255, 8, 25, 25);
+    
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.text("ESCUELA SECUNDARIA GENERAL, No. 9", doc.internal.pageSize.getWidth() / 2, 15, { align: "center" });
@@ -156,15 +158,13 @@ function Horario({ user }) {
     const tablaElement = horarioTableRef.current;
     if (!tablaElement) throw new Error("Tabla de horario no encontrada.");
 
-    // Ajuste para el canvas: Usar el ajuste de estilos del código viejo para el PDF
     const canvas = await html2canvas(tablaElement, { 
         scale: 2, 
         backgroundColor: "#ffffff", 
         useCORS: true,
-        // Usamos el 'onclone' para modificar la tabla solo para la exportación de PDF
         onclone: (clonedDocument) => {
+            // Corrección de estilos para el PDF
             clonedDocument.querySelectorAll('.asignaturas-cell').forEach(cell => {
-                // Forzar el ancho y el wrap en la copia para el PDF
                 cell.style.maxWidth = '150px';
                 cell.style.wordBreak = 'break-word';
                 cell.style.whiteSpace = 'normal';
@@ -185,7 +185,6 @@ function Horario({ user }) {
                 valueDiv.textContent = value;
                 valueDiv.style.backgroundColor = color === 'transparent' ? '#fff' : color; 
                 
-                // Estilos de cuadro pequeño para PDF (tomado del código viejo)
                 valueDiv.style.cssText += `
                     width: 22px; height: 20px; text-align: center; font-size: 10px; 
                     border: 1px solid ${color === 'transparent' ? '#bbb' : 'grey'};
@@ -310,7 +309,8 @@ function Horario({ user }) {
     }
   }, [user.role, anio, horario, leyenda, isLoading, mostrarAlerta]);
 
- 
+  // --- Función para SUBIR PDF (del código viejo, usando API_URL) ---
+  const abrirExploradorPDF = () => fileInputRef.current.click();
 
   const handleArchivoChange = useCallback(async (e) => {
     const file = e.target.files[0];
@@ -380,7 +380,7 @@ function Horario({ user }) {
             <button onClick={exportarPDF} className="btn-admin" disabled={isLoading}> 📄 Exportar PDF </button> 
             <button onClick={enviarHorarioProfesores} className="btn-admin" disabled={isLoading}> 📧 Enviar </button> 
             {/* Opción de subir PDF del código viejo */}
-           
+            <button onClick={abrirExploradorPDF} className="btn-admin" disabled={isLoading}> ⬆️ Subir PDF</button> 
             <input type="file" accept="application/pdf" ref={fileInputRef} style={{ display: "none" }} onChange={handleArchivoChange} disabled={isLoading} />
         </div> 
       )}
