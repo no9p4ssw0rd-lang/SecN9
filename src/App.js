@@ -1,11 +1,12 @@
 import React, { useEffect, useContext } from "react";
 import { Routes, Route, useNavigate, useLocation, Navigate } from "react-router-dom";
 
-// Componentes y Contexto (Importaciones corregidas: './AuthContext' en lugar de '../AuthContext')
-import { AuthProvider, AuthContext } from "./AuthContext"; 
-import PrivateRoute from "./PrivateRoute"; // Importamos el protector de rutas
+// Componentes y Contexto
+// RUTA CORREGIDA: Ahora apunta a la carpeta PAGINA/ donde está ubicado AuthContext.js
+import { AuthProvider, AuthContext } from "./PAGINA/AuthContext"; 
+import PrivateRoute from "./PAGINA/PrivateRoute"; // RUTA CORREGIDA
 
-import Home from "./Home";
+import Home from "./PAGINA/Home"; // Asumimos que todos los componentes están en PAGINA
 import Login from "./PAGINA/Login";
 import RegisterProfesor from "./PAGINA/RegisterProfesor";
 import Perfil from "./PAGINA/Perfil";
@@ -17,8 +18,8 @@ import Trabajos from "./PAGINA/Trabajos";
 import Calificaciones from "./PAGINA/Calificaciones";
 
 // Estilos y logo
-import "./App.css";
-import logo from "./logo.png";
+import "./App.css"; // Asumiendo que App.css sigue en src/
+import logo from "./logo.png"; // Asumiendo que logo.png sigue en src/
 
 
 function App() {
@@ -94,22 +95,22 @@ function App() {
               </button>
             </li>
           ) : (
-                <>
-                    <li className="nav-profile">
-                        <img
-                            src={getProfileImageUrl(user.foto)}
-                            alt="Perfil"
-                            className="profile-img-small"
-                            onClick={() => navigate("/perfil")}
-                            style={{ cursor: "pointer" }}
-                        />
-                    </li>
-                    <li>
-                        <button className="nav-button nav-link-button" onClick={logout}>
-                            CERRAR SESIÓN
-                        </button>
-                    </li>
-                </>
+                <>
+                    <li className="nav-profile">
+                        <img
+                            src={getProfileImageUrl(user.foto)}
+                            alt="Perfil"
+                            className="profile-img-small"
+                            onClick={() => navigate("/perfil")}
+                            style={{ cursor: "pointer" }}
+                        />
+                    </li>
+                    <li>
+                        <button className="nav-button nav-link-button" onClick={logout}>
+                            CERRAR SESIÓN
+                        </button>
+                    </li>
+                </>
           )}
         </ul>
       </div>

@@ -45,15 +45,15 @@ function Trabajos({ user }) { // Ahora acepta 'user' como prop
         setLoading(false);
       }
     };
-    
-    // Verificamos si el usuario fue pasado como prop y si existe un token
+    
+    // Verificamos si el usuario fue pasado como prop y si existe un token
     if (user && localStorage.getItem('token')) {
-        fetchGrupos();
-    } else {
-        // Si no hay usuario, detenemos la carga y mostramos un error
-        setLoading(false);
-        setError("Error de autenticación: El usuario no está disponible.");
-    }
+        fetchGrupos();
+    } else {
+        // Si no hay usuario, detenemos la carga y mostramos un error
+        setLoading(false);
+        setError("Error de autenticación: El usuario no está disponible.");
+    }
   }, [user]); // Depende de la prop 'user'
 
   const handleSeleccionarGrupo = (grupo, asignatura) => {
@@ -130,6 +130,7 @@ function Trabajos({ user }) { // Ahora acepta 'user' como prop
             onVolver={handleVolver} 
           />
         )}
+            
       </div>
     </>
   );
