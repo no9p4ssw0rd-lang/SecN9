@@ -61,7 +61,12 @@ ul { list-style-type: none; }
 a { text-decoration: none; }
 img { max-width: 100%; height: auto; }
 button { cursor: pointer; border: none; outline: none; }
-.container { max-width: 1140px; margin-left: auto; margin-right: auto; }
+.container { 
+    max-width: 1140px; 
+    margin-left: auto; 
+    margin-right: auto; 
+    padding: 0 1rem; /* Padding horizontal para que no toque los bordes */
+}
 .section { padding: 8rem 0 1rem; }
 
 /* --- Header & Nav --- */
@@ -72,34 +77,73 @@ button { cursor: pointer; border: none; outline: none; }
     top: 0; 
     left: 0; 
     z-index: var(--z-fixed); 
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 .scroll-header { box-shadow: 0 1px 4px rgba(212, 175, 55, .3); }
+
+/* <-- INICIO DE CAMBIOS PARA CENTRAR MENÚ --> */
 .nav { 
     height: calc(var(--header-height) + 1.5rem); 
     display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
+    justify-content: space-between; /* Mantiene el logo y el menú en los extremos */
+    align-items: center; /* Alineación vertical */
+    position: relative; 
 }
+
+.nav-logo {
+    display: flex;
+    align-items: center;
+    /* Quitamos el margen para que el flexbox lo maneje */
+    margin-right: 0; 
+}
+
 .nav-logo-img {
     width: 70px;
     height: auto;
     object-fit: contain; 
-    margin-left: 0;
     margin-top: 13px;
 }
+
+.nav-menu {
+    /* El menú toma el espacio restante y empuja los ítems hacia la derecha */
+    display: flex;
+    justify-content: flex-end; 
+    flex: 1; 
+}
+
+/* Contenedor del menú: listo para el diseño de la derecha */
+.nav-menu-right {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+}
+
+
 .nav-list { 
     display: flex; 
-    align-items: center;
-    gap: 15px; 
+    align-items: center; /* Alinea los ítems verticalmente */
+    gap: 1.5rem; /* Espaciado fijo entre los botones */
+    margin: 0; 
+    padding: 0;
 }
+
+/* Ajuste específico para la imagen de perfil para que no tenga padding extra */
+.nav-profile {
+    display: flex;
+    align-items: center;
+}
+/* <-- FIN DE CAMBIOS --> */
+
 .nav-link-button {
     background: none;
     border: none;
     color: var(--white-color);
     cursor: pointer;
     font-weight: 500;
-    padding: 0.3rem 1rem;
+    padding: 0.3rem 0; 
     transition: color 0.3s;
+    text-transform: uppercase; /* Para que todos los textos se vean igual de formales */
+    font-size: 0.95rem; /* Ligeramente más pequeños para que quepan mejor */
 }
 .nav-link-button:hover {
     color: var(--gold-color);
@@ -110,6 +154,7 @@ button { cursor: pointer; border: none; outline: none; }
     border-radius: 50%;
     object-fit: cover;
     cursor: pointer;
+    border: 2px solid var(--gold-color);
 }
 
 /* --- Home Section --- */
