@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../AuthContext"; // Importamos el AuthContext
+import { AuthContext } from "./AuthContext"; // Importamos el AuthContext - RUTA CORREGIDA A './AuthContext'
 import "./Login.css";
 
 // La URL de la API se obtiene de las variables de entorno para flexibilidad
@@ -56,11 +56,9 @@ function Login() {
             }
 
             // *** CAMBIO CLAVE: Usar la función 'login' del Contexto para establecer el estado global ***
+            // Esta función guardará el token y el usuario en localStorage y actualizará el estado de la aplicación.
             login(data.user, data.token);
             
-            // La función 'login' del Contexto ahora guarda el token y el usuario en localStorage y actualiza el estado.
-            // La redirección ocurrirá automáticamente por el AuthContext cuando el estado 'user' se actualice, 
-            // pero mantenemos la lógica de redirección aquí si deseas una redirección específica post-login.
             
             // Redirigir al usuario según su rol
             switch (data.user.role) {
