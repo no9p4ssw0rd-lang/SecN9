@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import './Trabajos.css'; 
-
-
-
+import "./Trabajos.css";
 // La URL de la API se obtiene de las variables de entorno para Vercel/Render
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -80,7 +77,80 @@ function Trabajos({ user }) {
 
   return (
     <>
-      
+      <style>{`
+        /* Estilos generales del componente */
+        .trabajos-container { padding: 2rem; max-width: 1200px; margin: auto; }
+        .error-mensaje { color: #dc3545; text-align: center; }
+        .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #eee; }
+        .subtitulo { text-align: center; color: #666; margin-bottom: 2rem; }
+        .btn { padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.3s; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-primary:hover { background-color: #0056b3; }
+        .btn-cancel { background-color: #6c757d; color: white; }
+        .btn-cancel:hover { background-color: #5a6268; }
+        .btn:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        /* Estilos de la tabla de grupos */
+        .grupos-table { width: 100%; border-collapse: collapse; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .grupos-table th, .grupos-table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        .grupos-table th { background-color: #f8f9fa; }
+        .grupos-table tbody tr:hover { background-color: #f1f1f1; }
+        .acciones-cell button { margin: 0; }
+
+        /* Estilos del panel de calificaciones */
+        .modal-backdrop-solid { background-color: #f4f7f6; min-height: 100vh; padding: 2rem; }
+        .asistencia-modal-content { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .bimestre-selector { display: flex; gap: 10px; margin-bottom: 20px; padding: 0 20px; justify-content: flex-start;}
+        .asistencia-grid { margin-top: 20px; padding: 0 20px; }
+        .asistencia-row { display: grid; grid-template-columns: 2fr 3fr 1fr; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .alumno-nombre { font-weight: bold; }
+        .bimestres-container { display: flex; flex-wrap: wrap; gap: 8px; }
+        .bimestre-header-btn { background-color: #e9ecef; border: 1px solid #ced4da; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.9em; white-space: nowrap;}
+        .bimestre-header-btn.activo { background-color: #007bff; color: white; border-color: #007bff; }
+        .promedio-final-display { font-weight: bold; font-size: 1.1em; text-align: right; }
+        .bimestre-desplegable { background: #fafafa; padding: 15px; display: none; margin: 0 -20px; } /* Ajuste de margen para cubrir el ancho */
+        .bimestre-desplegable.desplegado { display: block; }
+        .cuadritos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; margin-top: 10px; }
+        .cuadrito-calificacion { 
+          width: 100%; 
+          padding: 8px 4px; 
+          border: 1px solid #ccc; 
+          border-radius: 4px; 
+          text-align: center; 
+          font-size: 0.9em;
+        }
+        
+        /* Modal Criterios */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1050; }
+        .modal-content { background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px; }
+        .criterio-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; }
+        .criterio-item button { color: #dc3545; background: none; font-size: 1.2em; }
+        .criterio-form { display: flex; gap: 10px; margin: 15px 0; }
+        .criterio-form input { flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .criterio-total { margin-top: 10px; font-weight: bold; }
+        .criterio-total.error { color: #dc3545; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        
+        /* Notificación */
+        .notificacion-flotante { 
+          position: fixed; top: 80px; right: 20px; 
+          padding: 12px 20px; border-radius: 5px; 
+          color: white; z-index: 2000; 
+          box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .notificacion-flotante.exito { background-color: #28a745; }
+        .notificacion-flotante.error { background-color: #dc3545; }
+
+        @media (max-width: 768px) {
+            .asistencia-row { grid-template-columns: 1fr; gap: 10px; }
+            .promedio-final-display { text-align: left; }
+            .asistencia-grid { padding: 0 10px; }
+            .bimestre-selector { padding: 0 10px; flex-wrap: wrap; }
+            .bimestre-selector button { flex-grow: 1; }
+            .asistencia-modal-content { padding: 10px; }
+            .bimestre-desplegable { margin: 0 -10px; }
+        }
+      `}</style>
       <div className="trabajos-container">
         {!grupoSeleccionado ? (
           <ListaDeGrupos grupos={grupos} user={user} onSeleccionarGrupo={handleSeleccionarGrupo} />
