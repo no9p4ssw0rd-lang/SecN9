@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import "./Trabajos.css";
+
 // La URL de la API se obtiene de las variables de entorno para Vercel/Render
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -38,8 +38,13 @@ function Trabajos({ user }) {
   useEffect(() => {
     const fetchGrupos = async () => {
       const token = localStorage.getItem('token');
-      // Asegurar que el token y el user existan
-      if (!token || !user || !user.id) {
+      
+      // FIX 1: Usar user._id si está disponible, sino user.id. 
+      // Se necesita un ID para la verificación posterior.
+      const userId = user?._id || user?.id; 
+
+      // Asegurar que el token y el ID del usuario existan
+      if (!token || !userId) {
         setLoading(false);
         setError("Error de autenticación: Usuario o token no disponible.");
         return;
@@ -47,7 +52,7 @@ function Trabajos({ user }) {
 
       const config = { headers: { Authorization: `Bearer ${token}` } };
       try {
-        // La URL de la API se mantiene igual
+        // La URL de la API se mantiene igual (carga los grupos asignados a este profesor)
         const url = '/grupos/mis-grupos?populate=alumnos,profesoresAsignados.profesor';
         const res = await axios.get(`${API_URL}${url}`, config);
         setGrupos(res.data);
@@ -72,86 +77,465 @@ function Trabajos({ user }) {
     setAsignaturaSeleccionada(null);
   };
 
-  if (loading) return <div className="trabajos-container" style={{textAlign: 'center', paddingTop: '10rem'}}><p>Cargando tus grupos...</p></div>;
-  if (error) return <div className="trabajos-container error-mensaje" style={{textAlign: 'center', paddingTop: '10rem'}}><p>{error}</p></div>;
+  if (loading) return <div className="trabajos-container grupo-componente" style={{textAlign: 'center', paddingTop: '10rem'}}><p style={{color: '#E9E9E9'}}>Cargando tus grupos...</p></div>;
+  if (error) return <div className="trabajos-container grupo-componente error-mensaje" style={{textAlign: 'center', paddingTop: '10rem'}}><p>{error}</p></div>;
 
   return (
     <>
       <style>{`
-        /* Estilos generales del componente */
-        .trabajos-container { padding: 2rem; max-width: 1200px; margin: auto; }
-        .error-mensaje { color: #dc3545; text-align: center; }
-        .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #eee; }
-        .subtitulo { text-align: center; color: #666; margin-bottom: 2rem; }
-        .btn { padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.3s; }
-        .btn-primary { background-color: #007bff; color: white; }
-        .btn-primary:hover { background-color: #0056b3; }
-        .btn-cancel { background-color: #6c757d; color: white; }
-        .btn-cancel:hover { background-color: #5a6268; }
-        .btn:disabled { background-color: #ccc; cursor: not-allowed; }
+        /* ================================================= */
+        /* ESTILOS EXCLUSIVOS PARA Trabajos.js               */
+        /* ================================================= */
 
-        /* Estilos de la tabla de grupos */
-        .grupos-table { width: 100%; border-collapse: collapse; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .grupos-table th, .grupos-table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        .grupos-table th { background-color: #f8f9fa; }
-        .grupos-table tbody tr:hover { background-color: #f1f1f1; }
-        .acciones-cell button { margin: 0; }
+        /* --- FUENTES Y VARIABLES GLOBALES --- */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
-        /* Estilos del panel de calificaciones */
-        .modal-backdrop-solid { background-color: #f4f7f6; min-height: 100vh; padding: 2rem; }
-        .asistencia-modal-content { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .bimestre-selector { display: flex; gap: 10px; margin-bottom: 20px; padding: 0 20px; justify-content: flex-start;}
-        .asistencia-grid { margin-top: 20px; padding: 0 20px; }
-        .asistencia-row { display: grid; grid-template-columns: 2fr 3fr 1fr; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
-        .alumno-nombre { font-weight: bold; }
-        .bimestres-container { display: flex; flex-wrap: wrap; gap: 8px; }
-        .bimestre-header-btn { background-color: #e9ecef; border: 1px solid #ced4da; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.9em; white-space: nowrap;}
-        .bimestre-header-btn.activo { background-color: #007bff; color: white; border-color: #007bff; }
-        .promedio-final-display { font-weight: bold; font-size: 1.1em; text-align: right; }
-        .bimestre-desplegable { background: #fafafa; padding: 15px; display: none; margin: 0 -20px; } /* Ajuste de margen para cubrir el ancho */
-        .bimestre-desplegable.desplegado { display: block; }
-        .cuadritos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; margin-top: 10px; }
-        .cuadrito-calificacion { 
-          width: 100%; 
-          padding: 8px 4px; 
-          border: 1px solid #ccc; 
-          border-radius: 4px; 
-          text-align: center; 
-          font-size: 0.9em;
+        .grupo-componente {
+          --dark-color: #191D28;
+          --dark-color-alt: #1E222D;
+          --main-color: #b9972b; /* Dorado */
+          --title-color: #FFFFFF;
+          --text-color: #E9E9E9;
+          --danger-color: #d32f2f;
+          --success-color: #27ae60;
+          --warning-color: #f39c12;
+
+          --body-font: 'Poppins', sans-serif;
+          --font-semi-bold: 600;
+          
+          /* Estilos de fondo para todo el componente */
+          background-color: var(--dark-color); 
+          min-height: 100vh;
+          color: var(--text-color);
+        }
+
+        /* --- ESTRUCTURA GENERAL Y TÍTULOS --- */
+        .grupo-componente {
+          font-family: var(--body-font);
+          color: var(--text-color);
+        }
+
+        .grupo-componente .trabajos-container {
+            padding-top: 5rem; /* Ajuste para el padding superior */
+            padding-bottom: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+
+        .grupo-componente h1, h2, h3 {
+          color: var(--title-color);
+          font-weight: var(--font-semi-bold);
         }
         
-        /* Modal Criterios */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1050; }
-        .modal-content { background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px; }
-        .criterio-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; }
-        .criterio-item button { color: #dc3545; background: none; font-size: 1.2em; }
-        .criterio-form { display: flex; gap: 10px; margin: 15px 0; }
-        .criterio-form input { flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        .criterio-total { margin-top: 10px; font-weight: bold; }
-        .criterio-total.error { color: #dc3545; }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-        
-        /* Notificación */
-        .notificacion-flotante { 
-          position: fixed; top: 80px; right: 20px; 
-          padding: 12px 20px; border-radius: 5px; 
-          color: white; z-index: 2000; 
-          box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        .grupo-componente .main-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 2rem;
+          border-bottom: 2px solid var(--dark-color-alt);
+          padding-bottom: 1.5rem;
+          padding-top: 6rem; /* Aumentado para compensar el fixed header */
         }
-        .notificacion-flotante.exito { background-color: #28a745; }
-        .notificacion-flotante.error { background-color: #dc3545; }
+        
+        .grupo-componente .subtitulo {
+          text-align: center;
+          margin-bottom: 2rem;
+          font-size: 1.5rem;
+          color: var(--main-color);
+        }
+        
+        /* --- BOTONES --- */
+        .grupo-componente .btn {
+          display: inline-block;
+          padding: 0.8rem 1.5rem;
+          border-radius: .5rem;
+          font-weight: 500;
+          transition: .3s;
+          cursor: pointer;
+          color: var(--text-color);
+          background-color: var(--dark-color);
+          border: 1px solid #555;
+        }
+        .grupo-componente .btn:hover {
+          filter: brightness(1.2);
+          transform: translateY(-2px);
+          border-color: var(--main-color);
+        }
+        .grupo-componente .btn-primary { 
+          background-color: var(--main-color); 
+          color: var(--dark-color);
+          border-color: var(--main-color);
+        }
+        .grupo-componente .btn-cancel { 
+          background-color: #2c3e50;
+          color: white;
+          border-color: #2c3e50;
+        }
+        .grupo-componente .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* --- TABLA DE SELECCIÓN DE GRUPO --- */
+        .grupo-componente .grupos-table {
+          width: 100%;
+          margin-top: 2rem;
+          border-collapse: collapse;
+          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+          border-radius: 10px;
+          overflow: hidden;
+        }
+        .grupo-componente .grupos-table thead th {
+          background-color: var(--main-color);
+          color: var(--dark-color);
+          padding: 15px 20px;
+          text-align: left;
+        }
+        .grupo-componente .grupos-table tbody td {
+          padding: 15px 20px;
+          border-bottom: 1px solid var(--dark-color-alt);
+        }
+        .grupo-componente .grupos-table tbody tr:last-of-type {
+          border-bottom: 2px solid var(--main-color);
+        }
+        .grupo-componente .grupos-table tbody tr {
+          background-color: #2a2f3c;
+          transition: background-color 0.3s;
+        }
+        .grupo-componente .grupos-table tbody tr:hover {
+          background-color: #3c4252;
+        }
+        .grupo-componente .grupos-table .acciones-cell {
+          display: flex;
+          gap: 10px;
+        }
 
+        /* ================================================= */
+        /* ESTILOS PARA EL PANEL DE CALIFICACIÓN TIPO ASISTENCIA */
+        /* ================================================= */
+
+        .grupo-componente .modal-backdrop-solid {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: var(--dark-color);
+            display: block;
+            z-index: 1000;
+            padding: 5rem 1rem 2rem 1rem;
+            box-sizing: border-box;
+            overflow-y: auto;
+            color: var(--text-color);
+        }
+        
+        .grupo-componente .modal-content.asistencia-modal-content {
+            background-color: var(--dark-color-alt); /* Fondo del modal */
+            padding: 20px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 1200px; /* Ancho máximo para el panel */
+            margin: auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Resto de estilos del panel de calificaciones */
+        .grupo-componente .asistencia-grid {
+            padding: 1rem 0;
+        }
+        
+        .grupo-componente .asistencia-header {
+            display: flex;
+            align-items: center;
+            padding: 0 10px 10px 10px;
+            gap: 1rem;
+            border-bottom: 1px solid #444;
+            font-weight: var(--font-semi-bold);
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        
+        .grupo-componente .asistencia-header .bimestres-container {
+            text-align: center;
+        }
+        
+        .grupo-componente .asistencia-body {
+            max-height: 75vh;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .grupo-componente .asistencia-row {
+            display: grid; /* Usamos grid como base para el orden */
+            grid-template-columns: 250px 1fr 100px; /* Definimos columnas */
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--dark-color);
+            margin: 0 0 5px 0;
+            background-color: var(--dark-color);
+            border-radius: 6px;
+        }
+
+        .grupo-componente .alumno-nombre {
+            padding-left: 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+        }
+
+        .grupo-componente .bimestres-container {
+            display: flex;
+            flex-grow: 1;
+            justify-content: flex-start;
+            gap: 6px;
+            padding: 0 10px;
+        }
+
+        .grupo-componente .promedio-final-display {
+            padding-right: 15px;
+            text-align: right;
+        }
+        
+        .grupo-componente .bimestre-header-btn {
+            text-align: center;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background-color: var(--dark-color-alt);
+            color: var(--text-color);
+            font-size: 0.8rem;
+            white-space: nowrap;
+            border: 1px solid #555;
+        }
+        .grupo-componente .bimestre-header-btn:hover {
+            border-color: var(--main-color);
+            filter: brightness(1.2);
+        }
+        .grupo-componente .bimestre-header-btn.activo {
+            background-color: var(--main-color);
+            color: var(--dark-color);
+            font-weight: bold;
+            border-color: var(--main-color);
+        }
+        
+        .grupo-componente .bimestre-desplegable {
+            grid-column: 1 / -1; /* Ocupa todo el ancho en el grid */
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out, padding 0.4s ease-out, margin 0.4s ease-out;
+            padding: 0 20px;
+            margin: 0;
+            background-color: var(--dark-color-alt);
+            border-radius: 0 0 12px 12px;
+        }
+        .grupo-componente .bimestre-desplegable.desplegado {
+            max-height: 500px;
+            padding: 20px;
+            margin: 0;
+        }
+        
+        .grupo-componente .asistencia-totales {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+        .grupo-componente .total-presentes {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+        
+        .grupo-componente .cuadritos-grid {
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(32px, 1fr));
+            gap: 6px;
+            align-items: center;
+        }
+        
+        /* Estilos de input y botón en el cuadritos-grid */
+        .grupo-componente .cuadrito-calificacion {
+            width: 38px; /* Aumentado un poco el ancho para móvil */
+            height: 32px;
+            background-color: #4a4a4a;
+            border: 1px solid #777;
+            border-radius: 4px;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            font-family: var(--body-font);
+        }
+        .grupo-componente .cuadrito-calificacion::placeholder {
+            color: #999;
+            font-size: 0.8em;
+        }
+        
+        .grupo-componente .btn-agregar-dias {
+            background-color: var(--main-color);
+            color: var(--dark-color);
+            border: none;
+            border-radius: 4px;
+            width: 38px;
+            height: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        /* --- MODAL DE CRITERIOS (CON NUEVOS ESTILOS) --- */
+        .grupo-componente .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex; justify-content: center; align-items: center; z-index: 1050;
+        }
+
+        .grupo-componente .modal-content {
+            background-color: var(--dark-color-alt);
+            padding: 2rem; border-radius: 12px; width: 90%;
+            max-width: 600px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .grupo-componente .modal-actions {
+            display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;
+        }
+
+        .grupo-componente .criterio-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--dark-color);
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        .grupo-componente .criterio-item span {
+            color: var(--text-color);
+        }
+        .grupo-componente .criterio-item span strong {
+            color: var(--main-color);
+        }
+        .grupo-componente .criterio-item button {
+            background-color: transparent;
+            border: none;
+            color: var(--danger-color);
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.2rem;
+            transition: transform 0.2s;
+        }
+        
+        .grupo-componente .criterio-form {
+            display: flex;
+            gap: 10px;
+            margin: 1.5rem 0;
+            align-items: center;
+        }
+        .grupo-componente .criterio-form input {
+            background: var(--dark-color);
+            border: 1px solid #555;
+            border-radius: 6px;
+            color: var(--text-color);
+            padding: 12px;
+            box-sizing: border-box;
+        }
+        .grupo-componente .criterio-form input:focus {
+            outline: none;
+            border-color: var(--main-color);
+        }
+        .grupo-componente .criterio-form input::placeholder {
+            color: #888;
+        }
+        .grupo-componente .criterio-form input[type="text"] { flex-grow: 3; }
+
+        .grupo-componente .criterio-form .btn {
+            padding: 12px;
+            background-color: var(--dark-color);
+            color: var(--text-color);
+            border: 1px solid #555;
+        }
+        
+        .grupo-componente .criterio-total {
+            text-align: right; font-size: 1.1rem; font-weight: bold;
+            margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #444;
+            color: var(--text-color);
+        }
+        .grupo-componente .aviso-criterios {
+            text-align: center; padding: 3rem; background-color: var(--dark-color-alt);
+            border-radius: 8px; margin: 2rem;
+        }
+        .grupo-componente .aviso-criterios p {
+            margin-bottom: 1.5rem; font-size: 1.1rem; color: var(--warning-color);
+        }
+        
+        /* --- OCULTAR BARRA DE SCROLL INTERNA --- */
+        .grupo-componente .asistencia-body::-webkit-scrollbar {
+            display: none;
+        }
+        .grupo-componente .asistencia-body {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        /* --- ESTILO DE SCROLLBAR PERSONALIZADO --- */
+        .grupo-componente .modal-backdrop-solid {
+            /* Para Firefox */
+            scrollbar-width: thin;
+            scrollbar-color: var(--main-color) var(--dark-color-alt);
+        }
+        /* Para Webkit (Chrome, Safari, Edge) */
+        .grupo-componente .modal-backdrop-solid::-webkit-scrollbar {
+            width: 8px;
+        }
+        .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-track {
+            background: var(--dark-color-alt);
+        }
+        .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-thumb {
+            background-color: var(--main-color);
+            border-radius: 10px;
+            border: 2px solid var(--dark-color-alt);
+        }
+        .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-thumb:hover {
+            background-color: #d4b03f; /* Un tono más claro del color principal */
+        }
+        
+        /* Media Queries */
         @media (max-width: 768px) {
-            .asistencia-row { grid-template-columns: 1fr; gap: 10px; }
-            .promedio-final-display { text-align: left; }
-            .asistencia-grid { padding: 0 10px; }
-            .bimestre-selector { padding: 0 10px; flex-wrap: wrap; }
-            .bimestre-selector button { flex-grow: 1; }
-            .asistencia-modal-content { padding: 10px; }
-            .bimestre-desplegable { margin: 0 -10px; }
+            .grupo-componente .trabajos-container {
+                padding-top: 0;
+            }
+            .grupo-componente .main-header {
+                flex-direction: column;
+                align-items: flex-start;
+                padding-top: 1rem;
+            }
+            .grupo-componente .main-header h1 {
+                margin-bottom: 10px;
+            }
+            .grupo-componente .asistencia-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+                padding: 10px;
+            }
+            .grupo-componente .alumno-nombre {
+                width: auto;
+                padding-left: 0;
+            }
+            .grupo-componente .promedio-final-display {
+                text-align: left;
+                padding-right: 0;
+            }
+            .grupo-componente .bimestres-container {
+                justify-content: space-between;
+            }
+            .grupo-componente .modal-content {
+                max-width: 95%;
+            }
         }
       `}</style>
-      <div className="trabajos-container">
+      <div className="trabajos-container grupo-componente">
         {!grupoSeleccionado ? (
           <ListaDeGrupos grupos={grupos} user={user} onSeleccionarGrupo={handleSeleccionarGrupo} />
         ) : (
@@ -307,10 +691,10 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
     };
 
 
-    if (isLoadingData) return <div className="trabajos-container" style={{textAlign: 'center', paddingTop: '10rem'}}><p>Cargando datos del grupo...</p></div>;
+    if (isLoadingData) return <div className="trabajos-container grupo-componente" style={{textAlign: 'center', paddingTop: '10rem'}}><p style={{color: '#E9E9E9'}}>Cargando datos del grupo...</p></div>;
 
     return (
-        <div className="modal-backdrop-solid"> 
+        <div className="modal-backdrop-solid grupo-componente"> 
             <Notificacion mensaje={notificacion.mensaje} tipo={notificacion.tipo} onClose={() => setNotificacion({ mensaje: null, tipo: '' })} />
             <div className="asistencia-modal-content">
                 <header className="main-header" style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 20px' }}>
@@ -344,7 +728,7 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                                                 </div>
                                             ))}
                                         </div>
-                                        <div className="promedio-final-display" style={{color: calcularPromedioBimestre(alumno._id, bimestreActivo) >= 6 ? '#28a745' : '#dc3545'}}>
+                                        <div className="promedio-final-display" style={{color: calcularPromedioBimestre(alumno._id, bimestreActivo) >= 6 ? '#27ae60' : '#d32f2f'}}>
                                             Prom: {calcularPromedioBimestre(alumno._id, bimestreActivo)}
                                         </div>
                                     </div>
@@ -353,7 +737,7 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                                             {/* Opcional: Mostrar promedio del criterio en el desplegable */}
                                             <div style={{marginBottom: '10px', fontWeight: 'bold'}}>
                                                 Promedio "{criterioAbierto.criterioNombre}": 
-                                                <span style={{color: calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre) >= 6 ? '#28a745' : '#dc3545', marginLeft: '5px'}}>
+                                                <span style={{color: calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre) >= 6 ? '#27ae60' : '#d32f2f', marginLeft: '5px'}}>
                                                     {calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre).toFixed(2)}
                                                 </span>
                                             </div>
@@ -372,7 +756,7 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                                                         onChange={(e) => handleCalificacionChange(alumno._id, bimestreActivo, criterioAbierto.criterioNombre, tareaIndex, e.target.value)} 
                                                     />;
                                                 })}
-                                                <button className="btn" onClick={() => agregarTareas(criterioAbierto.criterioNombre)} style={{backgroundColor: '#17a2b8', color: 'white'}}>+5 Tareas</button>
+                                                <button className="btn btn-agregar-dias" onClick={() => agregarTareas(criterioAbierto.criterioNombre)}>+5</button>
                                             </div>
                                         </div>
                                     )}
@@ -381,7 +765,7 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                         </div>
                     </div>
                 ) : (
-                    <div style={{padding: '2rem', textAlign: 'center'}}><p>⚠️ Por favor, define los criterios de evaluación para comenzar a calificar.</p></div>
+                    <div className="aviso-criterios"><p>⚠️ Por favor, define los criterios de evaluación para comenzar a calificar.</p></div>
                 )}
                 <div className="modal-actions" style={{padding: '0 20px'}}>
                     <button className="btn btn-primary" onClick={guardarCalificaciones} disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar Calificaciones'}</button>
@@ -395,38 +779,44 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
 // ======================================
 // --- 4. Componente: Lista de Grupos ---
 // ======================================
-const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => (
-    <>
-        <header className="main-header" style={{ justifyContent: 'center' }}><h1>Gestión de Calificaciones</h1></header>
-        <h3 className="subtitulo">Selecciona un grupo y asignatura para calificar</h3>
-        <table className="grupos-table">
-            <thead><tr><th>Grupo</th><th>Mi Asignatura</th><th>Acciones</th></tr></thead>
-            <tbody>
-                {grupos.map(grupo => {
-                    // Usar user.id o user._id según la estructura de autenticación de tu app. Se asume user.id o user._id
-                    const miAsignacion = grupo.profesoresAsignados.find(asig => asig.profesor?._id === user._id || asig.profesor?.id === user.id); 
-                    const miAsignatura = miAsignacion ? miAsignacion.asignatura : 'N/A';
-                    
-                    return (
-                        <tr key={grupo._id}>
-                            <td>{grupo.nombre}</td>
-                            <td>{miAsignatura}</td>
-                            <td className="acciones-cell">
-                                <button 
-                                    className="btn btn-primary" 
-                                    onClick={() => onSeleccionarGrupo(grupo, miAsignatura)}
-                                    disabled={miAsignatura === 'N/A'}
-                                >
-                                    Calificar
-                                </button>
-                            </td>
-                        </tr>
-                    );
-                })}
-            </tbody>
-        </table>
-    </>
-);
+const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => {
+    // Definimos el ID del usuario actual, priorizando _id (MongoDB)
+    const userId = user?._id || user?.id; 
+    
+    return (
+        <>
+            <header className="main-header" style={{ justifyContent: 'center', paddingTop: '0' }}><h1>Gestión de Calificaciones</h1></header>
+            <h3 className="subtitulo">Selecciona un grupo y asignatura para calificar</h3>
+            <table className="grupos-table">
+                <thead><tr><th>Grupo</th><th>Mi Asignatura</th><th>Acciones</th></tr></thead>
+                <tbody>
+                    {grupos.map(grupo => {
+                        // FIX 2: Usar el ID del usuario actual (userId) para encontrar la asignación.
+                        const miAsignacion = grupo.profesoresAsignados.find(asig => asig.profesor?._id === userId); 
+                        const miAsignatura = miAsignacion ? miAsignacion.asignatura : 'N/A';
+                        
+                        return (
+                            <tr key={grupo._id}>
+                                <td>{grupo.nombre}</td>
+                                <td>{miAsignatura}</td>
+                                <td className="acciones-cell">
+                                    <button 
+                                        className="btn btn-primary" 
+                                        onClick={() => onSeleccionarGrupo(grupo, miAsignatura)}
+                                        // FIX 3: Solo deshabilitar si la asignatura es 'N/A'
+                                        disabled={miAsignatura === 'N/A'}
+                                    >
+                                        Calificar
+                                    </button>
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+        </>
+    );
+};
 
 // ======================================
 // --- 5. Componente: Modal para Criterios de Evaluación ---
