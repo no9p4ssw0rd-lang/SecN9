@@ -1,17 +1,13 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "./Home.css";
-import { useNavigate } from "react-router-dom"; // Importado del viejo, aunque no se usa en el nuevo, lo dejo por consistencia
-
+import { useNavigate } from "react-router-dom"; 
 // La URL de tu backend ahora se leerá desde las variables de entorno
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 
 function Home({ user }) {
-  // El código viejo tenía 'useNavigate' y 'handleNavClick' que no se usan en el nuevo,
-  // pero lo dejo como referencia si quieres re-incorporar la navegación o el scroll.
-  // const navigate = useNavigate();
-  // const { handleNavClick } = props; // Asumiendo que venía de props
+ 
 
   const [profesores, setProfesores] = useState([]);
   const [selectedProfesor, setSelectedProfesor] = useState(null);
