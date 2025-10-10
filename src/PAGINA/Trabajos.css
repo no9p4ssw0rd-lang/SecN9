@@ -452,3 +452,62 @@
 .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-thumb:hover {
     background-color: #d4b03f; /* Un tono más claro del color principal */
 }
+/* ================================================= */
+/* ESTILOS PARA LA NOTIFICACIÓN FLOTANTE (ALERTA) */
+/* ================================================= */
+
+.notificacion-flotante {
+    position: fixed;
+    /* Centrado horizontal */
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2000; 
+
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+
+    /* Animación inicial */
+    opacity: 0;
+    visibility: hidden;
+    /* La animación total es 3.5s, sincronizada con el setTimeout de 3s en React */
+    animation: fadeInOut 3.5s ease-in-out forwards; 
+}
+
+.notificacion-flotante.exito {
+    background-color: var(--success-color); 
+    color: var(--dark-color); 
+    border: 1px solid #1a8a49;
+}
+
+.notificacion-flotante.error {
+    background-color: var(--danger-color);
+    color: var(--title-color); 
+    border: 1px solid #a32222;
+}
+
+@keyframes fadeInOut {
+    0% {
+        opacity: 0;
+        visibility: hidden;
+        transform: translate(-50%, -20px);
+    }
+    5% {
+        opacity: 1;
+        visibility: visible;
+        transform: translate(-50%, 0); /* Baja a su posición */
+    }
+    90% {
+        opacity: 1;
+        visibility: visible;
+        transform: translate(-50%, 0); 
+    }
+    100% {
+        opacity: 0;
+        visibility: hidden;
+        transform: translate(-50%, -20px); /* Se eleva y desaparece */
+    }
+}
