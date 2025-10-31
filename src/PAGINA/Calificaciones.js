@@ -133,9 +133,9 @@ function Calificaciones({ user }) {
     doc.text(`Grupo: ${selectedGrupo.nombre}`, margin, margin + 21);
 
     const tableHeaders = ['Materia'];
-    if (bimestresSeleccionados[0]) tableHeaders.push("Bim. 1");
-    if (bimestresSeleccionados[1]) tableHeaders.push("Bim. 2");
-    if (bimestresSeleccionados[2]) tableHeaders.push("Bim. 3");
+    if (bimestresSeleccionados[0]) tableHeaders.push("Trim. 1");
+    if (bimestresSeleccionados[1]) tableHeaders.push("Trim. 2");
+    if (bimestresSeleccionados[2]) tableHeaders.push("Trim. 3");
 
     const alumnoCal = calificaciones[alumno._id] || {};
     const tableBody = materias.map(materia => {
@@ -186,10 +186,10 @@ function Calificaciones({ user }) {
     const head = [
         [{ content: 'Nombre del Alumno', rowSpan: 2 }],
         ...materias.map(materia => [{ content: materia, colSpan: 3 }]),
-        [{ content: 'PROMEDIO BIMESTRAL', colSpan: 3 }],
+        [{ content: 'PROMEDIO TRIMESTRAL', colSpan: 3 }],
         [{ content: 'FINAL', rowSpan: 2 }]
     ];
-    const subhead = [...materias.flatMap(() => ['B1', 'B2', 'B3']), 'B1', 'B2', 'B3'];
+    const subhead = [...materias.flatMap(() => ['T1', 'T2', 'T3']), 'T1', 'T2', 'T3'];
     head.push(subhead);
 
     const body = alumnos.map(alumno => {
@@ -288,20 +288,20 @@ function Calificaciones({ user }) {
              <div className="modal-overlay" onClick={() => setModalPdf({ visible: false, alumno: null })}>
                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                  <h3>Descargar Boleta de {`${modalPdf.alumno?.apellidoPaterno} ${modalPdf.alumno?.nombre}`}</h3>
-                 <p>Selecciona los bimestres que deseas incluir:</p>
+                 <p>Selecciona los trimestres que deseas incluir:</p>
                  <form onSubmit={(e) => {
                    e.preventDefault();
                    const bimestresSeleccionados = [e.target.b1.checked, e.target.b2.checked, e.target.b3.checked];
                    if (!bimestresSeleccionados.some(b => b)) {
-                     mostrarNotificacion("Debes seleccionar al menos un bimestre.", "error");
+                     mostrarNotificacion("Debes seleccionar al menos un Trimestre.", "error");
                      return;
                    }
                    generatePdfIndividual(modalPdf.alumno, bimestresSeleccionados, 'save');
                  }}>
                    <div className="checkbox-group">
-                     <label><input type="checkbox" name="b1" defaultChecked /> Bimestre 1</label>
-                     <label><input type="checkbox" name="b2" defaultChecked /> Bimestre 2</label>
-                     <label><input type="checkbox" name="b3" defaultChecked /> Bimestre 3</label>
+                     <label><input type="checkbox" name="b1" defaultChecked /> Trimestre 1</label>
+                     <label><input type="checkbox" name="b2" defaultChecked /> Trimestre 2</label>
+                     <label><input type="checkbox" name="b3" defaultChecked /> Trimestre 3</label>
                    </div>
                    <div className="modal-actions">
                      <button type="submit" className="button">Descargar Boleta</button>
@@ -336,15 +336,15 @@ function Calificaciones({ user }) {
                   <tr>
                     <th rowSpan="2">Nombre del Alumno</th>
                     {materias.map(materia => <th key={materia} colSpan="3">{materia}</th>)}
-                    <th colSpan="3" className="promedio-header">PROMEDIO BIMESTRAL</th>
+                    <th colSpan="3" className="promedio-header">PROMEDIO TRIMESTRAL</th>
                     <th rowSpan="2" className="promedio-header-final">FINAL</th>
                     <th rowSpan="2">Acciones</th>
                   </tr>
                   <tr>
-                    {materias.flatMap(materia => [<th key={`${materia}-b1`}>B1</th>, <th key={`${materia}-b2`}>B2</th>, <th key={`${materia}-b3`}>B3</th>])}
-                    <th className="promedio-header">B1</th>
-                    <th className="promedio-header">B2</th>
-                    <th className="promedio-header">B3</th>
+                    {materias.flatMap(materia => [<th key={`${materia}-b1`}>T1</th>, <th key={`${materia}-b2`}>B2</th>, <th key={`${materia}-b3`}>B3</th>])}
+                    <th className="promedio-header">T1</th>
+                    <th className="promedio-header">T2</th>
+                    <th className="promedio-header">T3</th>
                   </tr>
                 </thead>
                 <tbody>

@@ -395,9 +395,9 @@ function Grupo({ user }) {
         const head = [
             [
                 { content: 'Nombre Completo', rowSpan: 2, styles: { fillColor: [212, 175, 55] } },
-                { content: 'Bimestre 1', colSpan: 2, styles: { fillColor: [212, 175, 55] } },
-                { content: 'Bimestre 2', colSpan: 2, styles: { fillColor: [212, 175, 55] } },
-                { content: 'Bimestre 3', colSpan: 2, styles: { fillColor: [212, 175, 55] } },
+                { content: 'Trimestre 1', colSpan: 2, styles: { fillColor: [212, 175, 55] } },
+                { content: 'Trimestre 2', colSpan: 2, styles: { fillColor: [212, 175, 55] } },
+                { content: 'Trimestre 3', colSpan: 2, styles: { fillColor: [212, 175, 55] } },
             ],
             [
                 { content: 'Asist.', styles: { fillColor: [40, 167, 69] } }, // Verde
@@ -666,7 +666,7 @@ function Grupo({ user }) {
                           {bimestreActual && (
                             <>
                               <div className="asistencia-totales">
-                                <span>Totales del Bimestre:</span>
+                                <span>Totales del Trimestre:</span>
                                 <span className="total-presentes">✅ Asistencias: {totales.presentes}</span>
                                 <span className="total-faltas">❌ Faltas: {totales.faltas}</span>
                               </div>

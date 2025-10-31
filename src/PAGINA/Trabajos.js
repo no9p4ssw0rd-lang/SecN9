@@ -747,7 +747,7 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                 </header>
                 <div className="bimestre-selector">
                     {[1, 2, 3].map(bim => (
-                        <button key={bim} className={`btn ${bimestreActivo === bim ? 'btn-primary' : ''}`} onClick={() => setBimestreActivo(bim)}>Bimestre {bim}</button>
+                        <button key={bim} className={`btn ${bimestreActivo === bim ? 'btn-primary' : ''}`} onClick={() => setBimestreActivo(bim)}>Trimestre {bim}</button>
                     ))}
                 </div>
                 
