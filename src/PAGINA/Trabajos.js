@@ -84,498 +84,498 @@ function Trabajos({ user }) {
   return (
     <>
       <style>{`
-        /* ================================================= */
-        /* ESTILOS EXCLUSIVOS PARA Trabajos.js               */
-        /* ================================================= */
+        /* ================================================= */
+        /* ESTILOS EXCLUSIVOS PARA Trabajos.js               */
+        /* ================================================= */
 
-        /* --- FUENTES Y VARIABLES GLOBALES --- */
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        /* --- FUENTES Y VARIABLES GLOBALES --- */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
-        .grupo-componente {
-          --dark-color: #191D28;
-          --dark-color-alt: #1E222D;
-          --main-color: #b9972b; /* Dorado */
-          --title-color: #FFFFFF;
-          --text-color: #E9E9E9;
-          --danger-color: #d32f2f;
-          --success-color: #27ae60;
-          --warning-color: #f39c12;
+        .grupo-componente {
+          --dark-color: #191D28;
+          --dark-color-alt: #1E222D;
+          --main-color: #b9972b; /* Dorado */
+          --title-color: #FFFFFF;
+          --text-color: #E9E9E9;
+          --danger-color: #d32f2f;
+          --success-color: #27ae60;
+          --warning-color: #f39c12;
 
-          --body-font: 'Poppins', sans-serif;
-          --font-semi-bold: 600;
-          
-          /* Estilos de fondo para todo el componente */
-          background-color: var(--dark-color); 
-          min-height: 100vh;
-          color: var(--text-color);
-        }
+          --body-font: 'Poppins', sans-serif;
+          --font-semi-bold: 600;
+          
+          /* Estilos de fondo para todo el componente */
+          background-color: var(--dark-color); 
+          min-height: 100vh;
+          color: var(--text-color);
+        }
 
-        /* --- ESTRUCTURA GENERAL Y TÍTULOS --- */
-        .grupo-componente {
-          font-family: var(--body-font);
-          color: var(--text-color);
-        }
+        /* --- ESTRUCTURA GENERAL Y TÍTULOS --- */
+        .grupo-componente {
+          font-family: var(--body-font);
+          color: var(--text-color);
+        }
 
-        .grupo-componente .trabajos-container {
-            padding-top: 5rem; /* Ajuste para el padding superior */
-            padding-bottom: 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding-left: 1rem;
-            padding-right: 1rem;
-        }
+        .grupo-componente .trabajos-container {
+            padding-top: 5rem; /* Ajuste para el padding superior */
+            padding-bottom: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
 
-        .grupo-componente h1, h2, h3 {
-          color: var(--title-color);
-          font-weight: var(--font-semi-bold);
-        }
-        
-        .grupo-componente .main-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 2rem;
-          border-bottom: 2px solid var(--dark-color-alt);
-          padding-bottom: 1.5rem;
-          padding-top: 6rem; /* Aumentado para compensar el fixed header */
-        }
-        
-        .grupo-componente .subtitulo {
-          text-align: center;
-          margin-bottom: 2rem;
-          font-size: 1.5rem;
-          color: var(--main-color);
-        }
-        
-        /* --- BOTONES --- */
-        .grupo-componente .btn {
-          display: inline-block;
-          padding: 0.8rem 1.5rem;
-          border-radius: .5rem;
-          font-weight: 500;
-          transition: .3s;
-          cursor: pointer;
-          color: var(--text-color);
-          background-color: var(--dark-color);
-          border: 1px solid #555;
-        }
-        .grupo-componente .btn:hover {
-          filter: brightness(1.2);
-          transform: translateY(-2px);
-          border-color: var(--main-color);
-        }
-        .grupo-componente .btn-primary { 
-          background-color: var(--main-color); 
-          color: var(--dark-color);
-          border-color: var(--main-color);
-        }
-        .grupo-componente .btn-cancel { 
-          background-color: #2c3e50;
-          color: white;
-          border-color: #2c3e50;
-        }
-        .grupo-componente .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        /* --- TABLA DE SELECCIÓN DE GRUPO --- */
-        /* FIX: NUEVO CONTENEDOR PARA CENTRAR LA TABLA */
-        .grupos-table-wrapper {
-            display: flex;
-            justify-content: center;
-            width: 100%;
-            margin-top: 2rem;
-            margin-bottom: 2rem;
-        }
+        .grupo-componente h1, h2, h3 {
+          color: var(--title-color);
+          font-weight: var(--font-semi-bold);
+        }
+        
+        .grupo-componente .main-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 2rem;
+          border-bottom: 2px solid var(--dark-color-alt);
+          padding-bottom: 1.5rem;
+          padding-top: 6rem; /* Aumentado para compensar el fixed header */
+        }
+        
+        .grupo-componente .subtitulo {
+          text-align: center;
+          margin-bottom: 2rem;
+          font-size: 1.5rem;
+          color: var(--main-color);
+        }
+        
+        /* --- BOTONES --- */
+        .grupo-componente .btn {
+          display: inline-block;
+          padding: 0.8rem 1.5rem;
+          border-radius: .5rem;
+          font-weight: 500;
+          transition: .3s;
+          cursor: pointer;
+          color: var(--text-color);
+          background-color: var(--dark-color);
+          border: 1px solid #555;
+        }
+        .grupo-componente .btn:hover {
+          filter: brightness(1.2);
+          transform: translateY(-2px);
+          border-color: var(--main-color);
+        }
+        .grupo-componente .btn-primary { 
+          background-color: var(--main-color); 
+          color: var(--dark-color);
+          border-color: var(--main-color);
+        }
+        .grupo-componente .btn-cancel { 
+          background-color: #2c3e50;
+          color: white;
+          border-color: #2c3e50;
+        }
+        .grupo-componente .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* --- TABLA DE SELECCIÓN DE GRUPO --- */
+        /* FIX: NUEVO CONTENEDOR PARA CENTRAR LA TABLA */
+        .grupos-table-wrapper {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
 
-        .grupo-componente .grupos-table {
-          width: 90%; /* Ajustamos el ancho para que no sea 100% del contenedor */
-          max-width: 800px; /* Limitamos el ancho en pantallas grandes */
-          border-collapse: collapse;
-          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-          border-radius: 10px;
-          overflow: hidden;
-        }
-        .grupo-componente .grupos-table thead th {
-          background-color: var(--main-color);
-          color: var(--dark-color);
-          padding: 15px 20px;
-          text-align: left;
-        }
-        .grupo-componente .grupos-table tbody td {
-          padding: 15px 20px;
-          border-bottom: 1px solid var(--dark-color-alt);
-        }
-        .grupo-componente .grupos-table tbody tr:last-of-type {
-          border-bottom: 2px solid var(--main-color);
-        }
-        .grupo-componente .grupos-table tbody tr {
-          background-color: #2a2f3c;
-          transition: background-color 0.3s;
-        }
-        .grupo-componente .grupos-table tbody tr:hover {
-          background-color: #3c4252;
-        }
-        .grupo-componente .grupos-table .acciones-cell {
-          display: flex;
-          gap: 10px;
-        }
+        .grupo-componente .grupos-table {
+          width: 90%; /* Ajustamos el ancho para que no sea 100% del contenedor */
+          max-width: 800px; /* Limitamos el ancho en pantallas grandes */
+          border-collapse: collapse;
+          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+          border-radius: 10px;
+          overflow: hidden;
+        }
+        .grupo-componente .grupos-table thead th {
+          background-color: var(--main-color);
+          color: var(--dark-color);
+          padding: 15px 20px;
+          text-align: left;
+        }
+        .grupo-componente .grupos-table tbody td {
+          padding: 15px 20px;
+          border-bottom: 1px solid var(--dark-color-alt);
+        }
+        .grupo-componente .grupos-table tbody tr:last-of-type {
+          border-bottom: 2px solid var(--main-color);
+        }
+        .grupo-componente .grupos-table tbody tr {
+          background-color: #2a2f3c;
+          transition: background-color 0.3s;
+        }
+        .grupo-componente .grupos-table tbody tr:hover {
+          background-color: #3c4252;
+        }
+        .grupo-componente .grupos-table .acciones-cell {
+          display: flex;
+          gap: 10px;
+        }
 
-        /* ================================================= */
-        /* ESTILOS PARA EL PANEL DE CALIFICACIÓN TIPO ASISTENCIA */
-        /* ================================================= */
+        /* ================================================= */
+        /* ESTILOS PARA EL PANEL DE CALIFICACIÓN TIPO ASISTENCIA */
+        /* ================================================= */
 
-        .grupo-componente .modal-backdrop-solid {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background-color: var(--dark-color);
-            display: block;
-            z-index: 1000;
-            padding: 5rem 1rem 2rem 1rem;
-            box-sizing: border-box;
-            overflow-y: auto;
-            color: var(--text-color);
-        }
-        
-        .grupo-componente .modal-content.asistencia-modal-content {
-            background-color: var(--dark-color-alt); /* Fondo del modal */
-            padding: 20px;
-            border-radius: 12px;
-            width: 100%;
-            max-width: 1200px; /* Ancho máximo para el panel */
-            margin: auto;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-        }
-        
-        /* Resto de estilos del panel de calificaciones */
-        .grupo-componente .asistencia-grid {
-            padding: 1rem 0;
-        }
-        
-        .grupo-componente .asistencia-body {
-            max-height: 75vh;
-            overflow-y: auto;
-            padding-right: 10px;
-        }
-        
-        .grupo-componente .asistencia-row {
-            display: grid; /* Usamos grid como base para el orden */
-            grid-template-columns: 250px 1fr 100px; /* Definimos columnas */
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid var(--dark-color);
-            margin: 0 0 5px 0;
-            background-color: var(--dark-color);
-            border-radius: 6px;
-        }
+        .grupo-componente .modal-backdrop-solid {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: var(--dark-color);
+            display: block;
+            z-index: 1000;
+            padding: 5rem 1rem 2rem 1rem;
+            box-sizing: border-box;
+            overflow-y: auto;
+            color: var(--text-color);
+        }
+        
+        .grupo-componente .modal-content.asistencia-modal-content {
+            background-color: var(--dark-color-alt); /* Fondo del modal */
+            padding: 20px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 1200px; /* Ancho máximo para el panel */
+            margin: auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Resto de estilos del panel de calificaciones */
+        .grupo-componente .asistencia-grid {
+            padding: 1rem 0;
+        }
+        
+        .grupo-componente .asistencia-body {
+            max-height: 75vh;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .grupo-componente .asistencia-row {
+            display: grid; /* Usamos grid como base para el orden */
+            grid-template-columns: 250px 1fr 100px; /* Definimos columnas */
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--dark-color);
+            margin: 0 0 5px 0;
+            background-color: var(--dark-color);
+            border-radius: 6px;
+        }
 
-        .grupo-componente .alumno-nombre {
-            padding-left: 15px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            font-weight: 500;
-        }
-        
-        /* --- NUEVOS ESTILOS PARA EL RESUMEN DE CRITERIO --- */
-        .grupo-componente .criterio-resumen-wrapper {
-            display: flex;
-            justify-content: center; /* Centra el contenedor */
-            width: 100%;
-            margin-bottom: 10px;
-        }
-        .grupo-componente .criterio-resumen {
-            background-color: var(--main-color);
-            color: var(--dark-color);
-            font-weight: bold;
-            padding: 10px 20px;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 400px; /* Limita el ancho del cuadro */
-            text-align: center;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .grupo-componente .criterio-resumen .criterio-info {
-            flex-grow: 1;
-            text-align: left;
-        }
-        .grupo-componente .criterio-resumen .criterio-prom {
-            font-size: 1.1em;
-            margin-left: 10px;
-        }
-        /* ---------------------------------------------------- */
+        .grupo-componente .alumno-nombre {
+            padding-left: 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+        }
+        
+        /* --- NUEVOS ESTILOS PARA EL RESUMEN DE CRITERIO --- */
+        .grupo-componente .criterio-resumen-wrapper {
+            display: flex;
+            justify-content: center; /* Centra el contenedor */
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .grupo-componente .criterio-resumen {
+            background-color: var(--main-color);
+            color: var(--dark-color);
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px; /* Limita el ancho del cuadro */
+            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .grupo-componente .criterio-resumen .criterio-info {
+            flex-grow: 1;
+            text-align: left;
+        }
+        .grupo-componente .criterio-resumen .criterio-prom {
+            font-size: 1.1em;
+            margin-left: 10px;
+        }
+        /* ---------------------------------------------------- */
 
 
-        .grupo-componente .bimestres-container {
-            display: flex;
-            flex-grow: 1;
-            justify-content: flex-start;
-            gap: 6px;
-            padding: 0 10px;
-        }
+        .grupo-componente .bimestres-container {
+            display: flex;
+            flex-grow: 1;
+            justify-content: flex-start;
+            gap: 6px;
+            padding: 0 10px;
+        }
 
-        .grupo-componente .promedio-final-display {
-            padding-right: 15px;
-            text-align: right;
-        }
-        
-        .grupo-componente .bimestre-header-btn {
-            text-align: center;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s;
-            background-color: var(--dark-color-alt);
-            color: var(--text-color);
-            font-size: 0.8rem;
-            white-space: nowrap;
-            border: 1px solid #555;
-        }
-        .grupo-componente .bimestre-header-btn:hover {
-            border-color: var(--main-color);
-            filter: brightness(1.2);
-        }
-        .grupo-componente .bimestre-header-btn.activo {
-            background-color: var(--main-color);
-            color: var(--dark-color);
-            font-weight: bold;
-            border-color: var(--main-color);
-        }
-        
-        .grupo-componente .bimestre-desplegable {
-            grid-column: 1 / -1; /* Ocupa todo el ancho en el grid */
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.4s ease-out, padding 0.4s ease-out, margin 0.4s ease-out;
-            padding: 0 20px;
-            margin: 0;
-            background-color: var(--dark-color-alt);
-            border-radius: 0 0 12px 12px;
-        }
-        .grupo-componente .bimestre-desplegable.desplegado {
-            max-height: 500px;
-            padding: 20px;
-            margin: 0;
-        }
-        
-        .grupo-componente .asistencia-totales {
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 1rem;
-            font-weight: 500;
-        }
-        .grupo-componente .total-presentes {
-            color: var(--success-color);
-            font-weight: bold;
-        }
-        
-        .grupo-componente .cuadritos-grid {
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(32px, 1fr));
-            gap: 6px;
-            align-items: center;
-        }
-        
-        /* Estilos de input y botón en el cuadritos-grid */
-        .grupo-componente .cuadrito-calificacion {
-            width: 38px; /* Aumentado un poco el ancho para móvil */
-            height: 32px;
-            background-color: #4a4a4a;
-            border: 1px solid #777;
-            border-radius: 4px;
-            color: white;
-            text-align: center; /* Centrar texto horizontalmente */
-            font-weight: bold;
-            font-family: var(--body-font);
-        }
-        /* --- FIX: OCULTAR FLECHITAS DE INPUT TYPE=NUMBER Y CENTRAR TEXTO --- */
-        .grupo-componente .cuadrito-calificacion {
-            -moz-appearance: textfield; /* Para Firefox */
-        }
-        .grupo-componente .cuadrito-calificacion::-webkit-outer-spin-button,
-        .grupo-componente .cuadrito-calificacion::-webkit-inner-spin-button {
-            -webkit-appearance: none; /* Para Chrome, Safari, Edge */
-            margin: 0;
-        }
-        /* ------------------------------------------------------------------- */
+        .grupo-componente .promedio-final-display {
+            padding-right: 15px;
+            text-align: right;
+        }
+        
+        .grupo-componente .bimestre-header-btn {
+            text-align: center;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background-color: var(--dark-color-alt);
+            color: var(--text-color);
+            font-size: 0.8rem;
+            white-space: nowrap;
+            border: 1px solid #555;
+        }
+        .grupo-componente .bimestre-header-btn:hover {
+            border-color: var(--main-color);
+            filter: brightness(1.2);
+        }
+        .grupo-componente .bimestre-header-btn.activo {
+            background-color: var(--main-color);
+            color: var(--dark-color);
+            font-weight: bold;
+            border-color: var(--main-color);
+        }
+        
+        .grupo-componente .bimestre-desplegable {
+            grid-column: 1 / -1; /* Ocupa todo el ancho en el grid */
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out, padding 0.4s ease-out, margin 0.4s ease-out;
+            padding: 0 20px;
+            margin: 0;
+            background-color: var(--dark-color-alt);
+            border-radius: 0 0 12px 12px;
+        }
+        .grupo-componente .bimestre-desplegable.desplegado {
+            max-height: 500px;
+            padding: 20px;
+            margin: 0;
+        }
+        
+        .grupo-componente .asistencia-totales {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+        .grupo-componente .total-presentes {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+        
+        .grupo-componente .cuadritos-grid {
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(32px, 1fr));
+            gap: 6px;
+            align-items: center;
+        }
+        
+        /* Estilos de input y botón en el cuadritos-grid */
+        .grupo-componente .cuadrito-calificacion {
+            width: 38px; /* Aumentado un poco el ancho para móvil */
+            height: 32px;
+            background-color: #4a4a4a;
+            border: 1px solid #777;
+            border-radius: 4px;
+            color: white;
+            text-align: center; /* Centrar texto horizontalmente */
+            font-weight: bold;
+            font-family: var(--body-font);
+        }
+        /* --- FIX: OCULTAR FLECHITAS DE INPUT TYPE=NUMBER Y CENTRAR TEXTO --- */
+        .grupo-componente .cuadrito-calificacion {
+            -moz-appearance: textfield; /* Para Firefox */
+        }
+        .grupo-componente .cuadrito-calificacion::-webkit-outer-spin-button,
+        .grupo-componente .cuadrito-calificacion::-webkit-inner-spin-button {
+            -webkit-appearance: none; /* Para Chrome, Safari, Edge */
+            margin: 0;
+        }
+        /* ------------------------------------------------------------------- */
 
-        .grupo-componente .cuadrito-calificacion::placeholder {
-            color: #999;
-            font-size: 0.8em;
-        }
-        
-        .grupo-componente .btn-agregar-dias {
-            background-color: var(--main-color);
-            color: var(--dark-color);
-            border: none;
-            border-radius: 4px;
-            width: 38px;
-            height: 32px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        
-        /* --- MODAL DE CRITERIOS (CON NUEVOS ESTILOS) --- */
-        .grupo-componente .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: flex; justify-content: center; align-items: center; z-index: 1050;
-        }
+        .grupo-componente .cuadrito-calificacion::placeholder {
+            color: #999;
+            font-size: 0.8em;
+        }
+        
+        .grupo-componente .btn-agregar-dias {
+            background-color: var(--main-color);
+            color: var(--dark-color);
+            border: none;
+            border-radius: 4px;
+            width: 38px;
+            height: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        /* --- MODAL DE CRITERIOS (CON NUEVOS ESTILOS) --- */
+        .grupo-componente .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex; justify-content: center; align-items: center; z-index: 1050;
+        }
 
-        .grupo-componente .modal-content {
-            background-color: var(--dark-color-alt);
-            padding: 2rem; border-radius: 12px; width: 90%;
-            max-width: 600px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
+        .grupo-componente .modal-content {
+            background-color: var(--dark-color-alt);
+            padding: 2rem; border-radius: 12px; width: 90%;
+            max-width: 600px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
 
-        .grupo-componente .modal-actions {
-            display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;
-        }
+        .grupo-componente .modal-actions {
+            display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;
+        }
 
-        .grupo-componente .criterio-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: var(--dark-color);
-            padding: 10px 15px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-        }
-        .grupo-componente .criterio-item span {
-            color: var(--text-color);
-        }
-        .grupo-componente .criterio-item span strong {
-            color: var(--main-color);
-        }
-        .grupo-componente .criterio-item button {
-            background-color: transparent;
-            border: none;
-            color: var(--danger-color);
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 1.2rem;
-            transition: transform 0.2s;
-        }
-        
-        .grupo-componente .criterio-form {
-            display: flex;
-            gap: 10px;
-            margin: 1.5rem 0;
-            align-items: center;
-        }
-        .grupo-componente .criterio-form input {
-            background: var(--dark-color);
-            border: 1px solid #555;
-            border-radius: 6px;
-            color: var(--text-color);
-            padding: 12px;
-            box-sizing: border-box;
-        }
-        .grupo-componente .criterio-form input:focus {
-            outline: none;
-            border-color: var(--main-color);
-        }
-        .grupo-componente .criterio-form input::placeholder {
-            color: #888;
-        }
-        .grupo-componente .criterio-form input[type="text"] { flex-grow: 3; }
+        .grupo-componente .criterio-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--dark-color);
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        .grupo-componente .criterio-item span {
+            color: var(--text-color);
+        }
+        .grupo-componente .criterio-item span strong {
+            color: var(--main-color);
+        }
+        .grupo-componente .criterio-item button {
+            background-color: transparent;
+            border: none;
+            color: var(--danger-color);
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.2rem;
+            transition: transform 0.2s;
+        }
+        
+        .grupo-componente .criterio-form {
+            display: flex;
+            gap: 10px;
+            margin: 1.5rem 0;
+            align-items: center;
+        }
+        .grupo-componente .criterio-form input {
+            background: var(--dark-color);
+            border: 1px solid #555;
+            border-radius: 6px;
+            color: var(--text-color);
+            padding: 12px;
+            box-sizing: border-box;
+        }
+        .grupo-componente .criterio-form input:focus {
+            outline: none;
+            border-color: var(--main-color);
+        }
+        .grupo-componente .criterio-form input::placeholder {
+            color: #888;
+        }
+        .grupo-componente .criterio-form input[type="text"] { flex-grow: 3; }
 
-        .grupo-componente .criterio-form .btn {
-            padding: 12px;
-            background-color: var(--dark-color);
-            color: var(--text-color);
-            border: 1px solid #555;
-        }
-        
-        .grupo-componente .criterio-total {
-            text-align: right; font-size: 1.1rem; font-weight: bold;
-            margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #444;
-            color: var(--text-color);
-        }
-        .grupo-componente .aviso-criterios {
-            text-align: center; padding: 3rem; background-color: var(--dark-color-alt);
-            border-radius: 8px; margin: 2rem;
-        }
-        .grupo-componente .aviso-criterios p {
-            margin-bottom: 1.5rem; font-size: 1.1rem; color: var(--warning-color);
-        }
-        
-        /* --- OCULTAR BARRA DE SCROLL INTERNA --- */
-        .grupo-componente .asistencia-body::-webkit-scrollbar {
-            display: none;
-        }
-        .grupo-componente .asistencia-body {
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
+        .grupo-componente .criterio-form .btn {
+            padding: 12px;
+            background-color: var(--dark-color);
+            color: var(--text-color);
+            border: 1px solid #555;
+        }
+        
+        .grupo-componente .criterio-total {
+            text-align: right; font-size: 1.1rem; font-weight: bold;
+            margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #444;
+            color: var(--text-color);
+        }
+        .grupo-componente .aviso-criterios {
+            text-align: center; padding: 3rem; background-color: var(--dark-color-alt);
+            border-radius: 8px; margin: 2rem;
+        }
+        .grupo-componente .aviso-criterios p {
+            margin-bottom: 1.5rem; font-size: 1.1rem; color: var(--warning-color);
+        }
+        
+        /* --- OCULTAR BARRA DE SCROLL INTERNA --- */
+        .grupo-componente .asistencia-body::-webkit-scrollbar {
+            display: none;
+        }
+        .grupo-componente .asistencia-body {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
 
-        /* --- ESTILO DE SCROLLBAR PERSONALIZADO --- */
-        .grupo-componente .modal-backdrop-solid {
-            /* Para Firefox */
-            scrollbar-width: thin;
-            scrollbar-color: var(--main-color) var(--dark-color-alt);
-        }
-        /* Para Webkit (Chrome, Safari, Edge) */
-        .grupo-componente .modal-backdrop-solid::-webkit-scrollbar {
-            width: 8px;
-        }
-        .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-track {
-            background: var(--dark-color-alt);
-        }
-        .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-thumb {
-            background-color: var(--main-color);
-            border-radius: 10px;
-            border: 2px solid var(--dark-color-alt);
-        }
-        .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-thumb:hover {
-            background-color: #d4b03f; /* Un tono más claro del color principal */
-        }
-        
-        /* Media Queries */
-        @media (max-width: 768px) {
-            .grupo-componente .trabajos-container {
-                padding-top: 0;
-            }
-            .grupo-componente .main-header {
-                flex-direction: column;
-                align-items: flex-start;
-                padding-top: 1rem;
-            }
-            .grupo-componente .main-header h1 {
-                margin-bottom: 10px;
-            }
-            .grupo-componente .asistencia-row {
-                grid-template-columns: 1fr;
-                gap: 10px;
-                padding: 10px;
-            }
-            .grupo-componente .alumno-nombre {
-                width: auto;
-                padding-left: 0;
-            }
-            .grupo-componente .promedio-final-display {
-                text-align: left;
-                padding-right: 0;
-            }
-            .grupo-componente .bimestres-container {
-                justify-content: space-between;
-            }
-            .grupo-componente .modal-content {
-                max-width: 95%;
-            }
-            .grupo-componente .grupos-table {
-                width: 100%;
-                max-width: none;
-            }
-        }
-      `}</style>
+        /* --- ESTILO DE SCROLLBAR PERSONALIZADO --- */
+        .grupo-componente .modal-backdrop-solid {
+            /* Para Firefox */
+            scrollbar-width: thin;
+            scrollbar-color: var(--main-color) var(--dark-color-alt);
+        }
+        /* Para Webkit (Chrome, Safari, Edge) */
+        .grupo-componente .modal-backdrop-solid::-webkit-scrollbar {
+            width: 8px;
+        }
+        .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-track {
+            background: var(--dark-color-alt);
+        }
+        .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-thumb {
+            background-color: var(--main-color);
+            border-radius: 10px;
+            border: 2px solid var(--dark-color-alt);
+        }
+        .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-thumb:hover {
+            background-color: #d4b03f; /* Un tono más claro del color principal */
+        }
+        
+        /* Media Queries */
+        @media (max-width: 768px) {
+            .grupo-componente .trabajos-container {
+                padding-top: 0;
+            }
+            .grupo-componente .main-header {
+                flex-direction: column;
+                align-items: flex-start;
+                padding-top: 1rem;
+            }
+            .grupo-componente .main-header h1 {
+                margin-bottom: 10px;
+            }
+            .grupo-componente .asistencia-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+                padding: 10px;
+            }
+            .grupo-componente .alumno-nombre {
+                width: auto;
+                padding-left: 0;
+            }
+            .grupo-componente .promedio-final-display {
+                text-align: left;
+                padding-right: 0;
+            }
+            .grupo-componente .bimestres-container {
+                justify-content: space-between;
+            }
+            .grupo-componente .modal-content {
+                max-width: 95%;
+            }
+            .grupo-componente .grupos-table {
+                width: 100%;
+                max-width: none;
+            }
+        }
+      `}</style>
       <div className="trabajos-container grupo-componente">
         {!grupoSeleccionado ? (
           <ListaDeGrupos grupos={grupos} user={user} onSeleccionarGrupo={handleSeleccionarGrupo} />
@@ -586,6 +586,7 @@ function Trabajos({ user }) {
             onVolver={handleVolver} 
           />
         )}
+        {/* Se asume que los estilos CSS necesarios están en Trabajos.css o en el bloque <style> */}
       </div>
     </>
   );
@@ -599,7 +600,7 @@ function Trabajos({ user }) {
 const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
     const [bimestreActivo, setBimestreActivo] = useState(1);
     
-    // MODIFICADO: Ahora almacena los criterios por número de trimestre/bimestre (1, 2, 3)
+    // MODIFICADO: Almacena los criterios por número de trimestre/bimestre (1, 2, 3)
     const [criteriosPorTrimestre, setCriteriosPorTrimestre] = useState({ 1: [], 2: [], 3: [] });
     const criterios = criteriosPorTrimestre[bimestreActivo] || []; // Obtiene solo los criterios del bimestre activo
     
@@ -916,7 +917,7 @@ const ModalCriterios = ({ criteriosPorTrimestre, bimestreActivo, onGuardar, onCl
     // NUEVA LÓGICA DE COPIA
     const bimestreAnterior = bimestreActivo - 1;
     const criteriosAnteriores = criteriosPorTrimestre[bimestreAnterior] || [];
-    const constpuedeCopiar = bimestreActivo > 1 && criteriosAnteriores.length > 0 && criterios.length === 0;
+    const puedeCopiar = bimestreActivo > 1 && criteriosAnteriores.length > 0 && criterios.length === 0;
 
     const addCriterio = () => {
         const porciento = parseInt(porcentaje, 10);
@@ -957,7 +958,7 @@ const ModalCriterios = ({ criteriosPorTrimestre, bimestreActivo, onGuardar, onCl
                 <h2>Definir Criterios: Trimestre {bimestreActivo}</h2>
                 
                 {/* BOTÓN DE COPIAR CRITERIOS (Visible si se cumplen las condiciones) */}
-                {constpuedeCopiar && (
+                {puedeCopiar && (
                     <div className="modal-actions" style={{ marginBottom: '1.5rem', justifyContent: 'center' }}>
                         <button 
                             className="btn btn-primary" 
@@ -976,7 +977,7 @@ const ModalCriterios = ({ criteriosPorTrimestre, bimestreActivo, onGuardar, onCl
                 ))}
                 
                 {/* Muestra aviso si no hay criterios Y no hay opción de copiar */}
-                {criterios.length === 0 && !constpuedeCopiar && (
+                {criterios.length === 0 && !puedeCopiar && (
                     <div className="aviso-criterios">
                         <p>Define los criterios para el Trimestre {bimestreActivo}.</p>
                     </div>
