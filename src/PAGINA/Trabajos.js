@@ -643,19 +643,19 @@ function Trabajos({ user }) {
                 100% { opacity: 0; visibility: hidden; transform: translate(-50%, -20px); } /* Sale */
             }
         `}</style>
-      <div className="trabajos-container grupo-componente">
-        {!grupoSeleccionado ? (
-          <ListaDeGrupos grupos={grupos} user={user} onSeleccionarGrupo={handleSeleccionarGrupo} />
-        ) : (
-          <PanelCalificaciones 
-            grupo={grupoSeleccionado} 
-            asignatura={asignaturaSeleccionada}
-            onVolver={handleVolver} 
-          />
-        )}
-      </div>
-    </>
-  );
+      <div className="trabajos-container grupo-componente">
+        {!grupoSeleccionado ? (
+          <ListaDeGrupos grupos={grupos} user={user} onSeleccionarGrupo={handleSeleccionarGrupo} />
+        ) : (
+          <PanelCalificaciones 
+            grupo={grupoSeleccionado} 
+            asignatura={asignaturaSeleccionada}
+            onVolver={handleVolver} 
+          />
+        )}
+      </div>
+    </>
+  );
 }
 
 
@@ -715,12 +715,10 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                 
                 setNumTareas(initialNumTareas);
 
-                // **CORRECCIÓN para el Bimestre 1:**
-                // Si el Bimestre 1 no tiene criterios, aseguramos que se muestre el aviso
-                // y se active el modal para el Bimestre 1, aunque el estado activo sea 1 por defecto.
+                // CORRECCIÓN CLAVE: Abrir modal si el bimestre activo (por defecto 1) no tiene criterios definidos
                 if (!fetchedCriterios || !fetchedCriterios[1] || fetchedCriterios[1].length === 0) {
-                    setModalCriterios(true);
-                    setBimestreActivo(1); 
+                    setBimestreActivo(1); // Aseguramos que se vea el bimestre 1
+                    setModalCriterios(true); // Abrimos el modal para forzar la definición
                 }
             } catch (error) {
                 setNotificacion({ mensaje: 'Error al cargar los datos de calificaciones.', tipo: 'error' });
@@ -846,7 +844,7 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
             <Notificacion mensaje={notificacion.mensaje} tipo={notificacion.tipo} onClose={() => setNotificacion({ mensaje: null, tipo: '' })} />
             <div className="asistencia-modal-content">
                 <header className="main-header" style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 20px' }}>
-                    <h2>Calificaciones: {grupo.nombre} - {asignatura}</h2>
+                    <h2>Calificaciones: {grupo.nombre} - <strong>{asignatura}</strong></h2>
                     <div>
                         <button className="btn" onClick={() => setModalCriterios(true)}>Criterios (Bim. {bimestreActivo})</button>
                         <button className="btn btn-cancel" onClick={onVolver} style={{marginLeft: '10px'}}>Cerrar</button>
@@ -888,7 +886,7 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                                             ))}
                                         </div>
                                         <div className="promedio-final-display" style={{color: calcularPromedioBimestre(alumno._id, bimestreActivo) >= 6.00 ? '#27ae60' : '#d32f2f'}}>
-                                            {calcularPromedioBimestre(alumno._id, bimestreActivo)}
+                                            <strong>{calcularPromedioBimestre(alumno._id, bimestreActivo)}</strong>
                                         </div>
                                     </div>
                                     {criterioAbierto?.alumnoId === alumno._id && (
@@ -898,10 +896,10 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                                             <div className="criterio-resumen-wrapper">
                                                 <div className="criterio-resumen">
                                                     <span className="criterio-info">
-                                                        {criterioAbierto.criterioNombre} ({criteriosDelBimestreActivo.find(c => c.nombre === criterioAbierto.criterioNombre)?.porcentaje}%)
+                                                        <strong>{criterioAbierto.criterioNombre}</strong> ({criteriosDelBimestreActivo.find(c => c.nombre === criterioAbierto.criterioNombre)?.porcentaje}%)
                                                     </span>
                                                     <span className="criterio-prom" style={{color: calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre) >= 6 ? 'var(--dark-color)' : 'var(--danger-color)'}}>
-                                                        Prom: {calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre).toFixed(2)}
+                                                        Prom: <strong>{calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre).toFixed(2)}</strong>
                                                     </span>
                                                 </div>
                                             </div>
@@ -978,7 +976,7 @@ const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => {
                             
                             return (
                                 <tr key={grupo._id}>
-                                    <td>{grupo.nombre}</td>
+                                    <td><strong>{grupo.nombre}</strong></td>
                                     <td>{miAsignatura}</td>
                                     <td className="acciones-cell">
                                         <button 
@@ -1076,7 +1074,6 @@ const ModalCriterios = ({ bimestreActivo, criteriosExistentes, criteriosAnterior
                     <div key={index} className="criterio-item">
                         <span>{c.nombre} - <strong>{c.porcentaje}%</strong></span>
                         <button onClick={() => removeCriterio(index)}>X</button>
-                        
                     </div>
                 ))}
                 <div className="criterio-form">
