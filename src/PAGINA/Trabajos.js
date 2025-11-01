@@ -1602,7 +1602,7 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
                             </button>
                         </div>
                     ))}
-                    {criteriosDelBimestre.length === 0 && <p style={{textAlign: 'center', color: '#999'}}>No hay criterios definidos para este bimestre.</p>}
+                    {criteriosDelBimestre.length === 0 && <p style={{textAlign: 'center', color: '#999'}}>No hay criterios definidos para este Trimestre.</p>}
                 </div>
                 
                 <div className="criterio-form">
