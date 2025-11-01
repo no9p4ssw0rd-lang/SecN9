@@ -11,7 +11,8 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 function Notificacion({ mensaje, tipo, onClose }) {
     useEffect(() => {
         if (mensaje) {
-            const timer = setTimeout(onClose, 3000);
+            // El timer está configurado para 3000ms (3 segundos)
+            const timer = setTimeout(onClose, 3000); 
             return () => clearTimeout(timer);
         }
     }, [mensaje, onClose]);
@@ -41,7 +42,6 @@ function Trabajos({ user }) {
             const token = localStorage.getItem('token');
             
             // FIX 1: Usar user._id si está disponible, sino user.id. 
-            // Se necesita un ID para la verificación posterior.
             const userId = user?._id || user?.id; 
 
             // Asegurar que el token y el ID del usuario existan
@@ -55,6 +55,7 @@ function Trabajos({ user }) {
             try {
                 // La URL de la API se mantiene igual (carga los grupos asignados a este profesor)
                 const url = '/grupos/mis-grupos?populate=alumnos,profesoresAsignados.profesor';
+                // NOTA: Se asume que esta API filtra los grupos donde el usuario es profesor.
                 const res = await axios.get(`${API_URL}${url}`, config);
                 setGrupos(res.data);
             } catch (err) {
@@ -87,7 +88,7 @@ function Trabajos({ user }) {
                 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
                 /* ================================================= */
-                /* ESTILOS EXCLUSIVOS PARA Trabajos.js               */
+                /* ESTILOS EXCLUSIVOS PARA Trabajos.js               */
                 /* ================================================= */
 
                 /* --- FUENTES Y VARIABLES GLOBALES --- */
@@ -527,8 +528,12 @@ function Trabajos({ user }) {
                 }
                 .grupo-componente .porcentaje-wrapper::after {
                     content: '%';
+                    position: absolute; /* Aseguramos que el % no mueva el input */
                     right: 15px;
+                    top: 50%;
+                    transform: translateY(-50%);
                     color: #888;
+                    pointer-events: none; /* Evita que el '%' interfiera con el input */
                 }
                 .grupo-componente .criterio-form input[type="number"] {
                     padding-right: 35px;
@@ -660,6 +665,7 @@ function Trabajos({ user }) {
 const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
     const [bimestreActivo, setBimestreActivo] = useState(1);
     // CAMBIO CLAVE: El estado de criterios ahora es un objeto que contiene los criterios por bimestre
+    // INICIALIZACIÓN: Esto asegura que, si no hay criterios en el backend, tengamos la estructura separada.
     const [criteriosPorBimestre, setCriteriosPorBimestre] = useState({ 1: [], 2: [], 3: [] });
     const [calificaciones, setCalificaciones] = useState({});
     const [isLoadingData, setIsLoadingData] = useState(true);
@@ -683,8 +689,13 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
             try {
                 const res = await axios.get(`${API_URL}/calificaciones?grupoId=${grupo._id}&asignatura=${asignatura}`, config);
                 
-                // CAMBIO CLAVE: Criterios ahora es por bimestre. Inicializa si está vacío.
-                const fetchedCriterios = res.data?.criterios || { 1: [], 2: [], 3: [] };
+                // AJUSTE CLAVE: Asegurarse de que si el backend devuelve criterios, se mantenga la estructura de 3 bimestres.
+                // Si 'res.data?.criterios' existe, lo usamos. Si no existe, inicializamos con la estructura vacía.
+                const fetchedCriterios = {
+                    1: res.data?.criterios?.[1] || [], 
+                    2: res.data?.criterios?.[2] || [], 
+                    3: res.data?.criterios?.[3] || [], 
+                };
                 setCriteriosPorBimestre(fetchedCriterios);
 
                 setCalificaciones(res.data?.calificaciones || {});
@@ -699,19 +710,23 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                         Object.values(alumnoCal).forEach(bimestreCal => {
                             const tareas = bimestreCal[criterio.nombre];
                             if (tareas) {
+                                // Encontrar el índice de tarea más alto (0-indexado) en todas las calificaciones.
                                 const currentMax = Math.max(...Object.keys(tareas).map(Number));
+                                // Si se encuentra un índice, el siguiente espacio vacío es currentMax + 1.
+                                // Si es mayor que el maxIndex actual, se actualiza el maxIndex.
                                 if (currentMax >= maxIndex) maxIndex = currentMax + 1;
                             }
                         });
                     });
-                    acc[criterio.nombre] = Math.max(10, maxIndex + 5);
+                    // Establecer el número de inputs a mostrar: el máximo entre 10 y el índice máximo encontrado + 5 (para dar espacio extra).
+                    acc[criterio.nombre] = Math.max(10, maxIndex + 5); 
                     return acc;
                 }, {});
 
                 setNumTareas(initialNumTareas);
 
-
-                if (!res.data || !res.data.criterios || res.data.criterios[1]?.length === 0) {
+                // Abrir el modal de criterios si el bimestre 1 no tiene ninguno.
+                if (fetchedCriterios[1]?.length === 0) {
                     setModalCriterios(true);
                 }
             } catch (error) {
@@ -727,7 +742,7 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
         setIsSaving(true);
         const token = localStorage.getItem('token');
         const config = { headers: { Authorization: `Bearer ${token}` } };
-        // CAMBIO CLAVE: Envía criteriosPorBimestre
+        // ENVÍO CLAVE: Envía el objeto de criterios completo, separado por bimestre.
         const payload = { grupoId: grupo._id, asignatura, criterios: criteriosPorBimestre, calificaciones };
         try {
             await axios.post(`${API_URL}/calificaciones`, payload, config);
@@ -827,7 +842,7 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                     ))}
                 </div>
                 
-                {/* CAMBIO CLAVE: Usamos criteriosActivos */}
+                {/* CLAVE: Usamos criteriosActivos, que solo contiene los del bimestre seleccionado */}
                 {criteriosActivos.length > 0 ? (
                     <div className="asistencia-grid">
                         <div className="asistencia-body">
@@ -896,7 +911,7 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                     <button className="btn btn-primary" onClick={guardarCalificaciones} disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar Calificaciones'}</button>
                 </div>
             </div>
-            {/* CAMBIO CLAVE: Pasa el estado de criterios completo y setCriteriosPorBimestre */}
+            {/* CLAVE: Pasa el estado de criterios completo y setCriteriosPorBimestre */}
             {modalCriterios && (
                 <ModalCriterios 
                     criteriosPorBimestre={criteriosPorBimestre} 
@@ -961,6 +976,7 @@ const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => {
 // ======================================
 const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificacion }) => {
     // 1. Estado para manejar los criterios internamente, clonando el prop inicial.
+    // CLAVE: Esto asegura que los cambios no afecten al estado padre hasta que se guarde.
     const [criteriosLocales, setCriteriosLocales] = useState(criteriosPorBimestre || { 1: [], 2: [], 3: [] });
     // 2. Estado para el bimestre actualmente seleccionado en el modal.
     const [bimestreActivo, setBimestreActivo] = useState(1);
@@ -1045,6 +1061,7 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
         // Si todo está bien, guardar
         onGuardar(criteriosLocales); 
         onClose();
+        setNotificacion({ mensaje: 'Criterios de evaluación actualizados.', tipo: 'exito' });
     };
     
     // Función para copiar los criterios de un bimestre anterior (ej. 1 -> 2)
@@ -1126,7 +1143,6 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
                     {criteriosDelBimestre.length === 0 && <p style={{textAlign: 'center', color: '#999'}}>No hay criterios definidos para este bimestre.</p>}
                 </div>
                 
-
                 <div className="criterio-form">
                     <input type="text" placeholder="Nombre (Ej: Tareas)" value={nombre} onChange={e => setNombre(e.target.value)} />
                     <div className="porcentaje-wrapper">
