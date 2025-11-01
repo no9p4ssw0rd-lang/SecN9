@@ -597,39 +597,40 @@ function Trabajos({ user }) {
 // Modificado para soportar criterios independientes por bimestre.
 // ======================================
 const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
-    const [bimestreActivo, setBimestreActivo] = useState(1);
-    // CAMBIO CLAVE: Criterios ahora es un objeto, indexado por bimestre (1, 2, 3)
-    const [criteriosBimestre, setCriteriosBimestre] = useState({ 1: [], 2: [], 3: [] });
-    const [calificaciones, setCalificaciones] = useState({});
-    const [isLoadingData, setIsLoadingData] = useState(true);
-    const [isSaving, setIsSaving] = useState(false);
-    const [notificacion, setNotificacion] = useState({ mensaje: null, tipo: '' });
-    const [modalCriterios, setModalCriterios] = useState(false);
-    const [criterioAbierto, setCriterioAbierto] = useState(null); 
-    
-    // Estado para controlar cuántas tareas se muestran por criterio (por defecto 10)
-    const [numTareas, setNumTareas] = useState({}); 
+    const [bimestreActivo, setBimestreActivo] = useState(1);
+    // CAMBIO CLAVE: Criterios ahora es un objeto, indexado por bimestre (1, 2, 3)
+    const [criteriosBimestre, setCriteriosBimestre] = useState({ 1: [], 2: [], 3: [] });
+    const [calificaciones, setCalificaciones] = useState({});
+    const [isLoadingData, setIsLoadingData] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [notificacion, setNotificacion] = useState({ mensaje: null, tipo: '' });
+    const [modalCriterios, setModalCriterios] = useState(false);
+    const [criterioAbierto, setCriterioAbierto] = useState(null); 
+    
+    // Estado para controlar cuántas tareas se muestran por criterio (por defecto 10)
+    const [numTareas, setNumTareas] = useState({}); 
 
-    useEffect(() => {
-        const fetchCalificaciones = async () => {
-            setIsLoadingData(true);
-            const token = localStorage.getItem('token');
-            const config = { headers: { Authorization: `Bearer ${token}` } };
-            try {
-                const res = await axios.get(`${API_URL}/calificaciones?grupoId=${grupo._id}&asignatura=${asignatura}`, config);
-                
-                // CAMBIO: Adaptar la carga de criterios al formato por bimestre
-                const fetchedCriterios = res.data?.criterios || { 1: [], 2: [], 3: [] };
-                setCriteriosBimestre({ 
+    useEffect(() => {
+        const fetchCalificaciones = async () => {
+            setIsLoadingData(true);
+            const token = localStorage.getItem('token');
+            const config = { headers: { Authorization: `Bearer ${token}` } };
+            try {
+                // Se asume que el backend devuelve los criterios en un formato { 1: [...], 2: [...], 3: [...] }
+                const res = await axios.get(`${API_URL}/calificaciones?grupoId=${grupo._id}&asignatura=${asignatura}`, config);
+                
+                // CAMBIO: Adaptar la carga de criterios al formato por bimestre
+                const fetchedCriterios = res.data?.criterios || {};
+                setCriteriosBimestre({ 
                     1: fetchedCriterios[1] || [], 
                     2: fetchedCriterios[2] || [], 
                     3: fetchedCriterios[3] || [] 
                 });
-                setCalificaciones(res.data?.calificaciones || {});
-                
-                // Inicializa numTareas basado en los datos existentes o a 10
-                // La lógica de inicialización debe iterar sobre TODOS los criterios de TODOS los bimestres
+                setCalificaciones(res.data?.calificaciones || {});
+                
+                // Lógica para inicializar numTareas basada en datos existentes
                 let initialNumTareas = {};
+                // Iterar sobre todos los criterios de todos los bimestres para encontrar el maxIndex de tarea
                 Object.keys(fetchedCriterios).forEach(bimestre => {
                     (fetchedCriterios[bimestre] || []).forEach(criterio => {
                         let maxIndex = 0;
@@ -640,220 +641,227 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                                 if (currentMax >= maxIndex) maxIndex = currentMax + 1;
                             }
                         });
+                        // Usar el valor más alto encontrado para ese criterio, por defecto 10
                         initialNumTareas[criterio.nombre] = Math.max(initialNumTareas[criterio.nombre] || 10, maxIndex + 5);
                     });
                 });
                 
-                setNumTareas(initialNumTareas);
+                setNumTareas(initialNumTareas);
 
 
-                // Abrir modal de criterios si no hay criterios en el bimestre 1
-                if (!fetchedCriterios || fetchedCriterios[1]?.length === 0) {
-                    setModalCriterios(true);
-                }
-            } catch (error) {
-                setNotificacion({ mensaje: 'Error al cargar los datos de calificaciones.', tipo: 'error' });
-            } finally {
-                setIsLoadingData(false);
-            }
-        };
-        if (grupo && asignatura) fetchCalificaciones();
-    }, [grupo, asignatura]);
+                // Abrir modal de criterios si no hay criterios en el bimestre 1
+                if (!fetchedCriterios || !fetchedCriterios[1] || fetchedCriterios[1].length === 0) {
+                    setModalCriterios(true);
+                }
+            } catch (error) {
+                setNotificacion({ mensaje: 'Error al cargar los datos de calificaciones.', tipo: 'error' });
+            } finally {
+                setIsLoadingData(false);
+            }
+        };
+        if (grupo && asignatura) fetchCalificaciones();
+    }, [grupo, asignatura]);
 
-    // CAMBIO: Función para actualizar los criterios de UN bimestre específico
-    const handleGuardarCriterios = useCallback((bimestre, nuevosCriterios) => {
-        setCriteriosBimestre(prev => ({
-            ...prev,
-            [bimestre]: nuevosCriterios
-        }));
-    }, []);
+    // CAMBIO: Función para actualizar los criterios de UN bimestre específico
+    const handleGuardarCriterios = useCallback((bimestre, nuevosCriterios) => {
+        setCriteriosBimestre(prev => ({
+            ...prev,
+            [bimestre]: nuevosCriterios
+        }));
+    }, []);
 
 
-    const guardarCalificaciones = async () => {
-        setIsSaving(true);
-        const token = localStorage.getItem('token');
-        const config = { headers: { Authorization: `Bearer ${token}` } };
+    const guardarCalificaciones = async () => {
+        setIsSaving(true);
+        const token = localStorage.getItem('token');
+        const config = { headers: { Authorization: `Bearer ${token}` } };
         // CAMBIO: Enviar la nueva estructura de criterios (criteriosBimestre)
-        const payload = { grupoId: grupo._id, asignatura, criterios: criteriosBimestre, calificaciones };
-        try {
-            await axios.post(`${API_URL}/calificaciones`, payload, config);
-            setNotificacion({ mensaje: '¡Calificaciones y Criterios guardados con éxito!', tipo: 'exito' });
-        } catch (error) {
-            setNotificacion({ mensaje: 'Error al guardar las calificaciones.', tipo: 'error' });
-        } finally {
-            setIsSaving(false);
-        }
-    };
+        const payload = { grupoId: grupo._id, asignatura, criterios: criteriosBimestre, calificaciones };
+        try {
+            await axios.post(`${API_URL}/calificaciones`, payload, config);
+            setNotificacion({ mensaje: '¡Calificaciones y Criterios guardados con éxito!', tipo: 'exito' });
+        } catch (error) {
+            setNotificacion({ mensaje: 'Error al guardar las calificaciones.', tipo: 'error' });
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
-    const handleCalificacionChange = (alumnoId, bimestre, criterioNombre, tareaIndex, valor) => {
-        // La lógica se mantiene igual y es robusta
-        const notaFloat = valor === '' ? null : parseFloat(valor);
-        if (notaFloat !== null && (isNaN(notaFloat) || notaFloat < 0 || notaFloat > 10)) return;
-        
-        const nuevaEntrada = notaFloat === null ? null : {
-            nota: notaFloat,
-            fecha: new Date().toISOString()
-        };
+    const handleCalificacionChange = (alumnoId, bimestre, criterioNombre, tareaIndex, valor) => {
+        // La lógica se mantiene igual y es robusta
+        const notaFloat = valor === '' ? null : parseFloat(valor);
+        if (notaFloat !== null && (isNaN(notaFloat) || notaFloat < 0 || notaFloat > 10)) return;
+        
+        const nuevaEntrada = notaFloat === null ? null : {
+            nota: notaFloat,
+            fecha: new Date().toISOString()
+        };
 
-        setCalificaciones(prev => ({
-            ...prev,
-            [alumnoId]: {
-                ...prev[alumnoId],
-                [bimestre]: {
-                    ...prev[alumnoId]?.[bimestre],
-                    [criterioNombre]: {
-                        ...prev[alumnoId]?.[bimestre]?.[criterioNombre],
-                        [tareaIndex]: nuevaEntrada,
-                    },
-                },
-            },
-        }));
-    };
+        setCalificaciones(prev => ({
+            ...prev,
+            [alumnoId]: {
+                ...prev[alumnoId],
+                [bimestre]: {
+                    ...prev[alumnoId]?.[bimestre],
+                    [criterioNombre]: {
+                        ...prev[alumnoId]?.[bimestre]?.[criterioNombre],
+                        [tareaIndex]: nuevaEntrada,
+                    },
+                },
+            },
+        }));
+    };
 
-    // CAMBIO: Función adaptada para obtener criterios del bimestre activo
-    const criteriosDelBimestre = criteriosBimestre[bimestreActivo] || [];
+    // CAMBIO: Obtener los criterios del bimestre activo para usar en la renderización
+    const criteriosDelBimestreActivo = criteriosBimestre[bimestreActivo] || [];
     
-    const calcularPromedioCriterio = (alumnoId, bimestre, criterioNombre) => {
-        const tareas = calificaciones[alumnoId]?.[bimestre]?.[criterioNombre] || {};
-        const notasValidas = Object.values(tareas)
-            .filter(entrada => entrada && typeof entrada.nota === 'number')
-            .map(entrada => entrada.nota);
+    const calcularPromedioCriterio = (alumnoId, bimestre, criterioNombre) => {
+        const tareas = calificaciones[alumnoId]?.[bimestre]?.[criterioNombre] || {};
+        const notasValidas = Object.values(tareas)
+            .filter(entrada => entrada && typeof entrada.nota === 'number')
+            .map(entrada => entrada.nota);
 
-        if (notasValidas.length === 0) return 0;
-        const total = notasValidas.reduce((sum, nota) => sum + nota, 0);
-        return total / notasValidas.length;
-    };
+        if (notasValidas.length === 0) return 0;
+        const total = notasValidas.reduce((sum, nota) => sum + nota, 0);
+        return total / notasValidas.length;
+    };
 
-    // CAMBIO: Función adaptada para usar criteriosDelBimestre
-    const calcularPromedioBimestre = (alumnoId, bimestre) => {
+    // CAMBIO: Función adaptada para usar los criterios del bimestre solicitado
+    const calcularPromedioBimestre = (alumnoId, bimestre) => {
         const criterios = criteriosBimestre[bimestre] || [];
-        if (criterios.length === 0) return 0;
-        
-        const promedioPonderado = criterios.reduce((acc, criterio) => {
-            const promCriterio = calcularPromedioCriterio(alumnoId, bimestre, criterio.nombre);
-            return acc + (promCriterio * (criterio.porcentaje / 100));
-        }, 0);
-        
-        return promedioPonderado.toFixed(2);
-    };
+        if (criterios.length === 0) return 0;
+        
+        const promedioPonderado = criterios.reduce((acc, criterio) => {
+            const promCriterio = calcularPromedioCriterio(alumnoId, bimestre, criterio.nombre);
+            return acc + (promCriterio * (criterio.porcentaje / 100));
+        }, 0);
+        
+        return promedioPonderado.toFixed(2);
+    };
 
-    const formatFechaTooltip = (fechaISO) => {
-        if (!fechaISO) return "Sin calificar";
-        try {
-            return new Date(fechaISO).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        } catch (e) { return "Fecha inválida"; }
-    };
+    const formatFechaTooltip = (fechaISO) => {
+        if (!fechaISO) return "Sin calificar";
+        try {
+            return new Date(fechaISO).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        } catch (e) { return "Fecha inválida"; }
+    };
 
-    const handleToggleCriterio = (alumnoId, criterioNombre) => {
-        const esElMismo = criterioAbierto?.alumnoId === alumnoId && criterioAbierto?.criterioNombre === criterioNombre;
-        setCriterioAbierto(esElMismo ? null : { alumnoId, criterioNombre });
-    };
+    const handleToggleCriterio = (alumnoId, criterioNombre) => {
+        const esElMismo = criterioAbierto?.alumnoId === alumnoId && criterioAbierto?.criterioNombre === criterioNombre;
+        setCriterioAbierto(esElMismo ? null : { alumnoId, criterioNombre });
+    };
 
-    const agregarTareas = (criterioNombre) => {
-        // Aumenta el contador de tareas mostradas en 5
-        setNumTareas(prev => ({...prev, [criterioNombre]: (prev[criterioNombre] || 10) + 5}));
-    };
+    const agregarTareas = (criterioNombre) => {
+        // Aumenta el contador de tareas mostradas en 5
+        setNumTareas(prev => ({...prev, [criterioNombre]: (prev[criterioNombre] || 10) + 5}));
+    };
 
 
-    if (isLoadingData) return <div className="trabajos-container grupo-componente" style={{textAlign: 'center', paddingTop: '10rem'}}><p style={{color: '#E9E9E9'}}>Cargando datos del grupo...</p></div>;
+    if (isLoadingData) return <div className="trabajos-container grupo-componente" style={{textAlign: 'center', paddingTop: '10rem'}}><p style={{color: '#E9E9E9'}}>Cargando datos del grupo...</p></div>;
 
-    return (
-        <div className="modal-backdrop-solid grupo-componente"> 
-            <Notificacion mensaje={notificacion.mensaje} tipo={notificacion.tipo} onClose={() => setNotificacion({ mensaje: null, tipo: '' })} />
-            <div className="asistencia-modal-content">
-                <header className="main-header" style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 20px' }}>
-                    <h2>Calificaciones: {grupo.nombre} - {asignatura}</h2>
-                    <div>
-                        {/* CAMBIO: Al abrir el modal, siempre se abren los criterios para el bimestre activo */}
-                        <button className="btn" onClick={() => setModalCriterios(true)}>Criterios (Bim. {bimestreActivo})</button>
-                        <button className="btn btn-cancel" onClick={onVolver} style={{marginLeft: '10px'}}>Cerrar</button>
-                    </div>
-                </header>
-                <div className="bimestre-selector">
-                    {[1, 2, 3].map(bim => (
-                        <button key={bim} className={`btn ${bimestreActivo === bim ? 'btn-primary' : ''}`} onClick={() => {
-                            setBimestreActivo(bim); 
-                            setCriterioAbierto(null); // Cerrar cualquier criterio abierto al cambiar de bimestre
-                        }}>Bimestre {bim}</button>
-                    ))}
-                </div>
-                
-                {/* CAMBIO: Comprobación de criterios solo para el bimestre activo */}
-                {criteriosDelBimestre.length > 0 ? (
-                    <div className="asistencia-grid">
-                        <div className="asistencia-body">
-                            {grupo.alumnos.sort((a,b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map(alumno => (
-                                <React.Fragment key={alumno._id}>
-                                    <div className="asistencia-row">
-                                        <div className="alumno-nombre">{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</div>
-                                        <div className="bimestres-container">
-                                            {/* CAMBIO: Iterar sobre criteriosDelBimestre */}
-                                            {criteriosDelBimestre.map(criterio => (
-                                                <div 
-                                                    key={criterio.nombre} 
-                                                    className={`bimestre-header-btn ${criterioAbierto?.alumnoId === alumno._id && criterioAbierto?.criterioNombre === criterio.nombre ? 'activo' : ''}`} 
-                                                    onClick={() => handleToggleCriterio(alumno._id, criterio.nombre)}
-                                                >
-                                                    {criterio.nombre} ({criterio.porcentaje}%)
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <div className="promedio-final-display" style={{color: calcularPromedioBimestre(alumno._id, bimestreActivo) >= 6 ? '#27ae60' : '#d32f2f'}}>
-                                            Prom: {calcularPromedioBimestre(alumno._id, bimestreActivo)}
-                                        </div>
-                                    </div>
-                                    {criterioAbierto?.alumnoId === alumno._id && (
-                                        <div className={`bimestre-desplegable desplegado`}>
-                                            
-                                            {/* FIX: Contenedor para centrar el cuadro de resumen del criterio */}
-                                            <div className="criterio-resumen-wrapper">
-                                                <div className="criterio-resumen">
-                                                    <span className="criterio-info">
-                                                        {/* CAMBIO: Usar criteriosDelBimestre para encontrar el porcentaje */}
-                                                        {criterioAbierto.criterioNombre} ({criteriosDelBimestre.find(c => c.nombre === criterioAbierto.criterioNombre)?.porcentaje}%)
-                                                    </span>
-                                                    <span className="criterio-prom" style={{color: calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre) >= 6 ? 'var(--dark-color)' : 'var(--danger-color)'}}>
-                                                        Prom: {calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre).toFixed(2)}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            {/* FIN FIX */}
+    return (
+        <div className="modal-backdrop-solid grupo-componente"> 
+            <Notificacion mensaje={notificacion.mensaje} tipo={notificacion.tipo} onClose={() => setNotificacion({ mensaje: null, tipo: '' })} />
+            <div className="asistencia-modal-content">
+                <header className="main-header" style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 20px' }}>
+                    <h2>Calificaciones: {grupo.nombre} - {asignatura}</h2>
+                    <div>
+                        {/* CAMBIO: Mostrar el bimestre activo en el botón de Criterios */}
+                        <button className="btn" onClick={() => setModalCriterios(true)}>Criterios (Bim. {bimestreActivo})</button>
+                        <button className="btn btn-cancel" onClick={onVolver} style={{marginLeft: '10px'}}>Cerrar</button>
+                    </div>
+                </header>
+                <div className="bimestre-selector">
+                    {[1, 2, 3].map(bim => (
+                        <button 
+                            key={bim} 
+                            className={`btn ${bimestreActivo === bim ? 'btn-primary' : ''}`} 
+                            onClick={() => {
+                                setBimestreActivo(bim);
+                                setCriterioAbierto(null); // Limpiar criterio abierto al cambiar de bimestre
+                            }}
+                        >
+                            Bimestre {bim}
+                        </button>
+                    ))}
+                </div>
+                
+                {/* CAMBIO: Usar criteriosDelBimestreActivo para la comprobación */}
+                {criteriosDelBimestreActivo.length > 0 ? (
+                    <div className="asistencia-grid">
+                        <div className="asistencia-body">
+                            {grupo.alumnos.sort((a,b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map(alumno => (
+                                <React.Fragment key={alumno._id}>
+                                    <div className="asistencia-row">
+                                        <div className="alumno-nombre">{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</div>
+                                        <div className="bimestres-container">
+                                            {/* CAMBIO: Iterar sobre criteriosDelBimestreActivo */}
+                                            {criteriosDelBimestreActivo.map(criterio => (
+                                                <div 
+                                                    key={criterio.nombre} 
+                                                    className={`bimestre-header-btn ${criterioAbierto?.alumnoId === alumno._id && criterioAbierto?.criterioNombre === criterio.nombre ? 'activo' : ''}`} 
+                                                    onClick={() => handleToggleCriterio(alumno._id, criterio.nombre)}
+                                                >
+                                                    {criterio.nombre} ({criterio.porcentaje}%)
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="promedio-final-display" style={{color: calcularPromedioBimestre(alumno._id, bimestreActivo) >= 6 ? '#27ae60' : '#d32f2f'}}>
+                                            Prom: {calcularPromedioBimestre(alumno._id, bimestreActivo)}
+                                        </div>
+                                    </div>
+                                    {criterioAbierto?.alumnoId === alumno._id && (
+                                        <div className={`bimestre-desplegable desplegado`}>
+                                            
+                                            {/* FIX: Contenedor para centrar el cuadro de resumen del criterio */}
+                                            <div className="criterio-resumen-wrapper">
+                                                <div className="criterio-resumen">
+                                                    <span className="criterio-info">
+                                                        {/* CAMBIO: Usar criteriosDelBimestreActivo para encontrar el porcentaje */}
+                                                        {criterioAbierto.criterioNombre} ({criteriosDelBimestreActivo.find(c => c.nombre === criterioAbierto.criterioNombre)?.porcentaje}%)
+                                                    </span>
+                                                    <span className="criterio-prom" style={{color: calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre) >= 6 ? 'var(--dark-color)' : 'var(--danger-color)'}}>
+                                                        Prom: {calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre).toFixed(2)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            {/* FIN FIX */}
 
-                                            <div className="cuadritos-grid">
-                                                {/* Usamos numTareas[criterioAbierto.criterioNombre] para determinar cuántos inputs mostrar */}
-                                                {Array.from({ length: numTareas[criterioAbierto.criterioNombre] || 10 }).map((_, tareaIndex) => {
-                                                    const entrada = calificaciones[alumno._id]?.[bimestreActivo]?.[criterioAbierto.criterioNombre]?.[tareaIndex];
-                                                    return <input 
-                                                        key={tareaIndex} 
-                                                        type="number" 
-                                                        min="0" max="10" step="0.1" 
-                                                        className="cuadrito-calificacion" 
-                                                        placeholder={`${tareaIndex + 1}`} 
-                                                        value={entrada?.nota ?? ''} 
-                                                        title={formatFechaTooltip(entrada?.fecha)} 
-                                                        onChange={(e) => handleCalificacionChange(alumno._id, bimestreActivo, criterioAbierto.criterioNombre, tareaIndex, e.target.value)} 
-                                                    />;
-                                                })}
-                                                <button className="btn btn-agregar-dias" onClick={() => agregarTareas(criterioAbierto.criterioNombre)}>+5</button>
-                                            </div>
-                                        </div>
-                                    )}
-                                </React.Fragment>
-                            ))}
-                        </div>
-                    </div>
-                ) : (
-                    <div className="aviso-criterios">
+                                            <div className="cuadritos-grid">
+                                                {/* Usamos numTareas[criterioAbierto.criterioNombre] para determinar cuántos inputs mostrar */}
+                                                {Array.from({ length: numTareas[criterioAbierto.criterioNombre] || 10 }).map((_, tareaIndex) => {
+                                                    const entrada = calificaciones[alumno._id]?.[bimestreActivo]?.[criterioAbierto.criterioNombre]?.[tareaIndex];
+                                                    return <input 
+                                                        key={tareaIndex} 
+                                                        type="number" 
+                                                        min="0" max="10" step="0.1" 
+                                                        className="cuadrito-calificacion" 
+                                                        placeholder={`${tareaIndex + 1}`} 
+                                                        value={entrada?.nota ?? ''} 
+                                                        title={formatFechaTooltip(entrada?.fecha)} 
+                                                        onChange={(e) => handleCalificacionChange(alumno._id, bimestreActivo, criterioAbierto.criterioNombre, tareaIndex, e.target.value)} 
+                                                    />;
+                                                })}
+                                                <button className="btn btn-agregar-dias" onClick={() => agregarTareas(criterioAbierto.criterioNombre)}>+5</button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </React.Fragment>
+                            ))}
+                        </div>
+                    </div>
+                ) : (
+                    <div className="aviso-criterios">
                         <p>⚠️ Por favor, define los criterios de evaluación para el **Bimestre {bimestreActivo}**.</p>
                         <button className="btn btn-primary" onClick={() => setModalCriterios(true)}>Definir Criterios</button>
                     </div>
-                )}
-                <div className="modal-actions" style={{padding: '0 20px'}}>
-                    <button className="btn btn-primary" onClick={guardarCalificaciones} disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar Calificaciones'}</button>
-                </div>
-            </div>
-            {/* CAMBIO: Pasar los criterios del bimestre activo y la función de guardado con el bimestre */}
-            {modalCriterios && (
+                )}
+                <div className="modal-actions" style={{padding: '0 20px'}}>
+                    <button className="btn btn-primary" onClick={guardarCalificaciones} disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar Calificaciones'}</button>
+                </div>
+            </div>
+            {/* CAMBIO: Pasar el bimestre activo y la función de guardado con el bimestre */}
+            {modalCriterios && (
                 <ModalCriterios 
                     bimestreActivo={bimestreActivo}
                     criteriosExistentes={criteriosBimestre[bimestreActivo] || []} 
@@ -862,13 +870,12 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                     setNotificacion={setNotificacion} 
                 />
             )}
-        </div>
-    );
+        </div>
+    );
 };
 
 // ======================================
 // --- 4. Componente: Lista de Grupos ---
-// (No modificado)
 // ======================================
 const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => {
     // Definimos el ID del usuario actual, priorizando _id (MongoDB)
