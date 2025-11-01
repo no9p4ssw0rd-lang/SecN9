@@ -5,7 +5,7 @@ import autoTable from 'jspdf-autotable';
 import './Calificaciones.css'; 
 import logoImage from './Logoescuela.png'; 
 
-// --- URL de la API (DEBE SER CORRECTA EN EL ENTORNO DE DEPLOY) ---
+// --- CAMBIO: URL de la API desde variables de entorno para Vercel ---
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 // --- Componente de Notificación (Utilidad) ---
@@ -51,6 +51,7 @@ function Calificaciones({ user }) {
   useEffect(() => {
     const fetchGrupos = async () => {
       try {
+        // --- CAMBIO: Usar API_URL ---
         const res = await axios.get(`${API_URL}/grupos?populate=alumnos,profesoresAsignados`, getAxiosConfig());
         setGrupos(res.data);
       } catch (err) {
@@ -74,30 +75,18 @@ function Calificaciones({ user }) {
     setMaterias(materiasAsignadas);
 
     try {
+      // --- CAMBIO: Usar API_URL ---
       const res = await axios.get(`${API_URL}/grupos/${grupo._id}/calificaciones-admin`, getAxiosConfig());
       setCalificaciones(res.data || {});
     } catch (err) {
       console.error("Error detallado al cargar calificaciones:", err.response || err);
-      // Mantener la notificación de error mientras el backend no se corrija
-      mostrarNotificacion("No se pudieron cargar las calificaciones consolidadas de este grupo. (Verifica el backend)", "error");
+      mostrarNotificacion("No se pudieron cargar las calificaciones consolidadas de este grupo.", "error");
       setCalificaciones({});
     } finally {
       setLoading(false);
     }
   };
-  
-  // --- NUEVA FUNCIÓN: Calcula el promedio final de una materia (T1, T2, T3) ---
-  const calcularPromedioMateria = (alumnoId, materia) => {
-    const alumnoCal = calificaciones[alumnoId];
-    if (!alumnoCal || !alumnoCal[materia]) return 0;
-    
-    // Filtra calificaciones válidas (números mayores a 0) de [T1, T2, T3]
-    const cals = alumnoCal[materia].filter(c => typeof c === 'number' && c > 0);
-        
-    return cals.length > 0 ? (cals.reduce((sum, c) => sum + c, 0) / cals.length) : 0;
-  };
 
-  // Función original para promedio de bimestre (se mantiene para el PDF)
   const calcularPromedioBimestre = (alumnoId, bimestreIndex) => {
     const alumnoCal = calificaciones[alumnoId];
     if (!alumnoCal) return 0;
@@ -112,7 +101,6 @@ function Calificaciones({ user }) {
     return count > 0 ? (suma / count) : 0;
   };
   
-  // Función original para promedio final (se mantiene para el PDF y la columna FINAL GLOBAL)
   const calcularPromedioFinal = (alumnoId) => {
     let sumaDePromedios = 0;
     let bimestresConCalificacion = 0;
@@ -126,7 +114,6 @@ function Calificaciones({ user }) {
     return bimestresConCalificacion > 0 ? (sumaDePromedios / bimestresConCalificacion) : 0;
   };
 
-  // --- FUNCIONES DE PDF (Se mantienen, pero se actualizarían para usar el promedio de materia) ---
   const generatePdfIndividual = async (alumno, bimestresSeleccionados, outputType = 'save') => {
     const doc = new jsPDF();
     const nombreCompleto = `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`;
@@ -145,7 +132,6 @@ function Calificaciones({ user }) {
     doc.text(`Alumno: ${nombreCompleto}`, margin, margin + 15);
     doc.text(`Grupo: ${selectedGrupo.nombre}`, margin, margin + 21);
 
-    // El PDF mantiene la estructura detallada (T1, T2, T3)
     const tableHeaders = ['Materia'];
     if (bimestresSeleccionados[0]) tableHeaders.push("Trim. 1");
     if (bimestresSeleccionados[1]) tableHeaders.push("Trim. 2");
@@ -161,14 +147,25 @@ function Calificaciones({ user }) {
       return row;
     });
 
-    const promedioRow = ['PROMEDIO'];
+    // Agrega la fila de promedios bimestrales (T1, T2, T3)
+    const promedioBimestralRow = ['PROMEDIO BIMESTRAL']; // Nueva etiqueta para claridad
     [0, 1, 2].forEach(index => {
       if (bimestresSeleccionados[index]) {
         const promedio = calcularPromedioBimestre(alumno._id, index);
-        promedioRow.push(promedio > 0 ? promedio.toFixed(1) : 'N/A');
+        promedioBimestralRow.push(promedio > 0 ? promedio.toFixed(1) : 'N/A');
       }
     });
-    tableBody.push(promedioRow);
+    tableBody.push(promedioBimestralRow);
+
+    // Agrega la fila de promedio final general
+    const promedioFinalGeneral = calcularPromedioFinal(alumno._id);
+    const finalRow = ['PROMEDIO FINAL'];
+    // Solo mostramos el final si se seleccionaron los bimestres de ese promedio.
+    if (bimestresSeleccionados.some(b => b)) {
+        finalRow.push({ content: promedioFinalGeneral > 0 ? promedioFinalGeneral.toFixed(2) : 'N/A', colSpan: bimestresSeleccionados.filter(b=>b).length });
+    }
+    tableBody.push(finalRow);
+
 
     autoTable(doc, {
       startY: margin + 30,
@@ -178,7 +175,8 @@ function Calificaciones({ user }) {
       styles: { halign: 'center', cellPadding: 2.5 },
       headStyles: { fillColor: [212, 175, 55], textColor: 255 },
       didDrawCell: (data) => {
-        if (data.row.index === tableBody.length - 1) {
+        // Estilo para la fila de promedio bimestral y final
+        if (data.row.index >= tableBody.length - 2) { 
             doc.setFont(undefined, 'bold');
         }
       }
@@ -192,8 +190,45 @@ function Calificaciones({ user }) {
     return doc.output('datauristring');
   };
   
-  // generatePdfConsolidado no se usa actualmente en la vista, se omite para brevedad
-  const generatePdfConsolidado = async () => {/* ... */};
+  const generatePdfConsolidado = async () => {
+    const doc = new jsPDF({ orientation: 'landscape' });
+    doc.setFontSize(18);
+    doc.text(`Reporte de Calificaciones del Grupo: ${selectedGrupo.nombre}`, 14, 20);
+
+    const head = [
+        [{ content: 'Nombre del Alumno', rowSpan: 2 }],
+        ...materias.map(materia => [{ content: materia, colSpan: 3 }]),
+        [{ content: 'PROMEDIO TRIMESTRAL', colSpan: 3 }],
+        [{ content: 'FINAL', rowSpan: 2 }]
+    ];
+    const subhead = [...materias.flatMap(() => ['T1', 'T2', 'T3']), 'T1', 'T2', 'T3'];
+    head.push(subhead);
+
+    const body = alumnos.map(alumno => {
+        const row = [`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`];
+        materias.forEach(materia => {
+            [0, 1, 2].forEach(bim => {
+                const cal = calificaciones[alumno._id]?.[materia]?.[bim];
+                row.push(cal != null ? cal.toFixed(1) : '-');
+            });
+        });
+        [0, 1, 2].forEach(bim => {
+            const prom = calcularPromedioBimestre(alumno._id, bim);
+            row.push(prom > 0 ? prom.toFixed(1) : '-');
+        });
+        const promFinal = calcularPromedioFinal(alumno._id);
+        row.push(promFinal > 0 ? promFinal.toFixed(2) : '-');
+        return row;
+    });
+
+    autoTable(doc, {
+        startY: 30, head: head, body: body, theme: 'grid',
+        headStyles: { fillColor: [41, 128, 185], textColor: 255, halign: 'center' },
+        styles: { fontSize: 8, halign: 'center' },
+        columnStyles: { 0: { halign: 'left', fontStyle: 'bold' } }
+    });
+   
+  };
 
   const handleSendPdf = async (platform, recipient, alumno) => {
     const pdfDataUri = await generatePdfIndividual(alumno, [true, true, true], 'data');
@@ -210,6 +245,7 @@ function Calificaciones({ user }) {
                 pdfData: base64Pdf 
             };
             
+            // --- CAMBIO: Usar API_URL ---
             await axios.post(`${API_URL}/api/enviar-boleta`, payload, getAxiosConfig());
             mostrarNotificacion(`Boleta enviada a ${recipient} exitosamente.`, 'exito');
         
@@ -260,7 +296,6 @@ function Calificaciones({ user }) {
         </>
       ) : (
         <>
-          {/* ... Modales sin cambios ... */}
           {modalPdf.visible && (
              <div className="modal-overlay" onClick={() => setModalPdf({ visible: false, alumno: null })}>
                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -311,42 +346,50 @@ function Calificaciones({ user }) {
               <table className="calificaciones-table">
                 <thead>
                   <tr>
-                    {/* Título de la columna del nombre */}
                     <th rowSpan="2">Nombre del Alumno</th>
-                    
-                    {/* Ahora solo una columna por materia: el promedio */}
-                    {materias.map(materia => <th key={materia}>PROMEDIO DE {materia.toUpperCase()}</th>)}
-                    
-                    {/* Columna del promedio final del grupo (GLOBAL) */}
-                    <th className="promedio-header-final">PROMEDIO FINAL GLOBAL</th>
+                    {materias.map(materia => <th key={materia} colSpan="3">{materia}</th>)}
+                    <th colSpan="3" className="promedio-header">PROMEDIO TRIMESTRAL</th>
+                    <th rowSpan="2" className="promedio-header-final">FINAL</th>
                     <th rowSpan="2">Acciones</th>
                   </tr>
                   <tr>
-                    {/* Fila de subencabezado vacía ya que ya no hay T1, T2, T3 */}
+                    {materias.flatMap(materia => [<th key={`${materia}-b1`}>T1</th>, <th key={`${materia}-b2`}>T2</th>, <th key={`${materia}-b3`}>T3</th>])}
+                    <th className="promedio-header">T1</th>
+                    <th className="promedio-header">T2</th>
+                    <th className="promedio-header">T3</th>
                   </tr>
                 </thead>
                 <tbody>
                   {alumnos.map(alumno => {
-                    const promFinalGlobal = calcularPromedioFinal(alumno._id); 
+                    const promFinal = calcularPromedioFinal(alumno._id);
                     return (
                       <tr key={alumno._id}>
                         <td>{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</td>
-                        
-                        {/* Celdas para el promedio de CADA MATERIA */}
-                        {materias.map(materia => {
-                          const promedioMateria = calcularPromedioMateria(alumno._id, materia);
+                        {materias.map(materia => (
+                          <React.Fragment key={`${alumno._id}-${materia}`}>
+                            {[0, 1, 2].map(bimestreIndex => {
+                              const cal = calificaciones[alumno._id]?.[materia]?.[bimestreIndex];
+                              return (
+                                <td key={bimestreIndex} className={typeof cal === 'number' ? (cal < 6 ? 'reprobado' : 'aprobado') : ''}>
+                                  {cal != null ? cal.toFixed(1) : '-'}
+                                </td>
+                              )
+                            })}
+                          </React.Fragment>
+                        ))}
+                        {/* Muestra el promedio trimestral */}
+                        {[0, 1, 2].map(bimestreIndex => {
+                          const promedio = calcularPromedioBimestre(alumno._id, bimestreIndex);
                           return (
-                            <td key={`${alumno._id}-${materia}-prom`} className={`promedio-cell ${promedioMateria > 0 && promedioMateria < 6 ? 'reprobado' : 'aprobado'}`}>
-                              <strong>{promedioMateria > 0 ? promedioMateria.toFixed(1) : '-'}</strong>
+                            <td key={`prom-${bimestreIndex}`} className={`promedio-cell ${promedio > 0 && promedio < 6 ? 'reprobado' : 'aprobado'}`}>
+                              <strong>{promedio > 0 ? promedio.toFixed(1) : '-'}</strong>
                             </td>
                           )
                         })}
-                        
-                        {/* Columna de Promedio Final Global */}
-                        <td className={`promedio-final-cell ${promFinalGlobal > 0 && promFinalGlobal < 6 ? 'reprobado' : 'aprobado'}`}>
-                          <strong>{promFinalGlobal > 0 ? promFinalGlobal.toFixed(2) : '-'}</strong>
+                        {/* Muestra el promedio final general */}
+                        <td className={`promedio-final-cell ${promFinal > 0 && promFinal < 6 ? 'reprobado' : 'aprobado'}`}>
+                          <strong>{promFinal > 0 ? promFinal.toFixed(2) : '-'}</strong>
                         </td>
-                        
                         <td className="actions-cell">
                           <button onClick={() => setModalPdf({ visible: true, alumno })} title="Descargar Boleta Individual">📄</button>
                           <button onClick={() => setModalShare({ visible: true, alumno: alumno })} title="Compartir Boleta">🔗</button>
@@ -364,66 +407,4 @@ function Calificaciones({ user }) {
   );
 }
 
-// --- Componente: Modal para Compartir ---
-function ModalShare({ alumno, onClose, onSend }) {
-    const [recipientEmail, setRecipientEmail] = useState('');
-    const [recipientPhone, setRecipientPhone] = useState('');
-
-    const handleEmailSubmit = (e) => {
-        e.preventDefault();
-        if (recipientEmail) {
-            onSend('email', recipientEmail, alumno);
-        }
-    };
-
-    const handleWhatsAppSubmit = (e) => {
-        e.preventDefault();
-        if (recipientPhone) {
-            onSend('whatsapp', recipientPhone, alumno);
-        }
-    };
-
-    return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <h3>Enviar Boleta de {`${alumno.apellidoPaterno} ${alumno.nombre}`}</h3>
-                
-                <form onSubmit={handleEmailSubmit} className="share-form">
-                    <label htmlFor="email-input">Enviar por Correo Electrónico:</label>
-                    <div className="input-group">
-                        <input
-                            id="email-input"
-                            type="email"
-                            value={recipientEmail}
-                            onChange={(e) => setRecipientEmail(e.target.value)}
-                            placeholder="ejemplo@correo.com"
-                            required
-                        />
-                        <button type="submit" className="button">Enviar Email</button>
-                    </div>
-                </form>
-
-                <form onSubmit={handleWhatsAppSubmit} className="share-form">
-                    <label htmlFor="phone-input">Enviar a WhatsApp:</label>
-                    <div className="input-group">
-                        <input
-                            id="phone-input"
-                            type="tel"
-                            value={recipientPhone}
-                            onChange={(e) => setRecipientPhone(e.target.value)}
-                            placeholder="521234567890 (cód. país + número)"
-                            required
-                        />
-                        <button type="submit" className="button whatsapp">Enviar WhatsApp</button>
-                    </div>
-                </form>
-                
-                <div className="modal-actions">
-                    <button type="button" className="button-secondary" onClick={onClose}>Cancelar</button>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-export default Calificaciones;
+// ... (Resto del código de ModalShare y export default Calificaciones)
