@@ -1331,7 +1331,7 @@ const PanelCalificaciones = ({
                 </header>
                 <div className="bimestre-selector">
                     {[1, 2, 3].map(bim => (
-                        <button key={bim} className={`btn ${bimestreActivo === bim ? 'btn-primary' : ''}`} onClick={() => setBimestreActivo(bim)}>Bimestre {bim}</button>
+                        <button key={bim} className={`btn ${bimestreActivo === bim ? 'btn-primary' : ''}`} onClick={() => setBimestreActivo(bim)}>Trimestre {bim}</button>
                     ))}
                 </div>
                 
@@ -1393,7 +1393,7 @@ const PanelCalificaciones = ({
                         </div>
                     </div>
                 ) : (
-                    <div className="aviso-criterios"><p>⚠️ Por favor, define los criterios de evaluación para el **Bimestre {bimestreActivo}**.</p></div>
+                    <div className="aviso-criterios"><p>⚠️ Por favor, define los criterios de evaluación para el **Trimestre {bimestreActivo}**.</p></div>
                 )}
                 <div className="modal-actions" style={{padding: '0 20px'}}>
                     <button className="btn btn-primary" onClick={guardarCalificaciones} disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar Calificaciones'}</button>
@@ -1464,7 +1464,7 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
     const handleSetBimestre = (bim) => {
         if (criteriosDelBimestre.length > 0 && totalPorcentaje !== 100) {
             setNotificacion({ 
-                mensaje: `El Bimestre ${bimestreActivo} tiene criterios definidos (${totalPorcentaje}%). Por favor, ajústalo a 100% antes de cambiar.`, 
+                mensaje: `El Trimestre ${bimestreActivo} tiene criterios definidos (${totalPorcentaje}%). Por favor, ajústalo a 100% antes de cambiar.`, 
                 tipo: 'error' 
             });
             return;
@@ -1486,7 +1486,7 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
         
         if (criteriosDelBimestre.some(c => c.nombre.toLowerCase() === nombre.trim().toLowerCase())) {
              setNotificacion({ 
-                mensaje: 'Ya existe un criterio con ese nombre en este bimestre.', 
+                mensaje: 'Ya existe un criterio con ese nombre en este trimestre.', 
                 tipo: 'error' 
             });
             return;
@@ -1518,7 +1518,7 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
              const totalBimestre = criterios.reduce((acc, curr) => acc + (Number(curr.porcentaje) || 0), 0);
              if (criterios.length > 0 && totalBimestre !== 100) {
                  setNotificacion({ 
-                    mensaje: `ERROR: El Bimestre ${bimestre} debe sumar exactamente 100% para guardar. Actualmente suma ${totalBimestre}%.`, 
+                    mensaje: `ERROR: El Trimestre ${bimestre} debe sumar exactamente 100% para guardar. Actualmente suma ${totalBimestre}%.`, 
                     tipo: 'error' 
                 });
                 return; 
@@ -1534,13 +1534,13 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
     const handleCopiarCriterios = (bimestreOrigen, bimestreDestino) => {
         const criteriosOrigen = criteriosLocales[bimestreOrigen];
         if (!criteriosOrigen || criteriosOrigen.length === 0) {
-            setNotificacion({ mensaje: `No hay criterios definidos en el Bimestre ${bimestreOrigen}.`, tipo: 'error' });
+            setNotificacion({ mensaje: `No hay criterios definidos en el Trimestre ${bimestreOrigen}.`, tipo: 'error' });
             return;
         }
         
         const totalOrigen = criteriosOrigen.reduce((acc, curr) => acc + (Number(curr.porcentaje) || 0), 0);
         if (totalOrigen !== 100) {
-            setNotificacion({ mensaje: `El Bimestre ${bimestreOrigen} debe sumar 100% antes de ser copiado.`, tipo: 'error' });
+            setNotificacion({ mensaje: `El Trimestre ${bimestreOrigen} debe sumar 100% antes de ser copiado.`, tipo: 'error' });
             return;
         }
 
@@ -1549,13 +1549,13 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
             [bimestreDestino]: criteriosOrigen.map(c => ({...c}))
         }));
         setBimestreActivo(bimestreDestino);
-        setNotificacion({ mensaje: `Criterios del Bimestre ${bimestreOrigen} copiados a Bimestre ${bimestreDestino}.`, tipo: 'exito' });
+        setNotificacion({ mensaje: `Criterios del Trimestre ${bimestreOrigen} copiados a Trimestre ${bimestreDestino}.`, tipo: 'exito' });
     };
 
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <h2>Definir Criterios de Evaluación por Bimestre</h2>
+                <h2>Definir Criterios de Evaluación por Trimestre</h2>
                 
                 <div className="bimestre-selector" style={{ justifyContent: 'center', borderBottom: 'none' }}>
                     {[1, 2, 3].map(bim => (
@@ -1564,7 +1564,7 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
                             className={`btn ${bimestreActivo === bim ? 'btn-primary' : 'btn-cancel'}`} 
                             onClick={() => handleSetBimestre(bim)}
                         >
-                            Bimestre {bim}
+                            Trimestre {bim}
                         </button>
                     ))}
                 </div>
@@ -1577,13 +1577,13 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
                             disabled={criteriosDelBimestre.length > 0 || criteriosLocales[bimestreActivo - 1]?.length === 0}
                             title={criteriosDelBimestre.length > 0 ? "Elimina los criterios actuales para copiar." : `Copia criterios de Bimestre ${bimestreActivo - 1}`}
                         >
-                            <span role="img" aria-label="copiar">📋</span> Copiar Criterios de Bimestre {bimestreActivo - 1}
+                            <span role="img" aria-label="copiar">📋</span> Copiar Criterios de Trimestre {bimestreActivo - 1}
                         </button>
                     )}
                 </div>
 
 
-                <h3>Criterios para Bimestre {bimestreActivo}</h3>
+                <h3>Criterios para Trimestre {bimestreActivo}</h3>
                 <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                     {criteriosDelBimestre.map((c, index) => (
                         <div key={index} className="criterio-item">
@@ -1620,7 +1620,7 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
                 </div>
                 
                 <div className={`criterio-total ${totalPorcentaje !== 100 ? 'error' : ''}`}>
-                    <strong>Total del Bimestre {bimestreActivo}: {totalPorcentaje}% / 100%</strong>
+                    <strong>Total del Trimestre {bimestreActivo}: {totalPorcentaje}% / 100%</strong>
                 </div>
                 
                 <div className="modal-actions">
