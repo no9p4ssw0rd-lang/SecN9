@@ -9,19 +9,19 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 // --- 1. Componente de Notificación (Integrado) ---
 // ======================================
 function Notificacion({ mensaje, tipo, onClose }) {
-  useEffect(() => {
-    if (mensaje) {
-      const timer = setTimeout(onClose, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [mensaje, onClose]);
+  useEffect(() => {
+    if (mensaje) {
+      const timer = setTimeout(onClose, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [mensaje, onClose]);
 
-  if (!mensaje) return null;
+  if (!mensaje) return null;
 
-  // Se añade la clase 'exito' y 'error' para coincidir con la lógica interna
-  const claseTipo = tipo === 'exito' ? 'exito' : 'error';
+  // Se añade la clase 'exito' y 'error' para coincidir con la lógica interna
+  const claseTipo = tipo === 'exito' ? 'exito' : 'error';
 
-  return <div className={`notificacion-flotante ${claseTipo}`}>{mensaje}</div>;
+  return <div className={`notificacion-flotante ${claseTipo}`}>{mensaje}</div>;
 }
 
 
@@ -29,83 +29,84 @@ function Notificacion({ mensaje, tipo, onClose }) {
 // --- 2. Componente Principal: Trabajos ---
 // ======================================
 function Trabajos({ user }) {
-  
-  const [grupos, setGrupos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [grupoSeleccionado, setGrupoSeleccionado] = useState(null);
-  const [asignaturaSeleccionada, setAsignaturaSeleccionada] = useState(null);
+  
+  const [grupos, setGrupos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [grupoSeleccionado, setGrupoSeleccionado] = useState(null);
+  const [asignaturaSeleccionada, setAsignaturaSeleccionada] = useState(null);
 
-  useEffect(() => {
-    const fetchGrupos = async () => {
-      const token = localStorage.getItem('token');
-      
-      // FIX 1: Usar user._id si está disponible, sino user.id. 
-      // Se necesita un ID para la verificación posterior.
-      const userId = user?._id || user?.id; 
+  useEffect(() => {
+    const fetchGrupos = async () => {
+      const token = localStorage.getItem('token');
+      
+      // FIX 1: Usar user._id si está disponible, sino user.id. 
+      // Se necesita un ID para la verificación posterior.
+      const userId = user?._id || user?.id; 
 
-      // Asegurar que el token y el ID del usuario existan
-      if (!token || !userId) {
-        setLoading(false);
-        setError("Error de autenticación: Usuario o token no disponible.");
-        return;
-      }
+      // Asegurar que el token y el ID del usuario existan
+      if (!token || !userId) {
+        setLoading(false);
+        setError("Error de autenticación: Usuario o token no disponible.");
+        return;
+      }
 
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      try {
-        // La URL de la API se mantiene igual (carga los grupos asignados a este profesor)
-        const url = '/grupos/mis-grupos?populate=alumnos,profesoresAsignados.profesor';
-        const res = await axios.get(`${API_URL}${url}`, config);
-        setGrupos(res.data);
-      } catch (err) {
-        setError("No se pudieron cargar los grupos.");
-        console.error("Error fetching groups:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchGrupos();
-  }, [user]);
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      try {
+        // La URL de la API se mantiene igual (carga los grupos asignados a este profesor)
+        const url = '/grupos/mis-grupos?populate=alumnos,profesoresAsignados.profesor';
+        const res = await axios.get(`${API_URL}${url}`, config);
+        setGrupos(res.data);
+      } catch (err) {
+        setError("No se pudieron cargar los grupos.");
+        console.error("Error fetching groups:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchGrupos();
+  }, [user]);
 
-  const handleSeleccionarGrupo = (grupo, asignatura) => {
-    setGrupoSeleccionado(grupo);
-    setAsignaturaSeleccionada(asignatura);
-  };
-  
-  const handleVolver = () => {
-    setGrupoSeleccionado(null);
-    setAsignaturaSeleccionada(null);
-  };
+  const handleSeleccionarGrupo = (grupo, asignatura) => {
+    setGrupoSeleccionado(grupo);
+    setAsignaturaSeleccionada(asignatura);
+  };
+  
+  const handleVolver = () => {
+    setGrupoSeleccionado(null);
+    setAsignaturaSeleccionada(null);
+  };
 
-  if (loading) return <div className="trabajos-container grupo-componente" style={{textAlign: 'center', paddingTop: '10rem'}}><p style={{color: '#E9E9E9'}}>Cargando tus grupos...</p></div>;
-  if (error) return <div className="trabajos-container grupo-componente error-mensaje" style={{textAlign: 'center', paddingTop: '10rem'}}><p>{error}</p></div>;
+  if (loading) return <div className="trabajos-container grupo-componente" style={{textAlign: 'center', paddingTop: '10rem'}}><p style={{color: '#E9E9E9'}}>Cargando tus grupos...</p></div>;
+  if (error) return <div className="trabajos-container grupo-componente error-mensaje" style={{textAlign: 'center', paddingTop: '10rem'}}><p>{error}</p></div>;
 
-  return (
-    <>
-      <div className="trabajos-container grupo-componente">
-        {!grupoSeleccionado ? (
-          <ListaDeGrupos grupos={grupos} user={user} onSeleccionarGrupo={handleSeleccionarGrupo} />
-        ) : (
-          <PanelCalificaciones 
-            grupo={grupoSeleccionado} 
-            asignatura={asignaturaSeleccionada}
-            onVolver={handleVolver} 
-          />
-        )}
-      </div>
-    </>
-  );
+  return (
+    <>
+      <div className="trabajos-container grupo-componente">
+        {!grupoSeleccionado ? (
+          <ListaDeGrupos grupos={grupos} user={user} onSeleccionarGrupo={handleSeleccionarGrupo} />
+        ) : (
+          <PanelCalificaciones 
+            grupo={grupoSeleccionado} 
+            asignatura={asignaturaSeleccionada}
+            onVolver={handleVolver} 
+          />
+        )}
+      </div>
+    </>
+  );
 }
 
 
 // ======================================
 // --- 3. Sub-componente: Panel Principal de Calificaciones ---
-// La lógica aquí se unifica, adoptando la gestión de tareas más robusta del código viejo.
+// MODIFICADO: Adaptado para criterios por bimestre y lógica de inicialización.
 // ======================================
 const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
     const [bimestreActivo, setBimestreActivo] = useState(1);
-    const [criterios, setCriterios] = useState([]);
+    // CAMBIO CLAVE: Criterios ahora es un objeto, indexado por bimestre (1, 2, 3)
+    const [criteriosBimestre, setCriteriosBimestre] = useState({ 1: [], 2: [], 3: [] });
     const [calificaciones, setCalificaciones] = useState({});
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -122,32 +123,38 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
             const token = localStorage.getItem('token');
             const config = { headers: { Authorization: `Bearer ${token}` } };
             try {
+                // Se asume que el backend devuelve los criterios en un formato { 1: [...], 2: [...], 3: [...] }
                 const res = await axios.get(`${API_URL}/calificaciones?grupoId=${grupo._id}&asignatura=${asignatura}`, config);
                 
-                setCriterios(res.data?.criterios || []);
+                // Adaptar la carga de criterios al formato por bimestre
+                const fetchedCriterios = res.data?.criterios || {};
+                setCriteriosBimestre({ 
+                    1: fetchedCriterios[1] || [], 
+                    2: fetchedCriterios[2] || [], 
+                    3: fetchedCriterios[3] || [] 
+                });
                 setCalificaciones(res.data?.calificaciones || {});
                 
-                // Inicializa numTareas basado en los datos existentes o a 10
-                const initialNumTareas = (res.data?.criterios || []).reduce((acc, criterio) => {
-                    // Intenta encontrar la tarea con el índice más alto + 1, o usa 10 por defecto.
-                    let maxIndex = 0;
-                    Object.values(res.data?.calificaciones || {}).forEach(alumnoCal => {
-                        Object.values(alumnoCal).forEach(bimestreCal => {
-                            const tareas = bimestreCal[criterio.nombre];
+                // Lógica para inicializar numTareas basada en datos existentes
+                let initialNumTareas = {};
+                Object.keys(fetchedCriterios).forEach(bimestre => {
+                    (fetchedCriterios[bimestre] || []).forEach(criterio => {
+                        let maxIndex = 0;
+                        Object.values(res.data?.calificaciones || {}).forEach(alumnoCal => {
+                            const tareas = alumnoCal[bimestre]?.[criterio.nombre];
                             if (tareas) {
                                 const currentMax = Math.max(...Object.keys(tareas).map(Number));
                                 if (currentMax >= maxIndex) maxIndex = currentMax + 1;
                             }
                         });
+                        initialNumTareas[criterio.nombre] = Math.max(initialNumTareas[criterio.nombre] || 10, maxIndex + 5);
                     });
-                    acc[criterio.nombre] = Math.max(10, maxIndex + 5);
-                    return acc;
-                }, {});
-
+                });
+                
                 setNumTareas(initialNumTareas);
 
-
-                if (!res.data || !res.data.criterios || res.data.criterios.length === 0) {
+                // Abrir modal si el bimestre 1 no tiene criterios definidos
+                if (!fetchedCriterios || !fetchedCriterios[1] || fetchedCriterios[1].length === 0) {
                     setModalCriterios(true);
                 }
             } catch (error) {
@@ -159,14 +166,28 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
         if (grupo && asignatura) fetchCalificaciones();
     }, [grupo, asignatura]);
 
+    // Función para actualizar los criterios de UN bimestre específico
+    const handleGuardarCriterios = useCallback((bimestre, nuevosCriterios) => {
+        setCriteriosBimestre(prev => ({
+            ...prev,
+            [bimestre]: nuevosCriterios
+        }));
+        // Si no hay criterios después de guardar, cerramos el modal
+        if (nuevosCriterios.length > 0) {
+            setModalCriterios(false);
+        }
+    }, []);
+
+
     const guardarCalificaciones = async () => {
         setIsSaving(true);
         const token = localStorage.getItem('token');
         const config = { headers: { Authorization: `Bearer ${token}` } };
-        const payload = { grupoId: grupo._id, asignatura, criterios, calificaciones };
+        // Enviar la nueva estructura de criterios (criteriosBimestre)
+        const payload = { grupoId: grupo._id, asignatura, criterios: criteriosBimestre, calificaciones };
         try {
             await axios.post(`${API_URL}/calificaciones`, payload, config);
-            setNotificacion({ mensaje: '¡Calificaciones guardadas con éxito!', tipo: 'exito' });
+            setNotificacion({ mensaje: '¡Calificaciones y Criterios guardados con éxito!', tipo: 'exito' });
         } catch (error) {
             setNotificacion({ mensaje: 'Error al guardar las calificaciones.', tipo: 'error' });
         } finally {
@@ -175,7 +196,6 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
     };
 
     const handleCalificacionChange = (alumnoId, bimestre, criterioNombre, tareaIndex, valor) => {
-        // La lógica se mantiene igual y es robusta
         const notaFloat = valor === '' ? null : parseFloat(valor);
         if (notaFloat !== null && (isNaN(notaFloat) || notaFloat < 0 || notaFloat > 10)) return;
         
@@ -199,6 +219,9 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
         }));
     };
 
+    // Obtener los criterios del bimestre activo para usar en la renderización
+    const criteriosDelBimestreActivo = criteriosBimestre[bimestreActivo] || [];
+    
     const calcularPromedioCriterio = (alumnoId, bimestre, criterioNombre) => {
         const tareas = calificaciones[alumnoId]?.[bimestre]?.[criterioNombre] || {};
         const notasValidas = Object.values(tareas)
@@ -210,7 +233,9 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
         return total / notasValidas.length;
     };
 
+    // Función adaptada para usar los criterios del bimestre solicitado
     const calcularPromedioBimestre = (alumnoId, bimestre) => {
+        const criterios = criteriosBimestre[bimestre] || [];
         if (criterios.length === 0) return 0;
         
         const promedioPonderado = criterios.reduce((acc, criterio) => {
@@ -248,17 +273,27 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                 <header className="main-header" style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 20px' }}>
                     <h2>Calificaciones: {grupo.nombre} - {asignatura}</h2>
                     <div>
-                        <button className="btn" onClick={() => setModalCriterios(true)}>Criterios</button>
+                        <button className="btn" onClick={() => setModalCriterios(true)}>Criterios (Bim. {bimestreActivo})</button>
                         <button className="btn btn-cancel" onClick={onVolver} style={{marginLeft: '10px'}}>Cerrar</button>
                     </div>
                 </header>
                 <div className="bimestre-selector">
                     {[1, 2, 3].map(bim => (
-                        <button key={bim} className={`btn ${bimestreActivo === bim ? 'btn-primary' : ''}`} onClick={() => setBimestreActivo(bim)}>Bimestre {bim}</button>
+                        <button 
+                            key={bim} 
+                            className={`btn ${bimestreActivo === bim ? 'btn-primary' : ''}`} 
+                            onClick={() => {
+                                setBimestreActivo(bim);
+                                setCriterioAbierto(null); // Limpiar criterio abierto al cambiar de bimestre
+                            }}
+                        >
+                            Bimestre {bim}
+                        </button>
                     ))}
                 </div>
                 
-                {criterios.length > 0 ? (
+                {/* Mostrar aviso si no hay criterios definidos para el bimestre activo */}
+                {criteriosDelBimestreActivo.length > 0 ? (
                     <div className="asistencia-grid">
                         <div className="asistencia-body">
                             {grupo.alumnos.sort((a,b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map(alumno => (
@@ -266,7 +301,8 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                                     <div className="asistencia-row">
                                         <div className="alumno-nombre">{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</div>
                                         <div className="bimestres-container">
-                                            {criterios.map(criterio => (
+                                            {/* Iterar sobre criteriosDelBimestreActivo */}
+                                            {criteriosDelBimestreActivo.map(criterio => (
                                                 <div 
                                                     key={criterio.nombre} 
                                                     className={`bimestre-header-btn ${criterioAbierto?.alumnoId === alumno._id && criterioAbierto?.criterioNombre === criterio.nombre ? 'activo' : ''}`} 
@@ -283,19 +319,18 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                                     {criterioAbierto?.alumnoId === alumno._id && (
                                         <div className={`bimestre-desplegable desplegado`}>
                                             
-                                            {/* FIX: Contenedor para centrar el cuadro de resumen del criterio */}
+                                            {/* Contenedor para centrar el cuadro de resumen del criterio */}
                                             <div className="criterio-resumen-wrapper">
                                                 <div className="criterio-resumen">
                                                     <span className="criterio-info">
-                                                        {criterioAbierto.criterioNombre} ({criterios.find(c => c.nombre === criterioAbierto.criterioNombre)?.porcentaje}%)
+                                                        {criterioAbierto.criterioNombre} ({criteriosDelBimestreActivo.find(c => c.nombre === criterioAbierto.criterioNombre)?.porcentaje}%)
                                                     </span>
                                                     <span className="criterio-prom" style={{color: calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre) >= 6 ? 'var(--dark-color)' : 'var(--danger-color)'}}>
                                                         Prom: {calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre).toFixed(2)}
                                                     </span>
                                                 </div>
                                             </div>
-                                            {/* FIN FIX */}
-
+                                            
                                             <div className="cuadritos-grid">
                                                 {/* Usamos numTareas[criterioAbierto.criterioNombre] para determinar cuántos inputs mostrar */}
                                                 {Array.from({ length: numTareas[criterioAbierto.criterioNombre] || 10 }).map((_, tareaIndex) => {
@@ -320,13 +355,26 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                         </div>
                     </div>
                 ) : (
-                    <div className="aviso-criterios"><p>⚠️ Por favor, define los criterios de evaluación para comenzar a calificar.</p></div>
+                    <div className="aviso-criterios">
+                        <p>⚠️ Por favor, define los criterios de evaluación para el **Bimestre {bimestreActivo}**.</p>
+                        <button className="btn btn-primary" onClick={() => setModalCriterios(true)}>Definir Criterios</button>
+                    </div>
                 )}
                 <div className="modal-actions" style={{padding: '0 20px'}}>
                     <button className="btn btn-primary" onClick={guardarCalificaciones} disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar Calificaciones'}</button>
                 </div>
             </div>
-            {modalCriterios && <ModalCriterios criteriosExistentes={criterios} onGuardar={setCriterios} onClose={() => setModalCriterios(false)} setNotificacion={setNotificacion} />}
+            {/* Pasar el bimestre activo y la función de guardado con el bimestre */}
+            {modalCriterios && (
+                <ModalCriterios 
+                    bimestreActivo={bimestreActivo}
+                    criteriosExistentes={criteriosBimestre[bimestreActivo] || []} 
+                    criteriosAnteriores={bimestreActivo > 1 ? criteriosBimestre[bimestreActivo - 1] : []}
+                    onGuardar={(nuevosCriterios) => handleGuardarCriterios(bimestreActivo, nuevosCriterios)} 
+                    onClose={() => setModalCriterios(false)} 
+                    setNotificacion={setNotificacion} 
+                />
+            )}
         </div>
     );
 };
@@ -335,103 +383,134 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
 // --- 4. Componente: Lista de Grupos ---
 // ======================================
 const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => {
-    // Definimos el ID del usuario actual, priorizando _id (MongoDB)
-    const userId = user?._id || user?.id; 
-    
-    return (
-        <>
-            <header className="main-header" style={{ justifyContent: 'center', paddingTop: '0' }}><h1>Gestión de Calificaciones</h1></header>
-            <h3 className="subtitulo">Selecciona un grupo y asignatura para calificar</h3>
-            
-            {/* FIX: Contenedor para centrar la tabla y limitar su ancho */}
-            <div className="grupos-table-wrapper">
-                <table className="grupos-table">
-                    <thead><tr><th>Grupo</th><th>Mi Asignatura</th><th>Acciones</th></tr></thead>
-                    <tbody>
-                        {grupos.map(grupo => {
-                            // FIX 2: Usar el ID del usuario actual (userId) para encontrar la asignación.
-                            const miAsignacion = grupo.profesoresAsignados.find(asig => asig.profesor?._id === userId); 
-                            const miAsignatura = miAsignacion ? miAsignacion.asignatura : 'N/A';
-                            
-                            return (
-                                <tr key={grupo._id}>
-                                    <td>{grupo.nombre}</td>
-                                    <td>{miAsignatura}</td>
-                                    <td className="acciones-cell">
-                                        <button 
-                                            className="btn btn-primary" 
-                                            onClick={() => onSeleccionarGrupo(grupo, miAsignatura)}
-                                            // FIX 3: Solo deshabilitar si la asignatura es 'N/A'
-                                            disabled={miAsignatura === 'N/A'}
-                                        >
-                                            Calificar
-                                        </button>
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
-            </div>
-        </>
-    );
+    // Definimos el ID del usuario actual, priorizando _id (MongoDB)
+    const userId = user?._id || user?.id; 
+    
+    return (
+        <>
+            <header className="main-header" style={{ justifyContent: 'center', paddingTop: '0' }}><h1>Gestión de Calificaciones</h1></header>
+            <h3 className="subtitulo">Selecciona un grupo y asignatura para calificar</h3>
+            
+            {/* FIX: Contenedor para centrar la tabla y limitar su ancho */}
+            <div className="grupos-table-wrapper">
+                <table className="grupos-table">
+                    <thead><tr><th>Grupo</th><th>Mi Asignatura</th><th>Acciones</th></tr></thead>
+                    <tbody>
+                        {grupos.map(grupo => {
+                            // FIX 2: Usar el ID del usuario actual (userId) para encontrar la asignación.
+                            const miAsignacion = grupo.profesoresAsignados.find(asig => asig.profesor?._id === userId); 
+                            const miAsignatura = miAsignacion ? miAsignacion.asignatura : 'N/A';
+                            
+                            return (
+                                <tr key={grupo._id}>
+                                    <td>{grupo.nombre}</td>
+                                    <td>{miAsignatura}</td>
+                                    <td className="acciones-cell">
+                                        <button 
+                                            className="btn btn-primary" 
+                                            onClick={() => onSeleccionarGrupo(grupo, miAsignatura)}
+                                            // FIX 3: Solo deshabilitar si la asignatura es 'N/A'
+                                            disabled={miAsignatura === 'N/A'}
+                                        >
+                                            Calificar
+                                        </button>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
+        </>
+    );
 };
 
 // ======================================
 // --- 5. Componente: Modal para Criterios de Evaluación ---
+// MODIFICADO: Añadida opción para copiar del bimestre anterior
 // ======================================
-const ModalCriterios = ({ criteriosExistentes, onGuardar, onClose, setNotificacion }) => {
-    const [criterios, setCriterios] = useState(criteriosExistentes || []);
-    const [nombre, setNombre] = useState('');
-    const [porcentaje, setPorcentaje] = useState('');
-    const totalPorcentaje = criterios.reduce((acc, curr) => acc + (Number(curr.porcentaje) || 0), 0);
+const ModalCriterios = ({ bimestreActivo, criteriosExistentes, criteriosAnteriores, onGuardar, onClose, setNotificacion }) => {
+    const [criterios, setCriterios] = useState(criteriosExistentes || []);
+    const [nombre, setNombre] = useState('');
+    const [porcentaje, setPorcentaje] = useState('');
+    const totalPorcentaje = criterios.reduce((acc, curr) => acc + (Number(curr.porcentaje) || 0), 0);
 
-    const addCriterio = () => {
-        const porciento = parseInt(porcentaje, 10);
-        if (nombre.trim() && !isNaN(porciento) && porciento > 0 && totalPorcentaje + porciento <= 100) {
-            setCriterios([...criterios, { nombre: nombre.trim(), porcentaje: porciento }]);
-            setNombre(''); setPorcentaje('');
-        } else { 
-            setNotificacion({ mensaje: 'Verifica los datos. El total no debe exceder 100%.', tipo: 'error' });
+    const addCriterio = () => {
+        const porciento = parseInt(porcentaje, 10);
+        if (nombre.trim() && !isNaN(porciento) && porciento > 0 && totalPorcentaje + porciento <= 100) {
+            setCriterios([...criterios, { nombre: nombre.trim(), porcentaje: porciento }]);
+            setNombre(''); setPorcentaje('');
+        } else { 
+            setNotificacion({ mensaje: 'Verifica los datos. El total no debe exceder 100%.', tipo: 'error' });
+        }
+    };
+
+    const removeCriterio = (index) => setCriterios(criterios.filter((_, i) => i !== index));
+
+    // NUEVA FUNCIÓN: Copiar criterios del bimestre anterior
+    const copiarCriteriosAnteriores = () => {
+        if (criteriosAnteriores && criteriosAnteriores.length > 0) {
+            const totalAnterior = criteriosAnteriores.reduce((acc, curr) => acc + (Number(curr.porcentaje) || 0), 0);
+            if (totalAnterior === 100) {
+                setCriterios(criteriosAnteriores);
+                setNotificacion({ mensaje: `Criterios copiados del Bimestre ${bimestreActivo - 1}.`, tipo: 'exito' });
+            } else {
+                 setNotificacion({ mensaje: 'Los criterios anteriores no suman 100%. Debes ajustarlos.', tipo: 'error' });
+            }
         }
     };
 
-    const removeCriterio = (index) => setCriterios(criterios.filter((_, i) => i !== index));
 
-    const handleGuardar = () => {
-        if (totalPorcentaje !== 100) { 
-            setNotificacion({ mensaje: 'La suma de porcentajes debe ser exactamente 100%.', tipo: 'error' });
-            return; 
-        }
-        onGuardar(criterios); 
-        onClose();
-    };
+    const handleGuardar = () => {
+        if (totalPorcentaje !== 100) { 
+            setNotificacion({ mensaje: 'La suma de porcentajes debe ser exactamente 100%.', tipo: 'error' });
+            return; 
+        }
+        onGuardar(criterios); // onGuardar ahora sabe a qué bimestre guardar.
+        onClose();
+    };
 
-    return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <h2>Definir Criterios de Evaluación</h2>
-                {criterios.map((c, index) => (
-                    <div key={index} className="criterio-item">
-                        <span>{c.nombre} - <strong>{c.porcentaje}%</strong></span>
-                        <button onClick={() => removeCriterio(index)}>X</button>
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                {/* Título adaptado al bimestre activo */}
+                <h2>Definir Criterios de Evaluación - Bimestre {bimestreActivo}</h2>
+
+                {/* BOTÓN COPIAR */}
+                {bimestreActivo > 1 && criteriosExistentes.length === 0 && criteriosAnteriores.length > 0 && (
+                    <div style={{marginBottom: '1rem', textAlign: 'center'}}>
+                        <button 
+                            className="btn btn-secondary" 
+                            onClick={copiarCriteriosAnteriores}
+                            style={{padding: '10px 20px', backgroundColor: '#34495e', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer'}}
+                        >
+                            Copiar del Bimestre {bimestreActivo - 1}
+                        </button>
                     </div>
-                ))}
-                <div className="criterio-form">
-                    <input type="text" placeholder="Nombre (Ej: Tareas)" value={nombre} onChange={e => setNombre(e.target.value)} />
-                    <input type="number" placeholder="Porcentaje (Ej: 40)" min="1" max="100" value={porcentaje} onChange={e => setPorcentaje(e.target.value)} />
-                    <button className="btn" onClick={addCriterio} disabled={totalPorcentaje >= 100 || !nombre.trim() || !porcentaje}>Añadir</button>
-                </div>
-                <div className={`criterio-total ${totalPorcentaje !== 100 ? 'error' : ''}`}>
-                    <strong>Total: {totalPorcentaje}% / 100%</strong>
-                </div>
-                <div className="modal-actions">
-                    <button className="btn btn-cancel" onClick={onClose}>Cancelar</button>
-                    <button className="btn btn-primary" onClick={handleGuardar} disabled={totalPorcentaje !== 100}>Guardar Criterios</button>
-                </div>
-            </div>
-        </div>
-    );
+                )}
+                {/* FIN BOTÓN COPIAR */}
+
+                {criterios.map((c, index) => (
+                    <div key={index} className="criterio-item">
+                        <span>{c.nombre} - <strong>{c.porcentaje}%</strong></span>
+                        <button onClick={() => removeCriterio(index)}>X</button>
+                    </div>
+                ))}
+                <div className="criterio-form">
+                    <input type="text" placeholder="Nombre (Ej: Tareas)" value={nombre} onChange={e => setNombre(e.target.value)} />
+                    <input type="number" placeholder="Porcentaje (Ej: 40)" min="1" max="100" value={porcentaje} onChange={e => setPorcentaje(e.target.value)} />
+                    <button className="btn" onClick={addCriterio} disabled={totalPorcentaje >= 100 || !nombre.trim() || !porcentaje}>Añadir</button>
+                </div>
+                <div className={`criterio-total ${totalPorcentaje !== 100 ? 'error' : ''}`}>
+                    <strong>Total: {totalPorcentaje}% / 100%</strong>
+                </div>
+                <div className="modal-actions">
+                    <button className="btn btn-cancel" onClick={onClose}>Cancelar</button>
+                    <button className="btn btn-primary" onClick={handleGuardar} disabled={totalPorcentaje !== 100}>Guardar Criterios</button>
+                </div>
+            </div>
+        </div>
+    );
 };
 
 export default Trabajos;
