@@ -1,74 +1,35 @@
-import express from 'express';
-// 🛑 CORRECCIÓN: Si el modelo Calificacion.js NO usa 'export default Calificacion',
-// debes usar una importación con nombre, por ejemplo, import { Calificacion } from '...';
-// Basado en el error de Render, cambiamos a importación con nombre (desestructurando).
-import { Calificacion } from '../models/Calificacion.js'; 
-import { authMiddleware } from '../middlewares/authMiddleware.js';
+import mongoose from 'mongoose';
 
-const router = express.Router();
-
-/**
- * @route   GET /calificaciones?grupoId=...&asignatura=...
- * @desc    Obtiene los criterios y calificaciones para una materia específica de un grupo (Vista Profesor).
- * @access  Private (Profesores)
- */
-router.get('/', authMiddleware, async (req, res) => {
-// ... El resto de la lógica de la ruta GET (sin cambios) ...
-  try {
-    const { grupoId, asignatura } = req.query;
-    if (!grupoId || !asignatura) {
-      return res.status(400).json({ msg: 'Se requieren los parámetros grupoId y asignatura' });
+const CalificacionSchema = new mongoose.Schema({
+    // Vínculo con el grupo
+    grupo: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Grupo',
+        required: true,
+    },
+    // La materia
+    asignatura: {
+        type: String,
+        required: true,
+        trim: true,
+    },
+    // ⚠️ CORRECCIÓN CLAVE: Cambiar a Mixed para aceptar { 1: [{}], 2: [{}], 3: [{}] }
+    criterios: {
+        type: mongoose.Schema.Types.Mixed, 
+        default: { 1: [], 2: [], 3: [] } // Inicializa con la estructura que espera el frontend
+    },
+    // Objeto con las calificaciones
+    calificaciones: {
+        type: mongoose.Schema.Types.Mixed,
+        default: {}
     }
-
-    const registroDeCalificaciones = await Calificacion.findOne({ 
-      grupo: grupoId, 
-      asignatura: asignatura 
-    });
-
-    if (!registroDeCalificaciones) {
-      return res.json({ 
-        criterios: { 1: [], 2: [], 3: [] }, 
-        calificaciones: {} 
-      });
-    }
-
-    res.json(registroDeCalificaciones);
-
-  } catch (error) {
-    console.error("Error al obtener calificaciones (Profesor):", error.message);
-    res.status(500).send('Error del Servidor');
-  }
+}, {
+    timestamps: true
 });
 
-/**
- * @route   POST /calificaciones
- * @desc    Guarda o actualiza los criterios y calificaciones para una materia de un grupo (Vista Profesor).
- * @access  Private (Profesores)
- */
-router.post('/', authMiddleware, async (req, res) => {
-// ... El resto de la lógica de la ruta POST (sin cambios) ...
-    const { grupoId, asignatura, criterios, calificaciones } = req.body;
-    
-    if (!grupoId || !asignatura || !criterios || calificaciones === undefined) {
-        return res.status(400).json({ msg: 'Faltan datos requeridos (grupoId, asignatura, criterios, calificaciones)' });
-    }
+// El índice compuesto sigue siendo válido para la unicidad.
+CalificacionSchema.index({ grupo: 1, asignatura: 1 }, { unique: true });
 
-    try {
-        const registroActualizado = await Calificacion.findOneAndUpdate(
-            { grupo: grupoId, asignatura: asignatura }, 
-            { criterios, calificaciones, grupo: grupoId, asignatura: asignatura },
-            { upsert: true, new: true, setDefaultsOnInsert: true }
-        );
-        
-        res.status(200).json({ 
-            msg: 'Calificaciones guardadas exitosamente',
-            data: registroActualizado 
-        });
+const Calificacion = mongoose.model("Calificacion", CalificacionSchema);
 
-    } catch (error) {
-        console.error("Error al guardar calificaciones:", error.message);
-        res.status(500).send('Error del Servidor');
-    }
-});
-
-export { router as calificacionesRouter };
+export default Calificacion;

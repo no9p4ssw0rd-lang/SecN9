@@ -1,17 +1,19 @@
 import express from 'express';
-import Calificacion from '../models/Calificacion.js'; 
+// 🛑 CORRECCIÓN: Si el modelo Calificacion.js NO usa 'export default Calificacion',
+// debes usar una importación con nombre, por ejemplo, import { Calificacion } from '...';
+// Basado en el error de Render, cambiamos a importación con nombre (desestructurando).
+import { Calificacion } from '../models/Calificacion.js'; 
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-// --- RUTAS DE PROFESOR ---
-
 /**
  * @route   GET /calificaciones?grupoId=...&asignatura=...
- * @desc    Obtiene los criterios y calificaciones para una materia específica de un grupo.
+ * @desc    Obtiene los criterios y calificaciones para una materia específica de un grupo (Vista Profesor).
  * @access  Private (Profesores)
  */
 router.get('/', authMiddleware, async (req, res) => {
+// ... El resto de la lógica de la ruta GET (sin cambios) ...
   try {
     const { grupoId, asignatura } = req.query;
     if (!grupoId || !asignatura) {
@@ -24,8 +26,6 @@ router.get('/', authMiddleware, async (req, res) => {
     });
 
     if (!registroDeCalificaciones) {
-      // ✅ CORRECCIÓN 1: Devolver la estructura correcta del esquema de Mongoose para 'criterios'
-      // El esquema define criterios como: { 1: [], 2: [], 3: [] }, no como []
       return res.json({ 
         criterios: { 1: [], 2: [], 3: [] }, 
         calificaciones: {} 
@@ -42,10 +42,11 @@ router.get('/', authMiddleware, async (req, res) => {
 
 /**
  * @route   POST /calificaciones
- * @desc    Guarda o actualiza los criterios y calificaciones para una materia de un grupo.
+ * @desc    Guarda o actualiza los criterios y calificaciones para una materia de un grupo (Vista Profesor).
  * @access  Private (Profesores)
  */
 router.post('/', authMiddleware, async (req, res) => {
+// ... El resto de la lógica de la ruta POST (sin cambios) ...
     const { grupoId, asignatura, criterios, calificaciones } = req.body;
     
     if (!grupoId || !asignatura || !criterios || calificaciones === undefined) {
@@ -69,53 +70,5 @@ router.post('/', authMiddleware, async (req, res) => {
         res.status(500).send('Error del Servidor');
     }
 });
-
-// --- RUTA CLAVE CORREGIDA PARA EL ADMINISTRADOR ---
-
-/**
- * @route   GET /calificaciones/:grupoId/calificaciones-admin
- * @desc    Obtiene el consolidado de calificaciones por alumno para el dashboard Admin.
- * Esta ruta es la que fallaba con 'criterios.forEach is not a function'.
- * @access  Private (Admin)
- */
-// NOTA: Si este archivo de router está montado en /calificaciones, la ruta real sería /calificaciones/:grupoId/calificaciones-admin
-// Si está montado en /grupos, la ruta real sería /grupos/:grupoId/calificaciones-admin
-router.get('/:grupoId/calificaciones-admin', authMiddleware, async (req, res) => {
-    try {
-        const { grupoId } = req.params;
-
-        // Obtener todos los documentos de calificaciones para el grupo
-        const calificacionesDelGrupo = await Calificacion.find({ grupo: grupoId }).lean();
-        
-        const consolidadoPorAlumno = {};
-
-        // 2. Iterar sobre cada documento de Calificación (1 documento = 1 materia)
-        calificacionesDelGrupo.forEach(registroMateria => {
-            const nombreMateria = registroMateria.asignatura;
-            // Usamos un objeto vacío por defecto en caso de que no haya calificaciones.
-            const calificacionesMateria = registroMateria.calificaciones || {}; 
-            
-            // ✅ CORRECCIÓN 2: Evitar usar .forEach() en el objeto criterios, que era el problema.
-
-            // Iteramos sobre el objeto de calificaciones por alumno
-            Object.entries(calificacionesMateria).forEach(([alumnoId, calsArray]) => {
-                // calsArray es [T1, T2, T3]
-                if (!consolidadoPorAlumno[alumnoId]) {
-                    consolidadoPorAlumno[alumnoId] = {};
-                }
-                consolidadoPorAlumno[alumnoId][nombreMateria] = calsArray;
-            });
-
-        });
-
-        // El frontend recibe { "alumnoId": { "MateriaA": [c1, c2, c3], "MateriaB": [c1, c2, c3] }, ... }
-        res.json(consolidadoPorAlumno); 
-
-    } catch (error) {
-        console.error("Error procesando calificaciones para admin (SOLUCIÓN IMPLEMENTADA):", error);
-        res.status(500).json({ msg: 'Error interno del servidor al consolidar calificaciones' });
-    }
-});
-
 
 export { router as calificacionesRouter };
