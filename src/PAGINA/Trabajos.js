@@ -271,6 +271,230 @@ function Trabajos({ user }) {
                     box-sizing: border-box;
                     overflow-y: auto;
                 }
+                
+    /* ESTILOS EXCLUSIVOS PARA Trabajos.js               */
+    /* ================================================= */
+
+    /* --- FUENTES Y VARIABLES GLOBALES --- */
+    .grupo-componente {
+        --dark-color: #191D28;
+        --dark-color-alt: #1E222D;
+        --main-color: #b9972b; /* Tono Dorado/Amarillo formal */
+        --title-color: #FFFFFF;
+        --text-color: #E9E9E9;
+        --danger-color: #d32f2f; /* Rojo formal */
+        --success-color: #27ae60; /* Verde formal */
+        --warning-color: #f39c12; /* Naranja/Amarillo de advertencia */
+
+        --body-font: 'Poppins', sans-serif;
+        --font-semi-bold: 600;
+        background-color: var(--dark-color); 
+        min-height: 100vh;
+    }
+
+    /* Base de Modales y Notificaciones (Mantenidas) */
+    .grupo-componente .modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        display: flex; justify-content: center; align-items: center; 
+        z-index: 1050;
+    }
+    .notificacion-flotante {
+        position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 2000; 
+        padding: 12px 25px; border-radius: 8px; font-weight: 600; font-size: 1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); opacity: 0; visibility: hidden;
+        animation: fadeInOut 3.5s ease-in-out forwards; 
+    }
+    .notificacion-flotante.exito { background-color: var(--success-color); color: var(--dark-color); border: 1px solid #1a8a49; }
+    .notificacion-flotante.error { background-color: var(--danger-color); color: var(--title-color); border: 1px solid #a32222; }
+    @keyframes fadeInOut {
+        0% { opacity: 0; visibility: hidden; transform: translate(-50%, -20px); }
+        5% { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+        90% { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+        100% { opacity: 0; visibility: hidden; transform: translate(-50%, -20px); }
+    }
+
+    /* Estilos de Contenedor y Títulos (Mantenidos) */
+    .grupo-componente .trabajos-container { padding-top: 8rem; padding-bottom: 2rem; max-width: 1200px; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; }
+    .grupo-componente h1, h2, h3 { color: var(--title-color); font-weight: var(--font-semi-bold); }
+    .grupo-componente .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 2px solid var(--dark-color-alt); padding-bottom: 1.5rem; width: 100%; }
+    .grupo-componente .main-header h1 { font-size: 2.5rem; }
+    .grupo-componente .main-header h2 { font-size: 1.8rem; }
+    .grupo-componente .subtitulo { text-align: center; margin-bottom: 3rem; font-size: 1.4rem; color: var(--main-color); }
+
+    /* --- ESTILOS DE BOTONES BASE --- */
+    .grupo-componente .btn {
+        display: inline-block; padding: 0.8rem 1.5rem; border-radius: .5rem;
+        font-weight: 500; transition: all .3s; cursor: pointer; color: var(--text-color);
+        background-color: #3C414C; border: 1px solid #555;
+    }
+    .grupo-componente .btn:hover {
+        filter: brightness(1.1); transform: translateY(-2px); border-color: var(--main-color);
+    }
+    .grupo-componente .btn-primary { 
+        background-color: var(--main-color); color: var(--dark-color);
+        border-color: var(--main-color); font-weight: 600;
+    }
+    .grupo-componente .btn-cancel { 
+        background-color: #2c3e50; color: white; border-color: #2c3e50;
+    }
+    .grupo-componente .btn-secondary {
+        background-color: #34495e; color: white; border-color: #34495e;
+    }
+    .grupo-componente .btn:disabled {
+        opacity: 0.6; cursor: not-allowed; transform: none; filter: none;
+    }
+    
+    /* Estilos de asistencia (Mantenidos) */
+    .grupo-componente .modal-backdrop-solid { 
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: var(--dark-color); display: flex; 
+        justify-content: center; align-items: flex-start; 
+        z-index: 1000; padding: 5rem 1rem 2rem 1rem; box-sizing: border-box;
+        overflow-y: auto;
+    }
+    /* ... otros estilos de asistencia (cuadritos, etc.) ... */
+
+
+    /* ================================================= */
+    /* 🎨 MODAL DE CRITERIOS (ENFOQUE EN FORMULARIO Y BOTONES) */
+    /* ================================================= */
+
+    .grupo-componente .modal-content {
+        background-color: var(--dark-color-alt);
+        padding: 2.5rem; border-radius: 12px; width: 90%;
+        max-width: 550px; /* Reducido para centralizar */
+        box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+    }
+    .grupo-componente .modal-content h2 {
+        text-align: center;
+        margin-bottom: 1.5rem;
+        font-size: 1.8rem;
+    }
+    .grupo-componente .modal-content .bimestre-selector {
+        justify-content: center;
+        border-bottom: none;
+        padding: 0;
+    }
+    .grupo-componente .modal-content .bimestre-selector .btn {
+        padding: 0.6rem 1.2rem;
+        font-weight: 500;
+        background-color: var(--dark-color);
+        color: var(--text-color);
+        border: 1px solid #444;
+        box-shadow: none;
+        transition: all 0.2s;
+    }
+    .grupo-componente .modal-content .bimestre-selector .btn-primary {
+        background-color: var(--main-color);
+        color: var(--dark-color);
+        border-color: var(--main-color);
+        font-weight: 700;
+    }
+
+    /* Listado de Criterios */
+    .grupo-componente h3 {
+        margin-top: 1rem;
+        font-size: 1.3rem;
+        border-bottom: 1px solid #333;
+        padding-bottom: 10px;
+    }
+    .grupo-componente .criterio-item {
+        background-color: var(--dark-color);
+        border-left: 5px solid var(--main-color);
+        margin-bottom: 8px;
+    }
+    .grupo-componente .criterio-item button {
+        color: var(--danger-color);
+        background: none; border: none; cursor: pointer;
+        line-height: 1; font-size: 1.4rem;
+        transition: color 0.2s;
+    }
+    .grupo-componente .criterio-item button:hover {
+        color: #ff5252;
+    }
+
+    /* 📌 Formulario de Adición de Criterios (Mejora clave) */
+    .grupo-componente .criterio-form {
+        display: flex;
+        gap: 15px; /* Espaciado cómodo */
+        margin: 2rem 0 1.5rem 0;
+        align-items: center;
+    }
+    .grupo-componente .criterio-form input {
+        /* Estilo base de input más formal */
+        background: var(--dark-color);
+        border: 1px solid #444; 
+        border-radius: 6px;
+        color: var(--text-color);
+        padding: 10px 12px;
+        font-size: 1rem;
+        font-weight: 400; 
+        box-sizing: border-box;
+    }
+    .grupo-componente .criterio-form input:focus {
+        border-color: var(--main-color);
+        box-shadow: 0 0 3px rgba(185, 151, 43, 0.8);
+        background-color: #242935; 
+    }
+    .grupo-componente .criterio-form input[type="text"] {
+        flex-grow: 2; /* El nombre toma la mayor parte del espacio */
+        max-width: none;
+    }
+    
+    /* Wrapper para el input de porcentaje */
+    .grupo-componente .porcentaje-wrapper {
+        position: relative;
+        flex-grow: 0;
+        width: 100px; /* Ancho fijo para el porcentaje */
+    }
+    .grupo-componente .porcentaje-wrapper::after {
+        content: '%';
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #666;
+        pointer-events: none;
+    }
+    .grupo-componente .criterio-form input[type="number"] {
+        padding-right: 30px;
+        text-align: right;
+    }
+
+    /* Botón Añadir */
+    .grupo-componente .criterio-form .btn {
+        padding: 10px 15px;
+        font-weight: 600;
+        line-height: 1.4;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+
+    /* Total del Bimestre y Acciones */
+    .grupo-componente .criterio-total {
+        text-align: right; font-size: 1.1rem; font-weight: bold;
+        margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #444;
+    }
+    .grupo-componente .modal-actions {
+        margin-top: 1.5rem;
+    }
+    .grupo-componente .modal-actions .btn-primary {
+        padding: 0.8rem 1.5rem; 
+        transform: none; /* Asegurar que no se mueva en el hover aquí */
+    }
+    .grupo-componente .modal-actions .btn-cancel {
+        background-color: transparent;
+        color: var(--text-color);
+        border-color: #555;
+        padding: 0.8rem 1.5rem;
+    }
+    .grupo-componente .modal-actions .btn-cancel:hover {
+        background-color: #2a2f3c;
+        transform: none;
+    }
+
+
 
                 .grupo-componente .modal-content.asistencia-modal-content {
                     background-color: var(--dark-color-alt); 
