@@ -594,13 +594,14 @@ function Trabajos({ user }) {
 
 // ======================================
 // --- 3. Sub-componente: Panel Principal de Calificaciones (MODIFICADO) ---
+// La lógica aquí se unifica, adoptando la gestión de tareas más robusta del código viejo.
 // ======================================
 const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
     const [bimestreActivo, setBimestreActivo] = useState(1);
     
-    // MODIFICADO: Ahora almacena los criterios por número de trimestre (1, 2, 3)
+    // MODIFICADO: Ahora almacena los criterios por número de trimestre/bimestre (1, 2, 3)
     const [criteriosPorTrimestre, setCriteriosPorTrimestre] = useState({ 1: [], 2: [], 3: [] });
-    const criterios = criteriosPorTrimestre[bimestreActivo] || []; // Obtiene solo los criterios del trimestre activo
+    const criterios = criteriosPorTrimestre[bimestreActivo] || []; // Obtiene solo los criterios del bimestre activo
     
     const [calificaciones, setCalificaciones] = useState({});
     const [isLoadingData, setIsLoadingData] = useState(true);
@@ -631,7 +632,7 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                 setCriteriosPorTrimestre(fetchedCriterios);
                 setCalificaciones(res.data?.calificaciones || {});
                 
-                // MODIFICADO: Muestra el modal si el trimestre activo no tiene criterios
+                // MODIFICADO: Muestra el modal si el bimestre activo no tiene criterios
                 if (!fetchedCriterios[bimestreActivo] || fetchedCriterios[bimestreActivo].length === 0) {
                     setModalCriterios(true);
                 }
@@ -659,7 +660,7 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                 setIsLoadingData(false);
             }
         };
-        // Añadir bimestreActivo al array de dependencias para recargar datos si el trimestre cambia
+        // Añadir bimestreActivo al array de dependencias para recargar datos si el bimestre/trimestre cambia
         if (grupo && asignatura) fetchCalificaciones();
     }, [grupo, asignatura, bimestreActivo]); // Agregado bimestreActivo
 
@@ -723,7 +724,7 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
     };
 
     const calcularPromedioBimestre = (alumnoId, bimestre) => {
-        // Usa los criterios del trimestre activo
+        // Usa los criterios del bimestre activo
         const criteriosActivos = criteriosPorTrimestre[bimestre] || [];
         
         if (criteriosActivos.length === 0) return 0;
@@ -905,7 +906,7 @@ const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => {
 // --- 5. Componente: Modal para Criterios de Evaluación (MODIFICADO) ---
 // ======================================
 const ModalCriterios = ({ criteriosPorTrimestre, bimestreActivo, onGuardar, onClose, setNotificacion }) => {
-    // MODIFICADO: Obtiene los criterios del trimestre activo para edición local
+    // MODIFICADO: Obtiene los criterios del bimestre activo para edición local
     const criteriosDelBimestre = criteriosPorTrimestre[bimestreActivo] || [];
     const [criterios, setCriterios] = useState(criteriosDelBimestre);
     const [nombre, setNombre] = useState('');
@@ -915,7 +916,7 @@ const ModalCriterios = ({ criteriosPorTrimestre, bimestreActivo, onGuardar, onCl
     // NUEVA LÓGICA DE COPIA
     const bimestreAnterior = bimestreActivo - 1;
     const criteriosAnteriores = criteriosPorTrimestre[bimestreAnterior] || [];
-    const puedeCopiar = bimestreActivo > 1 && criteriosAnteriores.length > 0 && criterios.length === 0;
+    const constpuedeCopiar = bimestreActivo > 1 && criteriosAnteriores.length > 0 && criterios.length === 0;
 
     const addCriterio = () => {
         const porciento = parseInt(porcentaje, 10);
@@ -928,7 +929,7 @@ const ModalCriterios = ({ criteriosPorTrimestre, bimestreActivo, onGuardar, onCl
     };
 
     const removeCriterio = (index) => setCriterios(criterios.filter((_, i) => i !== index));
-    
+
     // NUEVA FUNCIÓN: Copia los criterios del trimestre anterior
     const copiarCriterios = () => {
         setCriterios(criteriosAnteriores);
@@ -944,7 +945,7 @@ const ModalCriterios = ({ criteriosPorTrimestre, bimestreActivo, onGuardar, onCl
         // MODIFICADO: Actualiza el objeto completo de criterios por trimestre
         onGuardar({
             ...criteriosPorTrimestre,
-            [bimestreActivo]: criterios // Solo actualiza el trimestre activo
+            [bimestreActivo]: criterios // Solo actualiza el bimestre activo
         }); 
         
         onClose();
@@ -956,7 +957,7 @@ const ModalCriterios = ({ criteriosPorTrimestre, bimestreActivo, onGuardar, onCl
                 <h2>Definir Criterios: Trimestre {bimestreActivo}</h2>
                 
                 {/* BOTÓN DE COPIAR CRITERIOS (Visible si se cumplen las condiciones) */}
-                {puedeCopiar && (
+                {constpuedeCopiar && (
                     <div className="modal-actions" style={{ marginBottom: '1.5rem', justifyContent: 'center' }}>
                         <button 
                             className="btn btn-primary" 
@@ -975,7 +976,7 @@ const ModalCriterios = ({ criteriosPorTrimestre, bimestreActivo, onGuardar, onCl
                 ))}
                 
                 {/* Muestra aviso si no hay criterios Y no hay opción de copiar */}
-                {criterios.length === 0 && !puedeCopiar && (
+                {criterios.length === 0 && !constpuedeCopiar && (
                     <div className="aviso-criterios">
                         <p>Define los criterios para el Trimestre {bimestreActivo}.</p>
                     </div>
