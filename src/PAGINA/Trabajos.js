@@ -883,7 +883,7 @@ function Trabajos({ user }) {
 .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-thumb {
     background-color: var(--main-color);
     border-radius: 10px;
-    border: 2px solid var(--dark-color-alt);
+    border: 2px solid var(--dark-color-alt)
 }
 .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-thumb:hover {
     background-color: #d4b03f; 
