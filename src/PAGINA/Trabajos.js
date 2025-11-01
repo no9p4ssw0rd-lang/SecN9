@@ -1,50 +1,3 @@
-/* =====================================================
---- 0. MODELO DE BACKEND (Mongoose Schema) ---
-=====================================================
-NOTA: Este código debe estar en un archivo separado en su backend (e.g., Calificacion.js) 
-y se incluye aquí solo para referencia y completitud del contexto.
-*/
-import mongoose from 'mongoose';
-
-const CalificacionSchema = new mongoose.Schema({
-  // Vínculo con el grupo al que pertenecen estas calificaciones
-  grupo: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Grupo',
-    required: true,
-  },
-  // La materia a la que corresponden estas calificaciones. Esencial para la unicidad.
-  asignatura: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  // Criterios de evaluación para esta materia específica (Indexado por bimestre: {1: [], 2: [], 3: []})
-  criterios: {
-    type: mongoose.Schema.Types.Mixed,
-    default: {}
-  },
-  // Objeto con las calificaciones detalladas que el profesor ingresa
-  calificaciones: {
-    type: mongoose.Schema.Types.Mixed,
-    default: {}
-  }
-}, {
-  timestamps: true
-});
-
-// ÍNDICE COMPUESTO: Asegura que la COMBINACIÓN de 'grupo' y 'asignatura' sea única.
-CalificacionSchema.index({ grupo: 1, asignatura: 1 }, { unique: true });
-
-// Exportar el modelo de Mongoose (se mantiene para la completitud)
-// const Calificacion = mongoose.model("Calificacion", CalificacionSchema);
-// export default Calificacion;
-
-
-/* =====================================================
---- CÓDIGO DE FRONTEND (React Component) ---
-=====================================================
-*/
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
@@ -53,7 +6,7 @@ import axios from 'axios';
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 // ======================================
-// 1. Componente de Notificación (Integrado)
+// 🚀 1. Componente de Notificación (Integrado)
 // ======================================
 function Notificacion({ mensaje, tipo, onClose }) {
     useEffect(() => {
@@ -73,7 +26,7 @@ function Notificacion({ mensaje, tipo, onClose }) {
 
 
 // ======================================
-// 2. Componente Principal: Trabajos
+// 🏢 2. Componente Principal: Trabajos
 // ======================================
 function Trabajos({ user }) {
 
@@ -410,7 +363,6 @@ function Trabajos({ user }) {
                     text-align: right;
                     font-weight: bold;
                     font-size: 1.2rem;
-                    color: var(--main-color);
                 }
 
                 .grupo-componente .bimestre-desplegable {
@@ -478,7 +430,6 @@ function Trabajos({ user }) {
                     font-weight: 600;
                     font-family: var(--body-font);
                     font-size: 1rem;
-                    transition: all 0.2s;
                 }
                 .grupo-componente .cuadrito-calificacion::placeholder {
                     color: #999;
@@ -689,255 +640,6 @@ function Trabajos({ user }) {
     );
 }
 
-
-// ======================================
-// 3. Sub-componente: Panel Principal de Calificaciones
-// ======================================
-const PanelCalificaciones = ({
-    grupo,
-    asignatura,
-    onVolver,
-    setModalCriterios,
-    criteriosPorBimestre,
-    setCriteriosPorBimestre,
-    setNotificacion
-}) => {
-    const [bimestreActivo, setBimestreActivo] = useState(1);
-    const [calificaciones, setCalificaciones] = useState({});
-    const [isLoadingData, setIsLoadingData] = useState(true);
-    const [isSaving, setIsSaving] = useState(false);
-    const [criterioAbierto, setCriterioAbierto] = useState(null);
-    const [numTareas, setNumTareas] = useState({});
-
-    // Obtener los criterios del bimestre activo
-    const criteriosActivos = criteriosPorBimestre[bimestreActivo] || [];
-
-
-    useEffect(() => {
-        const fetchCalificaciones = async () => {
-            setIsLoadingData(true);
-            const token = localStorage.getItem('token');
-            const config = { headers: { Authorization: `Bearer ${token}` } };
-            try {
-                const url = `${API_URL}/calificaciones?grupoId=${grupo._id}&asignatura=${asignatura}`;
-                const res = await axios.get(url, config);
-
-                // AJUSTE CLAVE: Se actualizan los criterios en el padre (Trabajos)
-                const fetchedCriterios = {
-                    1: res.data?.criterios?.[1] || [],
-                    2: res.data?.criterios?.[2] || [],
-                    3: res.data?.criterios?.[3] || [],
-                };
-                setCriteriosPorBimestre(fetchedCriterios);
-
-                setCalificaciones(res.data?.calificaciones || {});
-
-                // Lógica de numTareas (se mantiene igual)
-                const allCriterios = [...fetchedCriterios[1], ...fetchedCriterios[2], ...fetchedCriterios[3]];
-
-                const initialNumTareas = allCriterios.reduce((acc, criterio) => {
-                    let maxIndex = 0;
-                    Object.values(res.data?.calificaciones || {}).forEach(alumnoCal => {
-                        Object.values(alumnoCal).forEach(bimestreCal => {
-                            const tareas = bimestreCal[criterio.nombre];
-                            if (tareas) {
-                                const currentMax = Math.max(...Object.keys(tareas).map(Number));
-                                if (currentMax >= maxIndex) maxIndex = currentMax + 1;
-                            }
-                        });
-                    });
-                    acc[criterio.nombre] = Math.max(10, maxIndex + 5);
-                    return acc;
-                }, {});
-
-                setNumTareas(initialNumTareas);
-
-                // Abrir el modal de criterios si el bimestre 1 no tiene ninguno.
-                if (fetchedCriterios[1]?.length === 0) {
-                    setModalCriterios(true);
-                }
-            } catch (error) {
-                // Notificación de error si la carga falla
-                setNotificacion({ mensaje: 'Error al cargar los datos de calificaciones.', tipo: 'error' });
-            } finally {
-                setIsLoadingData(false);
-            }
-        };
-        if (grupo && asignatura) fetchCalificaciones();
-    // Dependencias ajustadas
-    }, [grupo, asignatura, setCriteriosPorBimestre, setModalCriterios, setNotificacion]);
-
-    const guardarCalificaciones = async () => {
-        setIsSaving(true);
-        const token = localStorage.getItem('token');
-        const config = { headers: { Authorization: `Bearer ${token}` } };
-        // Envía el objeto de criterios completo, separado por bimestre, que viene del estado del padre.
-        const payload = { grupoId: grupo._id, asignatura, criterios: criteriosPorBimestre, calificaciones };
-        try {
-            await axios.post(`${API_URL}/calificaciones`, payload, config);
-            setNotificacion({ mensaje: '¡Calificaciones guardadas con éxito!', tipo: 'exito' });
-        } catch (error) {
-            setNotificacion({ mensaje: 'Error al guardar las calificaciones.', tipo: 'error' });
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    // ... (handleCalificacionChange, calcularPromedioCriterio, calcularPromedioBimestre, formatFechaTooltip, handleToggleCriterio, agregarTareas se mantienen iguales)
-    const handleCalificacionChange = (alumnoId, bimestre, criterioNombre, tareaIndex, valor) => {
-        const notaFloat = valor === '' ? null : parseFloat(valor);
-        if (notaFloat !== null && (isNaN(notaFloat) || notaFloat < 0 || notaFloat > 10)) return;
-
-        const nuevaEntrada = notaFloat === null ? null : {
-            nota: notaFloat,
-            fecha: new Date().toISOString()
-        };
-
-        setCalificaciones(prev => ({
-            ...prev,
-            [alumnoId]: {
-                ...prev[alumnoId],
-                [bimestre]: {
-                    ...prev[alumnoId]?.[bimestre],
-                    [criterioNombre]: {
-                        ...prev[alumnoId]?.[bimestre]?.[criterioNombre],
-                        [tareaIndex]: nuevaEntrada,
-                    },
-                },
-            },
-        }));
-    };
-
-    const calcularPromedioCriterio = (alumnoId, bimestre, criterioNombre) => {
-        const tareas = calificaciones[alumnoId]?.[bimestre]?.[criterioNombre] || {};
-        const notasValidas = Object.values(tareas)
-            .filter(entrada => entrada && typeof entrada.nota === 'number')
-            .map(entrada => entrada.nota);
-
-        if (notasValidas.length === 0) return 0;
-        const total = notasValidas.reduce((sum, nota) => sum + nota, 0);
-        return total / notasValidas.length;
-    };
-
-    const calcularPromedioBimestre = (alumnoId, bimestre) => {
-        const criteriosDelBimestre = criteriosPorBimestre[bimestre] || [];
-
-        if (criteriosDelBimestre.length === 0) return 0;
-
-        const promedioPonderado = criteriosDelBimestre.reduce((acc, criterio) => {
-            const promCriterio = calcularPromedioCriterio(alumnoId, bimestre, criterio.nombre);
-            return acc + (promCriterio * (criterio.porcentaje / 100));
-        }, 0);
-
-        return promedioPonderado.toFixed(2);
-    };
-
-    const formatFechaTooltip = (fechaISO) => {
-        if (!fechaISO) return "Sin calificar";
-        try {
-            return new Date(fechaISO).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        } catch (e) { return "Fecha inválida"; }
-    };
-
-    const handleToggleCriterio = (alumnoId, criterioNombre) => {
-        const esElMismo = criterioAbierto?.alumnoId === alumnoId && criterioAbierto?.criterioNombre === criterioNombre;
-        setCriterioAbierto(esElMismo ? null : { alumnoId, criterioNombre });
-    };
-
-    const agregarTareas = (criterioNombre) => {
-        setNumTareas(prev => ({...prev, [criterioNombre]: (prev[criterioNombre] || 10) + 5}));
-    };
-
-
-    if (isLoadingData) return <div className="trabajos-container grupo-componente" style={{textAlign: 'center', paddingTop: '10rem'}}><p style={{color: '#E9E9E9'}}>Cargando datos del grupo...</p></div>;
-
-
-    return (
-        <div className="modal-backdrop-solid grupo-componente">
-            {/* Se eliminó la Notificación de aquí */}
-            <div className="asistencia-modal-content">
-                <header className="main-header" style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 20px' }}>
-                    <h2>Calificaciones: {grupo.nombre} - {asignatura}</h2>
-                    <div>
-                        {/* Pasa la función del padre para abrir el modal de criterios */}
-                        <button className="btn" onClick={() => setModalCriterios(true)}>Criterios</button>
-                        <button className="btn btn-cancel" onClick={onVolver} style={{marginLeft: '10px'}}>Cerrar</button>
-                    </div>
-                </header>
-                <div className="bimestre-selector">
-                    {[1, 2, 3].map(bim => (
-                        <button key={bim} className={`btn ${bimestreActivo === bim ? 'btn-primary' : ''}`} onClick={() => setBimestreActivo(bim)}>Bimestre {bim}</button>
-                    ))}
-                </div>
-
-                {criteriosActivos.length > 0 ? (
-                    <div className="asistencia-grid">
-                        <div className="asistencia-body">
-                            {grupo.alumnos.sort((a,b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map(alumno => (
-                                <React.Fragment key={alumno._id}>
-                                    <div className="asistencia-row">
-                                        <div className="alumno-nombre">{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</div>
-                                        <div className="bimestres-container">
-                                            {criteriosActivos.map(criterio => (
-                                                <div
-                                                    key={criterio.nombre}
-                                                    className={`bimestre-header-btn ${criterioAbierto?.alumnoId === alumno._id && criterioAbierto?.criterioNombre === criterio.nombre ? 'activo' : ''}`}
-                                                    onClick={() => handleToggleCriterio(alumno._id, criterio.nombre)}
-                                                >
-                                                    {criterio.nombre} ({criterio.porcentaje}%)
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <div className="promedio-final-display" style={{color: calcularPromedioBimestre(alumno._id, bimestreActivo) >= 6 ? '#27ae60' : '#d32f2f'}}>
-                                            Prom: {calcularPromedioBimestre(alumno._id, bimestreActivo)}
-                                        </div>
-                                    </div>
-                                    {criterioAbierto?.alumnoId === alumno._id && (
-                                        <div className={`bimestre-desplegable desplegado`}>
-                                            <div className="criterio-resumen-wrapper">
-                                                <div className="criterio-resumen">
-                                                    <span className="criterio-info">
-                                                        {criterioAbierto.criterioNombre} ({criteriosActivos.find(c => c.nombre === criterioAbierto.criterioNombre)?.porcentaje}%)
-                                                    </span>
-                                                    <span className="criterio-prom" style={{color: calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre) >= 6 ? 'var(--dark-color)' : 'var(--danger-color)'}}>
-                                                        Prom: {calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre).toFixed(2)}
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            <div className="cuadritos-grid">
-                                                {Array.from({ length: numTareas[criterioAbierto.criterioNombre] || 10 }).map((_, tareaIndex) => {
-                                                    const entrada = calificaciones[alumno._id]?.[bimestreActivo]?.[criterioAbierto.criterioNombre]?.[tareaIndex];
-                                                    return <input
-                                                        key={tareaIndex}
-                                                        type="number"
-                                                        min="0" max="10" step="0.1"
-                                                        className="cuadrito-calificacion"
-                                                        placeholder={`${tareaIndex + 1}`}
-                                                        value={entrada?.nota ?? ''}
-                                                        title={formatFechaTooltip(entrada?.fecha)}
-                                                        onChange={(e) => handleCalificacionChange(alumno._id, bimestreActivo, criterioAbierto.criterioNombre, tareaIndex, e.target.value)}
-                                                    />;
-                                                })}
-                                                <button className="btn btn-agregar-dias" onClick={() => agregarTareas(criterioAbierto.criterioNombre)}>+5</button>
-                                            </div>
-                                        </div>
-                                    )}
-                                </React.Fragment>
-                            ))}
-                        </div>
-                    </div>
-                ) : (
-                    <div className="aviso-criterios"><p>⚠️ Por favor, define los criterios de evaluación para el **Bimestre {bimestreActivo}**.</p></div>
-                )}
-                <div className="modal-actions" style={{padding: '0 20px'}}>
-                    <button className="btn btn-primary" onClick={guardarCalificaciones} disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar Calificaciones'}</button>
-                </div>
-            </div>
-            {/* Se eliminó el ModalCriterios de aquí */}
-        </div>
-    );
-};
 
 // ======================================
 // 4. Componente: Lista de Grupos (SIN CAMBIOS)
