@@ -166,7 +166,7 @@ function Trabajos({ user }) {
                     color: var(--main-color);
                 }
 
-                /* --- BOTONES DE ACCIÓN (General) --- */
+                /* --- BOTONES --- */
                 .grupo-componente .btn {
                     display: inline-block;
                     padding: 0.8rem 1.5rem;
@@ -187,13 +187,12 @@ function Trabajos({ user }) {
                     background-color: var(--main-color); 
                     color: var(--dark-color);
                     border-color: var(--main-color);
-                    font-weight: 600; /* Aseguramos que sea negrita */
+                    font-weight: 600;
                 }
                 .grupo-componente .btn-cancel { 
                     background-color: #2c3e50;
                     color: white;
                     border-color: #2c3e50;
-                    font-weight: 600; /* Aseguramos que sea negrita */
                 }
                 .grupo-componente .btn-secondary {
                     background-color: #34495e;
@@ -256,84 +255,7 @@ function Trabajos({ user }) {
                 }
 
                 /* ================================================= */
-                /* ESTILOS MODAL DE CRITERIOS (MEJORADOS)             */
-                /* ================================================= */
-                
-                .grupo-componente .modal-content {
-                    background-color: var(--dark-color-alt);
-                    padding: 2.5rem; border-radius: 12px; width: 90%;
-                    max-width: 650px;
-                    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-                }
-                
-                .grupo-componente .criterio-item {
-                    border-left: 5px solid var(--main-color);
-                }
-
-                /* MEJORA: Formulario de adición de criterios */
-                .grupo-componente .criterio-form {
-                    display: flex;
-                    gap: 10px; /* Reducimos el espacio */
-                    margin: 2rem 0 1rem 0;
-                    align-items: center;
-                }
-                /* MEJORA: Inputs más grandes y visualmente impactantes */
-                .grupo-componente .criterio-form input {
-                    background: var(--dark-color);
-                    border: 2px solid #555; /* Borde más grueso */
-                    border-radius: 8px;
-                    color: var(--text-color);
-                    padding: 14px 12px; /* Mayor padding vertical */
-                    box-sizing: border-box;
-                    font-size: 1.05rem; /* Letra un poco más grande */
-                    font-weight: 500;
-                }
-                .grupo-componente .criterio-form input:focus {
-                    border-color: var(--main-color);
-                    box-shadow: 0 0 5px rgba(185, 151, 43, 0.5); /* Sombra al enfocar */
-                }
-                
-                .grupo-componente .porcentaje-wrapper {
-                    max-width: 120px; /* Reducimos el ancho para que el botón "Añadir" quepa mejor */
-                }
-                
-                .grupo-componente .criterio-form input[type="number"] {
-                    padding-right: 35px;
-                    text-align: center; /* Centramos el porcentaje */
-                }
-                /* MEJORA: Botón Añadir más llamativo y con el color principal */
-                .grupo-componente .criterio-form .btn {
-                    padding: 14px 15px; /* Hace que el botón tenga la misma altura que los inputs */
-                    background-color: var(--main-color);
-                    color: var(--dark-color);
-                    font-weight: 700; /* Botón de acción principal muy visible */
-                    border: none;
-                    border-radius: 8px;
-                    line-height: 1;
-                    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-                    transition: background-color 0.2s;
-                }
-                .grupo-componente .criterio-form .btn:hover {
-                    background-color: #d4b03f;
-                    transform: none;
-                }
-
-                .grupo-componente .criterio-total {
-                    font-size: 1.3rem; /* Total un poco más grande */
-                }
-
-                /* MEJORA: Aseguramos el estilo de los botones de pie de modal */
-                .grupo-componente .modal-actions button.btn-cancel {
-                    font-weight: 600;
-                    padding: 0.9rem 1.8rem;
-                }
-                .grupo-componente .modal-actions button.btn-primary {
-                    font-weight: 700; /* Más énfasis en guardar */
-                    padding: 0.9rem 1.8rem;
-                }
-                
-                /* ================================================= */
-                /* ESTILOS RESTANTES (SIN CAMBIOS)                     */
+                /* ESTILOS PARA EL PANEL DE CALIFICACIÓN TIPO ASISTENCIA */
                 /* ================================================= */
 
                 .grupo-componente .modal-backdrop-solid { 
@@ -371,8 +293,7 @@ function Trabajos({ user }) {
                     padding: 10px 20px;
                     font-size: 1rem;
                 }
-                
-                /* Asistencia/Calificaciones Grid y Rows */
+
                 .grupo-componente .asistencia-grid {
                     padding: 1rem 0;
                 }
@@ -544,7 +465,33 @@ function Trabajos({ user }) {
                     background-color: #4b6587;
                 }
 
+                /* --- MODAL DE CRITERIOS (CON NUEVOS ESTILOS) --- */
+                .grupo-componente .modal-content {
+                    background-color: var(--dark-color-alt);
+                    padding: 2.5rem; border-radius: 12px; width: 90%;
+                    max-width: 650px;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+                }
+                .grupo-componente .modal-content h2 {
+                    text-align: center;
+                    margin-bottom: 2rem;
+                    font-size: 1.6rem;
+                }
 
+                .grupo-componente .modal-actions {
+                    display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;
+                }
+
+                .grupo-componente .criterio-item {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    background-color: var(--dark-color);
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    margin-bottom: 10px;
+                    border-left: 5px solid var(--main-color);
+                }
                 .grupo-componente .criterio-item span {
                     font-size: 1rem;
                 }
@@ -559,6 +506,69 @@ function Trabajos({ user }) {
                     font-size: 1.5rem;
                 }
                 
+                /* MEJORA: Formulario de adición de criterios */
+                .grupo-componente .criterio-form {
+                    display: flex;
+                    gap: 10px; /* Reducimos el espacio */
+                    margin: 2rem 0 1rem 0;
+                    align-items: center;
+                }
+                /* MEJORA: Inputs más grandes y visualmente impactantes */
+                .grupo-componente .criterio-form input {
+                    background: var(--dark-color);
+                    border: 2px solid #555; /* Borde más grueso */
+                    border-radius: 8px;
+                    color: var(--text-color);
+                    padding: 14px 12px; /* Mayor padding vertical */
+                    box-sizing: border-box;
+                    font-size: 1.05rem; /* Letra un poco más grande */
+                    font-weight: 500;
+                }
+                .grupo-componente .criterio-form input:focus {
+                    border-color: var(--main-color);
+                    box-shadow: 0 0 5px rgba(185, 151, 43, 0.5); /* Sombra al enfocar */
+                }
+                
+                .grupo-componente .porcentaje-wrapper {
+                    position: relative;
+                    flex-grow: 1;
+                    max-width: 120px; /* Reducimos el ancho para que el botón "Añadir" quepa mejor */
+                }
+                .grupo-componente .porcentaje-wrapper::after {
+                    content: '%';
+                    position: absolute;
+                    right: 15px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    color: #888;
+                    pointer-events: none;
+                }
+                .grupo-componente .criterio-form input[type="number"] {
+                    padding-right: 35px;
+                    text-align: center; /* Centramos el porcentaje */
+                }
+                /* MEJORA: Botón Añadir más llamativo y con el color principal */
+                .grupo-componente .criterio-form .btn {
+                    padding: 14px 15px; /* Hace que el botón tenga la misma altura que los inputs */
+                    background-color: var(--main-color);
+                    color: var(--dark-color);
+                    font-weight: 700; /* Botón de acción principal muy visible */
+                    border: none;
+                    border-radius: 8px;
+                    line-height: 1;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+                    transition: background-color 0.2s;
+                }
+                .grupo-componente .criterio-form .btn:hover {
+                    background-color: #d4b03f;
+                    transform: none;
+                }
+
+                .grupo-componente .criterio-total {
+                    text-align: right; font-size: 1.3rem; font-weight: bold;
+                    margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #444;
+                    color: var(--text-color);
+                }
                 .grupo-componente .criterio-total.error {
                     color: var(--danger-color);
                 }
@@ -654,6 +664,7 @@ function Trabajos({ user }) {
                     criteriosPorBimestre={criteriosPorBimestre} // Pasa el estado para consumo
                     setCriteriosPorBimestre={setCriteriosPorBimestre} // Pasa la función para actualizar
                     setNotificacion={setNotificacion} // Pasa la función para notificar
+                    user={user} // ✅ CORRECCIÓN: Pasar la prop user para eliminar el error de compilación
                 />
             )}
             </div>
@@ -684,7 +695,8 @@ const PanelCalificaciones = ({
     setModalCriterios, 
     criteriosPorBimestre, 
     setCriteriosPorBimestre,
-    setNotificacion 
+    setNotificacion,
+    user // ✅ CORRECCIÓN: Recibir la prop user
 }) => {
     const [bimestreActivo, setBimestreActivo] = useState(1);
     const [calificaciones, setCalificaciones] = useState({});
@@ -701,15 +713,15 @@ const PanelCalificaciones = ({
         const fetchCalificaciones = async () => {
             setIsLoadingData(true);
             const token = localStorage.getItem('token');
-            const userId = user?._id || user?.id; // user no está definido aquí pero se usa, asumiendo que viene de un contexto global o se pasa.
+            const userId = user?._id || user?.id; // Este uso es ahora correcto
+            const config = { headers: { Authorization: `Bearer ${token}` } };
 
-            if (!token) {
+            if (!token || !userId) {
                 setIsLoadingData(false);
                 setNotificacion({ mensaje: 'Error de autenticación: Token no disponible.', tipo: 'error' });
                 return;
             }
 
-            const config = { headers: { Authorization: `Bearer ${token}` } };
             try {
                 const url = `${API_URL}/calificaciones?grupoId=${grupo._id}&asignatura=${asignatura}`;
                 const res = await axios.get(url, config);
@@ -757,7 +769,7 @@ const PanelCalificaciones = ({
         };
         if (grupo && asignatura) fetchCalificaciones();
     // Dependencias ajustadas
-    }, [grupo, asignatura, setCriteriosPorBimestre, setModalCriterios, setNotificacion]); 
+    }, [grupo, asignatura, setCriteriosPorBimestre, setModalCriterios, setNotificacion, user]); // Añadimos 'user' a las dependencias
 
     const guardarCalificaciones = async () => {
         setIsSaving(true);
