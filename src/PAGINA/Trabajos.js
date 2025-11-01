@@ -117,7 +117,7 @@ function Trabajos({ user }) {
         }
 
         .grupo-componente .trabajos-container {
-            padding-top: 5rem; /* Ajuste para el padding superior */
+            padding-top: 5rem; 
             padding-bottom: 2rem;
             max-width: 1200px;
             margin: 0 auto;
@@ -181,7 +181,6 @@ function Trabajos({ user }) {
         }
         
         /* --- TABLA DE SELECCIÓN DE GRUPO --- */
-        /* FIX: NUEVO CONTENEDOR PARA CENTRAR LA TABLA */
         .grupos-table-wrapper {
             display: flex;
             justify-content: center;
@@ -191,8 +190,8 @@ function Trabajos({ user }) {
         }
 
         .grupo-componente .grupos-table {
-          width: 90%; /* Ajustamos el ancho para que no sea 100% del contenedor */
-          max-width: 800px; /* Limitamos el ancho en pantallas grandes */
+          width: 90%; 
+          max-width: 800px; 
           border-collapse: collapse;
           box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
           border-radius: 10px;
@@ -224,7 +223,7 @@ function Trabajos({ user }) {
         }
 
         /* ================================================= */
-        /* ESTILOS PARA EL PANEL DE CALIFICACIÓN TIPO ASISTENCIA */
+        /* ESTILOS PARA EL PANEL DE CALIFICACIÓN */
         /* ================================================= */
 
         .grupo-componente .modal-backdrop-solid {
@@ -234,36 +233,26 @@ function Trabajos({ user }) {
             background-color: var(--dark-color);
             display: block;
             z-index: 1000;
-            padding: 5rem 1rem 2rem 1rem;
+            padding: 1rem 1rem 2rem 1rem; 
             box-sizing: border-box;
             overflow-y: auto;
             color: var(--text-color);
         }
         
         .grupo-componente .modal-content.asistencia-modal-content {
-            background-color: var(--dark-color-alt); /* Fondo del modal */
+            background-color: var(--dark-color-alt); 
             padding: 20px;
             border-radius: 12px;
             width: 100%;
-            max-width: 1200px; /* Ancho máximo para el panel */
-            margin: auto;
+            max-width: 1200px; 
+            margin: 4rem auto 0 auto; 
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
         }
         
-        /* Resto de estilos del panel de calificaciones */
-        .grupo-componente .asistencia-grid {
-            padding: 1rem 0;
-        }
-        
-        .grupo-componente .asistencia-body {
-            max-height: 75vh;
-            overflow-y: auto;
-            padding-right: 10px;
-        }
-        
+        /* Estilos para la fila de alumnos - AHORA MÁS ROBUSTA */
         .grupo-componente .asistencia-row {
-            display: grid; /* Usamos grid como base para el orden */
-            grid-template-columns: 250px 1fr 100px; /* Definimos columnas */
+            display: grid; 
+            grid-template-columns: 250px 1fr 100px; /* Alumno (fijo) | Criterios (flexible) | Promedio (fijo) */
             align-items: center;
             padding: 10px 0;
             border-bottom: 1px solid var(--dark-color);
@@ -280,313 +269,81 @@ function Trabajos({ user }) {
             font-weight: 500;
         }
         
-        /* --- NUEVOS ESTILOS PARA EL RESUMEN DE CRITERIO --- */
-        .grupo-componente .criterio-resumen-wrapper {
-            display: flex;
-            justify-content: center; /* Centra el contenedor */
-            width: 100%;
-            margin-bottom: 10px;
-        }
-        .grupo-componente .criterio-resumen {
-            background-color: var(--main-color);
-            color: var(--dark-color);
-            font-weight: bold;
-            padding: 10px 20px;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 400px; /* Limita el ancho del cuadro */
-            text-align: center;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .grupo-componente .criterio-resumen .criterio-info {
-            flex-grow: 1;
-            text-align: left;
-        }
-        .grupo-componente .criterio-resumen .criterio-prom {
-            font-size: 1.1em;
-            margin-left: 10px;
-        }
-        /* ---------------------------------------------------- */
-
-
+        /* Contenedor de botones de criterios */
         .grupo-componente .bimestres-container {
             display: flex;
             flex-grow: 1;
             justify-content: flex-start;
             gap: 6px;
             padding: 0 10px;
-        }
-        
-        /* ESTILOS PARA EL SELECTOR DE BIMESTRE */
-        .grupo-componente .bimestre-selector {
-            display: flex;
-            gap: 10px;
-            padding: 0 20px;
-            margin-bottom: 20px;
-        }
-        .grupo-componente .bimestre-selector .btn {
-            padding: 0.5rem 1rem;
-            font-size: 1rem;
-            border-radius: 8px;
+            min-width: 100px; 
+            max-width: 100%;
+            overflow-x: auto; /* Permite scroll horizontal */
         }
 
+        /* Estilo para los botones individuales de criterio */
+        .grupo-componente .bimestre-header-btn {
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            flex-shrink: 0; /* EVITA QUE SE ENCOJA */
+            border: 1px solid #555;
+            border-radius: 6px;
+            background-color: var(--dark-color-alt);
+            cursor: pointer;
+        }
 
         .grupo-componente .promedio-final-display {
             padding-right: 15px;
             text-align: right;
+            font-weight: bold;
         }
-        
-        .grupo-componente .bimestre-header-btn {
-            text-align: center;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s;
-            background-color: var(--dark-color-alt);
-            color: var(--text-color);
-            font-size: 0.8rem;
-            white-space: nowrap;
-            border: 1px solid #555;
-        }
-        .grupo-componente .bimestre-header-btn:hover {
-            border-color: var(--main-color);
-            filter: brightness(1.2);
-        }
-        .grupo-componente .bimestre-header-btn.activo {
-            background-color: var(--main-color);
-            color: var(--dark-color);
-            font-weight: bold;
-            border-color: var(--main-color);
-        }
-        
-        .grupo-componente .bimestre-desplegable {
-            grid-column: 1 / -1; /* Ocupa todo el ancho en el grid */
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.4s ease-out, padding 0.4s ease-out, margin 0.4s ease-out;
-            padding: 0 20px;
-            margin: 0;
-            background-color: var(--dark-color-alt);
-            border-radius: 0 0 12px 12px;
-        }
+        
+        /* Contenedor de tareas desplegado (detalle) */
         .grupo-componente .bimestre-desplegable.desplegado {
             max-height: 500px;
             padding: 20px;
-            margin: 0;
+            margin-bottom: 5px; 
         }
-        
-        .grupo-componente .asistencia-totales {
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 1rem;
-            font-weight: 500;
-        }
-        .grupo-componente .total-presentes {
-            color: var(--success-color);
-            font-weight: bold;
-        }
-        
+        
+        /* FIX de la grilla de cuadritos a flexbox horizontal con scroll */
         .grupo-componente .cuadritos-grid {
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(32px, 1fr));
+            display: flex; 
+            flex-wrap: nowrap; 
             gap: 6px;
             align-items: center;
+            overflow-x: auto; /* IMPORTANTE: Habilita el scroll horizontal */
+            padding-bottom: 10px;
         }
-        
-        /* Estilos de input y botón en el cuadritos-grid */
+        
         .grupo-componente .cuadrito-calificacion {
-            width: 38px; /* Aumentado un poco el ancho para móvil */
+            width: 38px; 
             height: 32px;
-            background-color: #4a4a4a;
-            border: 1px solid #777;
-            border-radius: 4px;
-            color: white;
-            text-align: center; /* Centrar texto horizontalmente */
-            font-weight: bold;
-            font-family: var(--body-font);
+            flex-shrink: 0; /* No se encoge */
+            flex-grow: 0; 
+            -moz-appearance: textfield; 
+            text-align: center;
         }
-        /* --- FIX: OCULTAR FLECHITAS DE INPUT TYPE=NUMBER Y CENTRAR TEXTO --- */
-        .grupo-componente .cuadrito-calificacion {
-            -moz-appearance: textfield; /* Para Firefox */
-        }
-        .grupo-componente .cuadrito-calificacion::-webkit-outer-spin-button,
-        .grupo-componente .cuadrito-calificacion::-webkit-inner-spin-button {
-            -webkit-appearance: none; /* Para Chrome, Safari, Edge */
-            margin: 0;
-        }
-        /* ------------------------------------------------------------------- */
-
-        .grupo-componente .cuadrito-calificacion::placeholder {
-            color: #999;
-            font-size: 0.8em;
-        }
-        
-        .grupo-componente .btn-agregar-dias {
-            background-color: var(--main-color);
-            color: var(--dark-color);
-            border: none;
-            border-radius: 4px;
-            width: 38px;
-            height: 32px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        
-        /* --- MODAL DE CRITERIOS (CON NUEVOS ESTILOS) --- */
-        .grupo-componente .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: flex; justify-content: center; align-items: center; z-index: 1050;
-        }
-
-        .grupo-componente .modal-content {
-            background-color: var(--dark-color-alt);
-            padding: 2rem; border-radius: 12px; width: 90%;
-            max-width: 600px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
-        .grupo-componente .modal-actions {
-            display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;
-        }
-
-        .grupo-componente .criterio-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: var(--dark-color);
-            padding: 10px 15px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-        }
-        .grupo-componente .criterio-item span {
-            color: var(--text-color);
-        }
-        .grupo-componente .criterio-item span strong {
-            color: var(--main-color);
-        }
-        .grupo-componente .criterio-item button {
-            background-color: transparent;
-            border: none;
-            color: var(--danger-color);
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 1.2rem;
-            transition: transform 0.2s;
-        }
-        
-        .grupo-componente .criterio-form {
-            display: flex;
-            gap: 10px;
-            margin: 1.5rem 0;
-            align-items: center;
-        }
-        .grupo-componente .criterio-form input {
-            background: var(--dark-color);
-            border: 1px solid #555;
-            border-radius: 6px;
-            color: var(--text-color);
-            padding: 12px;
-            box-sizing: border-box;
-        }
-        .grupo-componente .criterio-form input:focus {
-            outline: none;
-            border-color: var(--main-color);
-        }
-        .grupo-componente .criterio-form input::placeholder {
-            color: #888;
-        }
-        .grupo-componente .criterio-form input[type="text"] { flex-grow: 3; }
-
-        .grupo-componente .criterio-form .btn {
-            padding: 12px;
-            background-color: var(--dark-color);
-            color: var(--text-color);
-            border: 1px solid #555;
-        }
-        
-        .grupo-componente .criterio-total {
-            text-align: right; font-size: 1.1rem; font-weight: bold;
-            margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #444;
-            color: var(--text-color);
-        }
-        .grupo-componente .aviso-criterios {
-            text-align: center; padding: 3rem; background-color: var(--dark-color-alt);
-            border-radius: 8px; margin: 2rem;
-        }
-        .grupo-componente .aviso-criterios p {
-            margin-bottom: 1.5rem; font-size: 1.1rem; color: var(--warning-color);
-        }
-        
-        /* --- OCULTAR BARRA DE SCROLL INTERNA --- */
-        .grupo-componente .asistencia-body::-webkit-scrollbar {
-            display: none;
-        }
-        .grupo-componente .asistencia-body {
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
-
-        /* --- ESTILO DE SCROLLBAR PERSONALIZADO --- */
-        .grupo-componente .modal-backdrop-solid {
-            /* Para Firefox */
-            scrollbar-width: thin;
-            scrollbar-color: var(--main-color) var(--dark-color-alt);
-        }
-        /* Para Webkit (Chrome, Safari, Edge) */
-        .grupo-componente .modal-backdrop-solid::-webkit-scrollbar {
-            width: 8px;
-        }
-        .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-track {
-            background: var(--dark-color-alt);
-        }
-        .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-thumb {
-            background-color: var(--main-color);
-            border-radius: 10px;
-            border: 2px solid var(--dark-color-alt);
-        }
-        .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-thumb:hover {
-            background-color: #d4b03f; /* Un tono más claro del color principal */
-        }
-        
-        /* Media Queries */
+        
+        /* Media Queries para móviles */
         @media (max-width: 768px) {
-            .grupo-componente .trabajos-container {
-                padding-top: 0;
-            }
-            .grupo-componente .main-header {
-                flex-direction: column;
-                align-items: flex-start;
-                padding-top: 1rem;
-            }
-            .grupo-componente .main-header h1 {
-                margin-bottom: 10px;
-            }
             .grupo-componente .asistencia-row {
                 grid-template-columns: 1fr;
                 gap: 10px;
                 padding: 10px;
             }
-            .grupo-componente .alumno-nombre {
-                width: auto;
-                padding-left: 0;
+            .grupo-componente .bimestres-container {
+                flex-wrap: wrap; /* Permitir que los botones se envuelvan */
+                padding: 0;
+                margin-top: 5px;
+                overflow-x: hidden; /* Ocultar scroll si se envuelve */
+            }
+            .grupo-componente .bimestre-header-btn {
+                width: 48%; /* Dos botones por fila */
+                flex-grow: 1;
             }
             .grupo-componente .promedio-final-display {
                 text-align: left;
-                padding-right: 0;
-            }
-            .grupo-componente .bimestres-container {
-                justify-content: space-between;
-            }
-            .grupo-componente .modal-content {
-                max-width: 95%;
-            }
-            .grupo-componente .grupos-table {
-                width: 100%;
-                max-width: none;
             }
         }
       `}</style>
@@ -600,7 +357,7 @@ function Trabajos({ user }) {
             onVolver={handleVolver} 
           />
         )}
-      </div>
+        </div>
     </>
   );
 }
@@ -608,11 +365,9 @@ function Trabajos({ user }) {
 
 // ======================================
 // --- 3. Sub-componente: Panel Principal de Calificaciones ---
-// Modificado para usar criterios por bimestre.
 // ======================================
 const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
     const [bimestreActivo, setBimestreActivo] = useState(1);
-    // Estado MODIFICADO: Ahora guarda los criterios por número de bimestre (ej: {1: [], 2: [], 3: []})
     const [criteriosBimestre, setCriteriosBimestre] = useState({ 1: [], 2: [], 3: [] });
     const [calificaciones, setCalificaciones] = useState({});
     const [isLoadingData, setIsLoadingData] = useState(true);
@@ -621,10 +376,8 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
     const [modalCriterios, setModalCriterios] = useState(false);
     const [criterioAbierto, setCriterioAbierto] = useState(null); 
     
-    // Estado para controlar cuántas tareas se muestran por criterio (por defecto 10)
     const [numTareas, setNumTareas] = useState({}); 
 
-    // Obtener los criterios del bimestre activo
     const criterios = criteriosBimestre[bimestreActivo] || [];
 
 
@@ -636,34 +389,29 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
             try {
                 const res = await axios.get(`${API_URL}/calificaciones?grupoId=${grupo._id}&asignatura=${asignatura}`, config);
                 
-                // MODIFICADO: Al cargar, mapear los criterios al nuevo estado
-                // Asumiendo que el backend devuelve un objeto como: { 1: [criterios], 2: [criterios] }
                 setCriteriosBimestre(res.data?.criteriosBimestre || { 1: [], 2: [], 3: [] });
                 setCalificaciones(res.data?.calificaciones || {});
                 
-                // Inicializa numTareas basado en los datos existentes o a 10
                 const initialNumTareas = {1: {}, 2: {}, 3: {}};
-                
-                // Iterar sobre todos los bimestres y criterios para calcular maxIndex
-                Object.keys(res.data?.criteriosBimestre || {}).forEach(bimestre => {
-                    (res.data?.criteriosBimestre[bimestre] || []).forEach(criterio => {
-                        let maxIndex = 0;
-                        Object.values(res.data?.calificaciones || {}).forEach(alumnoCal => {
-                            const tareas = alumnoCal[bimestre]?.[criterio.nombre];
-                            if (tareas) {
-                                const currentMax = Math.max(...Object.keys(tareas).map(Number));
-                                if (currentMax >= maxIndex) maxIndex = currentMax + 1;
-                            }
-                        });
-                        initialNumTareas[bimestre][criterio.nombre] = Math.max(10, maxIndex + 5);
-                    });
-                });
-                
+                
+                Object.keys(res.data?.criteriosBimestre || {}).forEach(bimestre => {
+                    (res.data?.criteriosBimestre[bimestre] || []).forEach(criterio => {
+                        let maxIndex = 0;
+                        Object.values(res.data?.calificaciones || {}).forEach(alumnoCal => {
+                            const tareas = alumnoCal[bimestre]?.[criterio.nombre];
+                            if (tareas) {
+                                const currentMax = Math.max(...Object.keys(tareas).map(Number));
+                                if (currentMax >= maxIndex) maxIndex = currentMax + 1;
+                            }
+                        });
+                        initialNumTareas[bimestre][criterio.nombre] = Math.max(10, maxIndex + 5);
+                    });
+                });
+                
                 setNumTareas(initialNumTareas);
 
-                // Revisa los criterios del primer bimestre al cargar.
                 if (!res.data || !res.data.criteriosBimestre || !res.data.criteriosBimestre[1] || res.data.criteriosBimestre[1].length === 0) {
-                    setModalCriterios(true);
+                    // La lógica de abrir modal se maneja en el useEffect del bimestre
                 }
             } catch (error) {
                 setNotificacion({ mensaje: 'Error al cargar los datos de calificaciones.', tipo: 'error' });
@@ -678,7 +426,6 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
         setIsSaving(true);
         const token = localStorage.getItem('token');
         const config = { headers: { Authorization: `Bearer ${token}` } };
-        // MODIFICADO: Enviar criteriosBimestre al backend
         const payload = { grupoId: grupo._id, asignatura, criteriosBimestre, calificaciones };
         try {
             await axios.post(`${API_URL}/calificaciones`, payload, config);
@@ -689,32 +436,27 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
             setIsSaving(false);
         }
     };
-    
-    // Función para actualizar los criterios (llamada desde la modal)
-    const handleGuardarCriteriosBimestre = (nuevosCriterios) => {
-        setCriteriosBimestre(prev => ({
-            ...prev,
-            [bimestreActivo]: nuevosCriterios
-        }));
+    
+    const handleGuardarCriteriosBimestre = (nuevosCriterios) => {
+        setCriteriosBimestre(prev => ({
+            ...prev,
+            [bimestreActivo]: nuevosCriterios
+        }));
 
-        // Limpia el criterio abierto para evitar errores visuales si se modificó
-        setCriterioAbierto(null); 
-    };
-    
-    // Al cambiar de bimestre, si no hay criterios, abre la modal
-    useEffect(() => {
-        if (!isLoadingData) {
-            if (!criteriosBimestre[bimestreActivo] || criteriosBimestre[bimestreActivo].length === 0) {
-                setModalCriterios(true);
-            }
-        }
-        // También cerramos el panel de tareas al cambiar de bimestre.
-        setCriterioAbierto(null);
-    }, [bimestreActivo, isLoadingData, criteriosBimestre]);
-    
+        setCriterioAbierto(null); 
+    };
+    
+    useEffect(() => {
+        if (!isLoadingData) {
+            if (!criteriosBimestre[bimestreActivo] || criteriosBimestre[bimestreActivo].length === 0) {
+                setModalCriterios(true);
+            }
+        }
+        setCriterioAbierto(null);
+    }, [bimestreActivo, isLoadingData, criteriosBimestre]);
+    
 
     const handleCalificacionChange = (alumnoId, bimestre, criterioNombre, tareaIndex, valor) => {
-        // La lógica se mantiene igual y es robusta
         const notaFloat = valor === '' ? null : parseFloat(valor);
         if (notaFloat !== null && (isNaN(notaFloat) || notaFloat < 0 || notaFloat > 10)) return;
         
@@ -750,7 +492,6 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
     };
 
     const calcularPromedioBimestre = (alumnoId, bimestre) => {
-        // MODIFICADO: Usar los criterios del bimestre actual.
         const criteriosDelBimestre = criteriosBimestre[bimestre] || [];
         if (criteriosDelBimestre.length === 0) return 0;
         
@@ -777,12 +518,12 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
     const agregarTareas = (criterioNombre) => {
         // Aumenta el contador de tareas mostradas en 5, almacenado por bimestre y criterio
         setNumTareas(prev => ({
-            ...prev,
-            [bimestreActivo]: {
-                ...prev[bimestreActivo],
-                [criterioNombre]: (prev[bimestreActivo]?.[criterioNombre] || 10) + 5
-            }
-        }));
+            ...prev,
+            [bimestreActivo]: {
+                ...prev[bimestreActivo],
+                [criterioNombre]: (prev[bimestreActivo]?.[criterioNombre] || 10) + 5
+            }
+        }));
     };
 
     if (isLoadingData) return <div className="trabajos-container grupo-componente" style={{textAlign: 'center', paddingTop: '10rem'}}><p style={{color: '#E9E9E9'}}>Cargando datos del grupo...</p></div>;
@@ -800,7 +541,7 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                 </header>
                 <div className="bimestre-selector">
                     {[1, 2, 3].map(bim => (
-                        // Modificado: Al hacer clic, se cambia el bimestre activo.
+                        // Modificado: Al hacer clic, se cambia el bimestre activo.
                         <button key={bim} className={`btn ${bimestreActivo === bim ? 'btn-primary' : ''}`} onClick={() => setBimestreActivo(bim)}>Bimestre {bim}</button>
                     ))}
                 </div>
@@ -870,25 +611,25 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                     </div>
                 ) : (
                     <div className="aviso-criterios">
-                        <p>⚠️ **Bimestre {bimestreActivo}**: Por favor, define los criterios de evaluación para comenzar a calificar.</p>
-                        <button className="btn btn-primary" onClick={() => setModalCriterios(true)}>Definir Criterios</button>
-                    </div>
+                        <p>⚠️ **Bimestre {bimestreActivo}**: Por favor, define los criterios de evaluación para comenzar a calificar.</p>
+                        <button className="btn btn-primary" onClick={() => setModalCriterios(true)}>Definir Criterios</button>
+                    </div>
                 )}
                 <div className="modal-actions" style={{padding: '0 20px'}}>
                     <button className="btn btn-primary" onClick={guardarCalificaciones} disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar Calificaciones'}</button>
                 </div>
             </div>
-            {/* MODIFICADO: Pasar el bimestre y el manejador de guardado actualizado. */}
+            {/* MODIFICADO: Pasar el bimestre y el manejador de guardado actualizado. */}
             {modalCriterios && (
-                <ModalCriterios 
-                    bimestre={bimestreActivo}
-                    criteriosExistentes={criteriosBimestre[bimestreActivo]} 
-                    criteriosAnteriores={bimestreActivo > 1 ? criteriosBimestre[bimestreActivo - 1] : []}
-                    onGuardar={handleGuardarCriteriosBimestre} 
-                    onClose={() => setModalCriterios(false)} 
-                    setNotificacion={setNotificacion} 
-                />
-            )}
+                <ModalCriterios 
+                    bimestre={bimestreActivo}
+                    criteriosExistentes={criteriosBimestre[bimestreActivo]} 
+                    criteriosAnteriores={bimestreActivo > 1 ? criteriosBimestre[bimestreActivo - 1] : []}
+                    onGuardar={handleGuardarCriteriosBimestre} 
+                    onClose={() => setModalCriterios(false)} 
+                    setNotificacion={setNotificacion} 
+                />
+            )}
         </div>
     );
 };
@@ -969,18 +710,18 @@ const ModalCriterios = ({ bimestre, criteriosExistentes, criteriosAnteriores, on
 
     const removeCriterio = (index) => setCriterios(criterios.filter((_, i) => i !== index));
 
-    // NUEVO: Función para copiar criterios del bimestre anterior
-    const copiarCriteriosAnteriores = () => {
-        if (criterios.length > 0 && !window.confirm(`Ya tienes criterios definidos. ¿Estás seguro de que quieres reemplazarlos con los del Bimestre ${bimestre - 1}?`)) {
-            return;
-        }
-        if (criteriosAnteriores && criteriosAnteriores.length > 0) {
-            setCriterios([...criteriosAnteriores]); // Copia superficial es suficiente
-            setNotificacion({ mensaje: `Criterios del Bimestre ${bimestre - 1} copiados. ¡Recuerda Guardar!`, tipo: 'exito' });
-        } else {
-            setNotificacion({ mensaje: `No hay criterios definidos en el Bimestre ${bimestre - 1} para copiar.`, tipo: 'error' });
-        }
-    };
+    // NUEVO: Función para copiar criterios del bimestre anterior
+    const copiarCriteriosAnteriores = () => {
+        if (criterios.length > 0 && !window.confirm(`Ya tienes criterios definidos. ¿Estás seguro de que quieres reemplazarlos con los del Bimestre ${bimestre - 1}?`)) {
+            return;
+        }
+        if (criteriosAnteriores && criteriosAnteriores.length > 0) {
+            setCriterios([...criteriosAnteriores]); // Copia superficial es suficiente
+            setNotificacion({ mensaje: `Criterios del Bimestre ${bimestre - 1} copiados. ¡Recuerda Guardar!`, tipo: 'exito' });
+        } else {
+            setNotificacion({ mensaje: `No hay criterios definidos en el Bimestre ${bimestre - 1} para copiar.`, tipo: 'error' });
+        }
+    };
 
     const handleGuardar = () => {
         if (totalPorcentaje !== 100) { 
@@ -995,17 +736,17 @@ const ModalCriterios = ({ bimestre, criteriosExistentes, criteriosAnteriores, on
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 <h2>Definir Criterios de Evaluación - Bimestre {bimestre}</h2>
-                {bimestre > 1 && (
-                    <div style={{textAlign: 'center', marginBottom: '1.5rem'}}>
-                        <button 
-                            className="btn" 
-                            onClick={copiarCriteriosAnteriores}
-                            disabled={!criteriosAnteriores || criteriosAnteriores.length === 0}
-                        >
-                            📋 Copiar criterios del Bimestre {bimestre - 1}
-                        </button>
-                    </div>
-                )}
+                {bimestre > 1 && (
+                    <div style={{textAlign: 'center', marginBottom: '1.5rem'}}>
+                        <button 
+                            className="btn" 
+                            onClick={copiarCriteriosAnteriores}
+                            disabled={!criteriosAnteriores || criteriosAnteriores.length === 0}
+                        >
+                            📋 Copiar criterios del Bimestre {bimestre - 1}
+                        </button>
+                    </div>
+                )}
                 {criterios.map((c, index) => (
                     <div key={index} className="criterio-item">
                         <span>{c.nombre} - <strong>{c.porcentaje}%</strong></span>
