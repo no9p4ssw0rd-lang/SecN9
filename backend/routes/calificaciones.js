@@ -1,10 +1,10 @@
 import express from 'express';
-import Calificacion from '../models/Calificacion.js'; // Usando exportación por defecto
+import Calificacion from '../models/Calificacion.js'; 
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-// --- RUTAS DE PROFESOR (Ya existentes) ---
+// --- RUTAS DE PROFESOR ---
 
 /**
  * @route   GET /calificaciones?grupoId=...&asignatura=...
@@ -18,23 +18,24 @@ router.get('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ msg: 'Se requieren los parámetros grupoId y asignatura' });
     }
 
-    // Busca el documento de calificación que coincida con el grupo Y la asignatura
     const registroDeCalificaciones = await Calificacion.findOne({ 
       grupo: grupoId, 
       asignatura: asignatura 
     });
 
     if (!registroDeCalificaciones) {
-      // Si no existe, es la primera vez que el profesor abre esta materia.
-      // Se devuelve una estructura vacía para que el frontend no falle.
-      return res.json({ criterios: { 1: [], 2: [], 3: [] }, calificaciones: {} }); 
-      // NOTA: Se devuelve criterios como objeto vacío { 1:[],...} según tu Schema.
+      // ✅ CORRECCIÓN 1: Devolver la estructura correcta del esquema de Mongoose para 'criterios'
+      // El esquema define criterios como: { 1: [], 2: [], 3: [] }, no como []
+      return res.json({ 
+        criterios: { 1: [], 2: [], 3: [] }, 
+        calificaciones: {} 
+      });
     }
 
     res.json(registroDeCalificaciones);
 
   } catch (error) {
-    console.error("Error al obtener calificaciones:", error.message);
+    console.error("Error al obtener calificaciones (Profesor):", error.message);
     res.status(500).send('Error del Servidor');
   }
 });
@@ -52,12 +53,10 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 
     try {
-        // Busca un documento por grupo y asignatura, y lo actualiza.
-        // Si no lo encuentra, 'upsert: true' crea uno nuevo.
         const registroActualizado = await Calificacion.findOneAndUpdate(
-            { grupo: grupoId, asignatura: asignatura }, // El filtro para encontrar el documento correcto
-            { criterios, calificaciones, grupo: grupoId, asignatura: asignatura }, // Los datos a guardar/actualizar
-            { upsert: true, new: true, setDefaultsOnInsert: true } // Opciones: upsert crea si no existe, new devuelve el doc actualizado
+            { grupo: grupoId, asignatura: asignatura }, 
+            { criterios, calificaciones, grupo: grupoId, asignatura: asignatura },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
         );
         
         res.status(200).json({ 
@@ -71,56 +70,49 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 });
 
-// ----------------------------------------------------------------------
-// --- RUTA AGREGADA Y CORREGIDA PARA EL ADMINISTRADOR ---
-// ----------------------------------------------------------------------
+// --- RUTA CLAVE CORREGIDA PARA EL ADMINISTRADOR ---
 
 /**
  * @route   GET /calificaciones/:grupoId/calificaciones-admin
  * @desc    Obtiene el consolidado de calificaciones por alumno para el dashboard Admin.
- * Esta ruta es la que el frontend llama en el componente Calificaciones.
+ * Esta ruta es la que fallaba con 'criterios.forEach is not a function'.
  * @access  Private (Admin)
  */
-// NOTA: Esta ruta asume que tu archivo principal de rutas lo monta como app.use('/grupos', grupoRoutes)
-// y esta función está dentro de ese router. 
+// NOTA: Si este archivo de router está montado en /calificaciones, la ruta real sería /calificaciones/:grupoId/calificaciones-admin
+// Si está montado en /grupos, la ruta real sería /grupos/:grupoId/calificaciones-admin
 router.get('/:grupoId/calificaciones-admin', authMiddleware, async (req, res) => {
     try {
         const { grupoId } = req.params;
 
-        // 1. Obtener todos los documentos de calificaciones para el grupo
+        // Obtener todos los documentos de calificaciones para el grupo
         const calificacionesDelGrupo = await Calificacion.find({ grupo: grupoId }).lean();
         
-        // Objeto final de calificaciones consolidado: 
-        // { alumnoId: { materia: [calT1, calT2, calT3], ... }, ... }
         const consolidadoPorAlumno = {};
 
-        // 2. Iterar sobre cada documento de Calificación (que representa 1 materia)
+        // 2. Iterar sobre cada documento de Calificación (1 documento = 1 materia)
         calificacionesDelGrupo.forEach(registroMateria => {
             const nombreMateria = registroMateria.asignatura;
+            // Usamos un objeto vacío por defecto en caso de que no haya calificaciones.
             const calificacionesMateria = registroMateria.calificaciones || {}; 
             
-            // 🚨 SOLUCIÓN AL ERROR: El campo 'registroMateria.criterios' NO se toca aquí.
-            // Si el código anterior intentaba: registroMateria.criterios.forEach(), 
-            // causaba el error ya que 'criterios' es un objeto, no un array.
+            // ✅ CORRECCIÓN 2: Evitar usar .forEach() en el objeto criterios, que era el problema.
 
-            // 3. Iterar sobre cada alumno que tiene calificaciones en esta materia
+            // Iteramos sobre el objeto de calificaciones por alumno
             Object.entries(calificacionesMateria).forEach(([alumnoId, calsArray]) => {
-                // Inicializar el alumno si es la primera vez que aparece
+                // calsArray es [T1, T2, T3]
                 if (!consolidadoPorAlumno[alumnoId]) {
                     consolidadoPorAlumno[alumnoId] = {};
                 }
-                // Asignar las calificaciones de esta materia al alumno
                 consolidadoPorAlumno[alumnoId][nombreMateria] = calsArray;
             });
 
         });
 
-        // El frontend espera este objeto consolidado
+        // El frontend recibe { "alumnoId": { "MateriaA": [c1, c2, c3], "MateriaB": [c1, c2, c3] }, ... }
         res.json(consolidadoPorAlumno); 
 
     } catch (error) {
-        console.error("Error procesando calificaciones para admin:", error);
-        // El error en el log de Render provenía de un fallo aquí, ¡ahora está corregido!
+        console.error("Error procesando calificaciones para admin (SOLUCIÓN IMPLEMENTADA):", error);
         res.status(500).json({ msg: 'Error interno del servidor al consolidar calificaciones' });
     }
 });
