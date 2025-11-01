@@ -20,14 +20,12 @@ function Notificacion({ mensaje, tipo, onClose }) {
 
     const claseTipo = tipo === 'exito' ? 'exito' : 'error';
 
-    // CLAVE: Usamos un z-index alto para la notificación
     return <div className={`notificacion-flotante ${claseTipo}`}>{mensaje}</div>;
 }
 
 
 // ======================================
-// --- 2. Componente Principal: Trabajos (MODIFICADO) ---
-// Se encarga de manejar el modal de criterios y las notificaciones para toda la pantalla.
+// --- 2. Componente Principal: Trabajos ---
 // ======================================
 function Trabajos({ user }) {
     
@@ -109,21 +107,8 @@ function Trabajos({ user }) {
                     background-color: var(--dark-color); 
                     min-height: 100vh;
                 }
-                /* ... Estilos restantes ... */
-                /* CLAVE: Aseguramos que el overlay del modal de criterios esté por encima del Panel */
-                .grupo-componente .modal-overlay {
-                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                    background-color: rgba(0, 0, 0, 0.8);
-                    display: flex; justify-content: center; align-items: center; 
-                    z-index: 1050; /* Z-INDEX ALTO */
-                }
-                .notificacion-flotante {
-                    /* ... estilos ... */
-                    z-index: 2000; /* Z-INDEX MÁS ALTO PARA NOTIFICACIONES */
-                    /* ... estilos ... */
-                }
-                /* ... Estilos restantes (deben ser los mismos que en el ejemplo anterior) ... */
-                /* ESTILOS DE TABLA Y BOTONES (SE MANTIENEN IGUAL) */
+                
+                /* ESTILOS DEL PANEL PRINCIPAL Y TABLA DE GRUPOS */
                 .grupo-componente {
                     font-family: var(--body-font);
                     color: var(--text-color);
@@ -175,7 +160,7 @@ function Trabajos({ user }) {
                     transition: all .3s;
                     cursor: pointer;
                     color: var(--text-color);
-                    background-color: #3C414C;
+                    background-color: #3C414C; /* Gris estándar */
                     border: 1px solid #555;
                 }
                 .grupo-componente .btn:hover {
@@ -190,7 +175,7 @@ function Trabajos({ user }) {
                     font-weight: 600;
                 }
                 .grupo-componente .btn-cancel { 
-                    background-color: #2c3e50;
+                    background-color: #2c3e50; /* Azul oscuro formal para cerrar/cancelar */
                     color: white;
                     border-color: #2c3e50;
                 }
@@ -255,7 +240,7 @@ function Trabajos({ user }) {
                 }
 
                 /* ================================================= */
-                /* ESTILOS PARA EL PANEL DE CALIFICACIÓN TIPO ASISTENCIA */
+                /* ESTILOS DE PANTALLA COMPLETA (PanelCalificaciones) */
                 /* ================================================= */
 
                 .grupo-componente .modal-backdrop-solid { 
@@ -294,16 +279,15 @@ function Trabajos({ user }) {
                     font-size: 1rem;
                 }
 
+                /* Estilos de Calificación (Grid, Alumno, Promedio) */
                 .grupo-componente .asistencia-grid {
                     padding: 1rem 0;
                 }
-
                 .grupo-componente .asistencia-body {
                     max-height: 65vh;
                     overflow-y: auto;
                     padding-right: 10px;
                 }
-
                 .grupo-componente .asistencia-row {
                     display: grid; 
                     grid-template-columns: 280px 1fr 120px; 
@@ -314,26 +298,11 @@ function Trabajos({ user }) {
                     border-bottom: 1px solid var(--dark-color-alt);
                     margin-bottom: 5px;
                 }
-                .grupo-componente .asistencia-row:hover {
-                    background-color: #2a2f3c;
-                }
-
-                .grupo-componente .alumno-nombre {
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    font-weight: 500;
-                    font-size: 1.1rem;
-                    color: var(--title-color);
-                }
-
                 .grupo-componente .bimestres-container {
                     display: flex;
-                    flex-grow: 1;
                     justify-content: flex-start;
                     gap: 10px;
                 }
-
                 .grupo-componente .bimestre-header-btn {
                     text-align: center;
                     padding: 6px 10px;
@@ -346,18 +315,6 @@ function Trabajos({ user }) {
                     white-space: nowrap;
                     border: 1px solid #444;
                 }
-                .grupo-componente .bimestre-header-btn:hover {
-                    border-color: var(--main-color);
-                    filter: brightness(1.2);
-                }
-                .grupo-componente .bimestre-header-btn.activo {
-                    background-color: var(--main-color);
-                    color: var(--dark-color);
-                    font-weight: bold;
-                    border-color: var(--main-color);
-                    box-shadow: 0 0 8px rgba(185, 151, 43, 0.7);
-                }
-
                 .grupo-componente .promedio-final-display {
                     width: 120px;
                     flex-shrink: 0;
@@ -366,53 +323,8 @@ function Trabajos({ user }) {
                     font-size: 1.2rem;
                     color: var(--main-color);
                 }
-
-                .grupo-componente .bimestre-desplegable {
-                    max-height: 0;
-                    overflow: hidden;
-                    transition: max-height 0.4s ease-out, padding 0.4s ease-out, margin 0.4s ease-out;
-                    padding: 0 20px;
-                    margin: 0;
-                    background-color: var(--dark-color-alt);
-                    border-radius: 8px;
-                    grid-column: 1 / -1;
-                }
-                .grupo-componente .bimestre-desplegable.desplegado {
-                    max-height: 500px;
-                    padding: 20px;
-                    margin: 5px 0 10px 0;
-                }
-
-                .grupo-componente .criterio-resumen-wrapper {
-                    display: flex;
-                    justify-content: center; 
-                    width: 100%;
-                    margin-bottom: 20px;
-                }
-                .grupo-componente .criterio-resumen {
-                    background-color: var(--main-color);
-                    color: var(--dark-color);
-                    font-weight: bold;
-                    padding: 12px 25px;
-                    border-radius: 8px;
-                    width: 90%;
-                    max-width: 500px;
-                    text-align: center;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-                }
-                .grupo-componente .criterio-resumen .criterio-info {
-                    flex-grow: 1;
-                    text-align: left;
-                    font-size: 1rem;
-                }
-                .grupo-componente .criterio-resumen .criterio-prom {
-                    font-size: 1.3em;
-                    margin-left: 10px;
-                }
-
+                
+                /* Estilos para el desplegable de notas */
                 .grupo-componente .cuadritos-grid {
                     display: grid; 
                     grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
@@ -421,220 +333,90 @@ function Trabajos({ user }) {
                     padding: 10px 0;
                 }
 
-                .grupo-componente .cuadrito-calificacion {
-                    width: 38px;
-                    height: 38px;
-                    background-color: #4a4a4a;
-                    border: 1px solid #777;
-                    border-radius: 6px;
-                    color: white;
-                    text-align: center;
-                    font-weight: 600;
-                    font-family: var(--body-font);
-                    font-size: 1rem;
-                    transition: all 0.2s;
-                }
-                .grupo-componente .cuadrito-calificacion::placeholder {
-                    color: #999;
-                    font-size: 0.9em;
-                }
-                .grupo-componente .cuadrito-calificacion:focus {
-                    outline: 2px solid var(--main-color);
-                    background-color: #5f5f5f;
-                }
-                .grupo-componente .cuadrito-calificacion::-webkit-outer-spin-button,
-                .grupo-componente .cuadrito-calificacion::-webkit-inner-spin-button {
-                    -webkit-appearance: none;
-                    margin: 0;
+                /* ================================================= */
+                /* ESTILOS DE MODAL DE CRITERIOS (ModalCriterios) --- FINAL */
+                /* ================================================= */
+                .grupo-componente .modal-overlay {
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                    background-color: rgba(0, 0, 0, 0.8);
+                    display: flex; justify-content: center; align-items: center; 
+                    z-index: 1050; 
                 }
 
-                .grupo-componente .btn-agregar-dias {
-                    background-color: #34495e;
-                    color: white;
-                    border: none;
-                    border-radius: 6px;
-                    width: 38px;
-                    height: 38px;
-                    font-weight: bold;
-                    cursor: pointer;
-                    transition: transform 0.2s, background-color 0.2s;
-                    font-size: 1.1rem;
-                }
-                .grupo-componente .btn-agregar-dias:hover {
-                    transform: scale(1.05);
-                    background-color: #4b6587;
-                }
-
-                /* --- MODAL DE CRITERIOS (CON NUEVOS ESTILOS) --- */
                 .grupo-componente .modal-content {
                     background-color: var(--dark-color-alt);
                     padding: 2.5rem; border-radius: 12px; width: 90%;
                     max-width: 650px;
                     box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+                    max-height: 90vh; 
+                    overflow-y: auto;
                 }
+
                 .grupo-componente .modal-content h2 {
                     text-align: center;
                     margin-bottom: 2rem;
                     font-size: 1.6rem;
                 }
+                
+                /* Ajuste para centrar y estilizar los botones de Bimestre en el Modal */
+                .grupo-componente .modal-content .bimestre-selector {
+                    justify-content: center; 
+                    padding: 10px 0; 
+                    border-bottom: none;
+                }
+
+                .grupo-componente .modal-content .bimestre-selector .btn {
+                    padding: 0.5rem 1rem;
+                    font-size: 0.9rem;
+                    line-height: 1; 
+                }
+
+                .grupo-componente .modal-content h3 {
+                    text-align: center;
+                    margin-top: 1.5rem;
+                    font-size: 1.4rem;
+                    color: var(--text-color);
+                }
+
+                .grupo-componente .criterio-total {
+                    text-align: right; 
+                    font-size: 1.2rem; 
+                    font-weight: bold;
+                    margin-top: 1.5rem; 
+                    padding-top: 1.5rem; 
+                    border-top: 1px solid #444;
+                    color: var(--text-color);
+                }
 
                 .grupo-componente .modal-actions {
                     display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;
                 }
-
-                .grupo-componente .criterio-item {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    background-color: var(--dark-color);
-                    padding: 12px 20px;
-                    border-radius: 8px;
-                    margin-bottom: 10px;
-                    border-left: 5px solid var(--main-color);
-                }
-                .grupo-componente .criterio-item span {
-                    font-size: 1rem;
-                }
-                .grupo-componente .criterio-item span strong {
-                    color: var(--main-color);
-                    font-size: 1.1rem;
-                }
-                .grupo-componente .criterio-item button {
-                    color: var(--danger-color);
-                    width: 30px;
-                    height: 30px;
-                    font-size: 1.5rem;
-                }
                 
                 .grupo-componente .criterio-form {
-                    display: flex;
-                    gap: 15px;
                     margin: 2rem 0 1rem 0;
-                    align-items: center;
                 }
                 .grupo-componente .criterio-form input {
-                    background: var(--dark-color);
-                    border: 1px solid #555;
-                    border-radius: 8px;
-                    color: var(--text-color);
-                    padding: 12px;
-                    box-sizing: border-box;
-                    font-size: 1rem;
+                    padding: 10px;
                 }
-                .grupo-componente .criterio-form input:focus {
-                    border-color: var(--main-color);
-                }
-                .grupo-componente .criterio-form input[type="text"] { flex-grow: 3; }
-
-                .grupo-componente .porcentaje-wrapper {
-                    position: relative;
-                    flex-grow: 1;
-                    max-width: 150px;
-                }
-                .grupo-componente .porcentaje-wrapper::after {
-                    content: '%';
-                    position: absolute;
-                    right: 15px;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    color: #888;
-                    pointer-events: none;
-                }
-                .grupo-componente .criterio-form input[type="number"] {
-                    padding-right: 35px;
-                }
-
                 .grupo-componente .criterio-form .btn {
-                    padding: 12px 15px;
-                    background-color: var(--main-color);
-                    color: var(--dark-color);
-                    font-weight: 600;
-                    border: 1px solid var(--main-color);
-                    line-height: 1;
-                }
-                .grupo-componente .criterio-form .btn:hover {
-                    background-color: #d4b03f;
+                    padding: 10px 15px;
                 }
 
-                .grupo-componente .criterio-total {
-                    text-align: right; font-size: 1.2rem; font-weight: bold;
-                    margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #444;
-                    color: var(--text-color);
-                }
-                .grupo-componente .criterio-total.error {
-                    color: var(--danger-color);
-                }
-                .grupo-componente .criterio-total strong {
-                    color: var(--main-color);
-                }
-                .grupo-componente .criterio-total.error strong {
-                    color: var(--danger-color);
-                }
-                
-                .grupo-componente .aviso-criterios {
-                    text-align: center; padding: 3rem; background-color: var(--dark-color);
-                    border-radius: 12px; margin: 2rem;
-                    border: 2px dashed var(--warning-color);
-                    box-shadow: 0 0 15px rgba(243, 156, 18, 0.2);
-                }
-                .grupo-componente .aviso-criterios p {
-                    margin-bottom: 2rem; font-size: 1.2rem; color: var(--warning-color);
-                }
-                
-                /* --- ESTILOS DE SCROLLBAR (Mejorados) --- */
-                .grupo-componente .asistencia-body::-webkit-scrollbar {
-                    display: none;
-                }
-                .grupo-componente .asistencia-body {
-                    scrollbar-width: none;
-                    -ms-overflow-style: none;
-                }
-                .grupo-componente .modal-backdrop-solid::-webkit-scrollbar {
-                    width: 8px;
-                }
-                .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-track {
-                    background: var(--dark-color-alt);
-                }
-                .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-thumb {
-                    background-color: var(--main-color);
-                    border-radius: 10px;
-                    border: 2px solid var(--dark-color-alt);
-                }
-                .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-thumb:hover {
-                    background-color: #d4b03f; 
-                }
-                /* ================================================= */
-                /* ESTILOS PARA LA NOTIFICACIÓN FLOTANTE (ALERTA) */
-                /* ================================================= */
-
+                /* --- NOTIFICACIONES --- */
                 .notificacion-flotante {
                     position: fixed;
                     top: 20px;
                     left: 50%;
                     transform: translateX(-50%);
                     z-index: 2000; 
-
                     padding: 12px 25px;
                     border-radius: 8px;
                     font-weight: 600;
                     font-size: 1rem;
                     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-
                     opacity: 0;
                     visibility: hidden;
                     animation: fadeInOut 3.5s ease-in-out forwards; 
-                }
-
-                .notificacion-flotante.exito {
-                    background-color: var(--success-color); 
-                    color: var(--dark-color); 
-                    border: 1px solid #1a8a49;
-                }
-
-                .notificacion-flotante.error {
-                    background-color: var(--danger-color);
-                    color: var(--title-color); 
-                    border: 1px solid #a32222;
                 }
 
                 @keyframes fadeInOut {
@@ -652,17 +434,16 @@ function Trabajos({ user }) {
                     grupo={grupoSeleccionado} 
                     asignatura={asignaturaSeleccionada}
                     onVolver={handleVolver} 
-                    setModalCriterios={setModalCriterios} // Pasa la función para abrir el modal
-                    criteriosPorBimestre={criteriosPorBimestre} // Pasa el estado para consumo
-                    setCriteriosPorBimestre={setCriteriosPorBimestre} // Pasa la función para actualizar
-                    setNotificacion={setNotificacion} // Pasa la función para notificar
+                    setModalCriterios={setModalCriterios} 
+                    criteriosPorBimestre={criteriosPorBimestre} 
+                    setCriteriosPorBimestre={setCriteriosPorBimestre} 
+                    setNotificacion={setNotificacion} 
                 />
             )}
             </div>
-            {/* 1. Notificación en el nivel superior */}
+            
             <Notificacion mensaje={notificacion.mensaje} tipo={notificacion.tipo} onClose={() => setNotificacion({ mensaje: null, tipo: '' })} />
 
-            {/* 2. Modal de Criterios en el nivel superior (para evitar problemas de z-index) */}
             {modalCriterios && (
                 <ModalCriterios 
                     criteriosPorBimestre={criteriosPorBimestre} 
@@ -677,8 +458,7 @@ function Trabajos({ user }) {
 
 
 // ======================================
-// --- 3. Sub-componente: Panel Principal de Calificaciones (MODIFICADO) ---
-// Se han movido los estados de notificaciones y modal de criterios al padre (Trabajos).
+// --- 3. Sub-componente: Panel Principal de Calificaciones ---
 // ======================================
 const PanelCalificaciones = ({ 
     grupo, 
@@ -696,7 +476,6 @@ const PanelCalificaciones = ({
     const [criterioAbierto, setCriterioAbierto] = useState(null); 
     const [numTareas, setNumTareas] = useState({}); 
 
-    // Obtener los criterios del bimestre activo
     const criteriosActivos = criteriosPorBimestre[bimestreActivo] || [];
 
 
@@ -709,7 +488,6 @@ const PanelCalificaciones = ({
                 const url = `${API_URL}/calificaciones?grupoId=${grupo._id}&asignatura=${asignatura}`;
                 const res = await axios.get(url, config);
                 
-                // AJUSTE CLAVE: Se actualizan los criterios en el padre (Trabajos)
                 const fetchedCriterios = {
                     1: res.data?.criterios?.[1] || [], 
                     2: res.data?.criterios?.[2] || [], 
@@ -719,7 +497,6 @@ const PanelCalificaciones = ({
 
                 setCalificaciones(res.data?.calificaciones || {});
                 
-                // Lógica de numTareas (se mantiene igual)
                 const allCriterios = [...fetchedCriterios[1], ...fetchedCriterios[2], ...fetchedCriterios[3]];
                 
                 const initialNumTareas = allCriterios.reduce((acc, criterio) => {
@@ -739,26 +516,22 @@ const PanelCalificaciones = ({
 
                 setNumTareas(initialNumTareas);
 
-                // Abrir el modal de criterios si el bimestre 1 no tiene ninguno.
                 if (fetchedCriterios[1]?.length === 0) {
                     setModalCriterios(true);
                 }
             } catch (error) {
-                // Notificación de error si la carga falla
                 setNotificacion({ mensaje: 'Error al cargar los datos de calificaciones.', tipo: 'error' });
             } finally {
                 setIsLoadingData(false);
             }
         };
         if (grupo && asignatura) fetchCalificaciones();
-    // Dependencias ajustadas
     }, [grupo, asignatura, setCriteriosPorBimestre, setModalCriterios, setNotificacion]); 
 
     const guardarCalificaciones = async () => {
         setIsSaving(true);
         const token = localStorage.getItem('token');
         const config = { headers: { Authorization: `Bearer ${token}` } };
-        // Envía el objeto de criterios completo, separado por bimestre, que viene del estado del padre.
         const payload = { grupoId: grupo._id, asignatura, criterios: criteriosPorBimestre, calificaciones };
         try {
             await axios.post(`${API_URL}/calificaciones`, payload, config);
@@ -770,7 +543,6 @@ const PanelCalificaciones = ({
         }
     };
 
-    // ... (handleCalificacionChange, calcularPromedioCriterio, calcularPromedioBimestre, formatFechaTooltip, handleToggleCriterio, agregarTareas se mantienen iguales)
     const handleCalificacionChange = (alumnoId, bimestre, criterioNombre, tareaIndex, valor) => {
         const notaFloat = valor === '' ? null : parseFloat(valor);
         if (notaFloat !== null && (isNaN(notaFloat) || notaFloat < 0 || notaFloat > 10)) return;
@@ -841,12 +613,10 @@ const PanelCalificaciones = ({
 
     return (
         <div className="modal-backdrop-solid grupo-componente"> 
-            {/* Se eliminó la Notificación de aquí */}
             <div className="asistencia-modal-content">
                 <header className="main-header" style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 20px' }}>
                     <h2>Calificaciones: {grupo.nombre} - {asignatura}</h2>
                     <div>
-                        {/* Pasa la función del padre para abrir el modal de criterios */}
                         <button className="btn" onClick={() => setModalCriterios(true)}>Criterios</button>
                         <button className="btn btn-cancel" onClick={onVolver} style={{marginLeft: '10px'}}>Cerrar</button>
                     </div>
@@ -921,13 +691,12 @@ const PanelCalificaciones = ({
                     <button className="btn btn-primary" onClick={guardarCalificaciones} disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar Calificaciones'}</button>
                 </div>
             </div>
-            {/* Se eliminó el ModalCriterios de aquí */}
         </div>
     );
 };
 
 // ======================================
-// --- 4. Componente: Lista de Grupos (SIN CAMBIOS) ---
+// --- 4. Componente: Lista de Grupos ---
 // ======================================
 const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => {
     const userId = user?._id || user?.id; 
@@ -969,8 +738,7 @@ const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => {
 };
 
 // ======================================
-// --- 5. Componente: Modal para Criterios de Evaluación (SIN CAMBIOS ESTRUCTURALES) ---
-// Se mantiene igual.
+// --- 5. Componente: Modal para Criterios de Evaluación (AJUSTADO) ---
 // ======================================
 const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificacion }) => {
     // 1. Estado para manejar los criterios internamente, clonando el prop inicial.
@@ -1081,11 +849,13 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 <h2>Definir Criterios de Evaluación por Bimestre</h2>
                 
+                {/* Ajuste de estilo: Centrado en el modal */}
                 <div className="bimestre-selector" style={{ justifyContent: 'center', borderBottom: 'none' }}>
                     {[1, 2, 3].map(bim => (
                         <button 
                             key={bim} 
-                            className={`btn ${bimestreActivo === bim ? 'btn-primary' : 'btn-cancel'}`} 
+                            // CLAVE: Usamos 'btn' (gris oscuro) para inactivos y 'btn-primary' (dorado) para el activo, resolviendo el problema visual.
+                            className={`btn ${bimestreActivo === bim ? 'btn-primary' : 'btn'}`} 
                             onClick={() => handleSetBimestre(bim)}
                         >
                             Bimestre {bim}
@@ -1093,6 +863,7 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
                     ))}
                 </div>
                 
+                {/* Botón de Copiar Criterios */}
                 <div style={{ textAlign: 'center', marginTop: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid #444', paddingBottom: '1.5rem' }}>
                     {bimestreActivo > 1 && (
                         <button 
