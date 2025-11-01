@@ -11,23 +11,23 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 function Notificacion({ mensaje, tipo, onClose }) {
     useEffect(() => {
         if (mensaje) {
-            // El timer está configurado para 3000ms (3 segundos)
-            const timer = setTimeout(onClose, 3000); 
+            const timer = setTimeout(onClose, 3000);
             return () => clearTimeout(timer);
         }
     }, [mensaje, onClose]);
 
     if (!mensaje) return null;
 
-    // Se añade la clase 'exito' y 'error' para coincidir con la lógica interna
     const claseTipo = tipo === 'exito' ? 'exito' : 'error';
 
+    // CLAVE: Usamos un z-index alto para la notificación
     return <div className={`notificacion-flotante ${claseTipo}`}>{mensaje}</div>;
 }
 
 
 // ======================================
-// --- 2. Componente Principal: Trabajos ---
+// --- 2. Componente Principal: Trabajos (MODIFICADO) ---
+// Se encarga de manejar el modal de criterios y las notificaciones para toda la pantalla.
 // ======================================
 function Trabajos({ user }) {
     
@@ -37,14 +37,16 @@ function Trabajos({ user }) {
     const [grupoSeleccionado, setGrupoSeleccionado] = useState(null);
     const [asignaturaSeleccionada, setAsignaturaSeleccionada] = useState(null);
 
+    // Estados levantados de PanelCalificaciones
+    const [modalCriterios, setModalCriterios] = useState(false);
+    const [criteriosPorBimestre, setCriteriosPorBimestre] = useState({ 1: [], 2: [], 3: [] });
+    const [notificacion, setNotificacion] = useState({ mensaje: null, tipo: '' });
+    
     useEffect(() => {
         const fetchGrupos = async () => {
             const token = localStorage.getItem('token');
-            
-            // FIX 1: Usar user._id si está disponible, sino user.id. 
             const userId = user?._id || user?.id; 
 
-            // Asegurar que el token y el ID del usuario existan
             if (!token || !userId) {
                 setLoading(false);
                 setError("Error de autenticación: Usuario o token no disponible.");
@@ -53,9 +55,7 @@ function Trabajos({ user }) {
 
             const config = { headers: { Authorization: `Bearer ${token}` } };
             try {
-                // La URL de la API se mantiene igual (carga los grupos asignados a este profesor)
                 const url = '/grupos/mis-grupos?populate=alumnos,profesoresAsignados.profesor';
-                // NOTA: Se asume que esta API filtra los grupos donde el usuario es profesor.
                 const res = await axios.get(`${API_URL}${url}`, config);
                 setGrupos(res.data);
             } catch (err) {
@@ -72,6 +72,8 @@ function Trabajos({ user }) {
     const handleSeleccionarGrupo = (grupo, asignatura) => {
         setGrupoSeleccionado(grupo);
         setAsignaturaSeleccionada(asignatura);
+        // Resetea el estado de criterios para el nuevo grupo/asignatura
+        setCriteriosPorBimestre({ 1: [], 2: [], 3: [] });
     };
     
     const handleVolver = () => {
@@ -104,19 +106,31 @@ function Trabajos({ user }) {
 
                     --body-font: 'Poppins', sans-serif;
                     --font-semi-bold: 600;
-                    /* CORRECCIÓN: Fondo para toda la página */
                     background-color: var(--dark-color); 
                     min-height: 100vh;
                 }
-
-                /* --- ESTRUCTURA GENERAL Y TÍTULOS --- */
+                /* ... Estilos restantes ... */
+                /* CLAVE: Aseguramos que el overlay del modal de criterios esté por encima del Panel */
+                .grupo-componente .modal-overlay {
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                    background-color: rgba(0, 0, 0, 0.8);
+                    display: flex; justify-content: center; align-items: center; 
+                    z-index: 1050; /* Z-INDEX ALTO */
+                }
+                .notificacion-flotante {
+                    /* ... estilos ... */
+                    z-index: 2000; /* Z-INDEX MÁS ALTO PARA NOTIFICACIONES */
+                    /* ... estilos ... */
+                }
+                /* ... Estilos restantes (deben ser los mismos que en el ejemplo anterior) ... */
+                /* ESTILOS DE TABLA Y BOTONES (SE MANTIENEN IGUAL) */
                 .grupo-componente {
                     font-family: var(--body-font);
                     color: var(--text-color);
                 }
 
-                .grupo-componente .trabajos-container { /* Usando 'trabajos-container' */
-                    padding-top: 8rem; /* Ajuste para barra de navegación superior (si existe) */
+                .grupo-componente .trabajos-container {
+                    padding-top: 8rem;
                     padding-bottom: 2rem;
                     max-width: 1200px;
                     margin: 0 auto;
@@ -136,7 +150,7 @@ function Trabajos({ user }) {
                     margin-bottom: 2rem;
                     border-bottom: 2px solid var(--dark-color-alt);
                     padding-bottom: 1.5rem;
-                    width: 100%; /* Asegura que ocupe el ancho en el modal de calificaciones */
+                    width: 100%;
                 }
                 .grupo-componente .main-header h1 {
                     font-size: 2.5rem;
@@ -161,7 +175,7 @@ function Trabajos({ user }) {
                     transition: all .3s;
                     cursor: pointer;
                     color: var(--text-color);
-                    background-color: #3C414C; /* Gris oscuro para botones estándar */
+                    background-color: #3C414C;
                     border: 1px solid #555;
                 }
                 .grupo-componente .btn:hover {
@@ -180,7 +194,7 @@ function Trabajos({ user }) {
                     color: white;
                     border-color: #2c3e50;
                 }
-                .grupo-componente .btn-secondary { /* Estilo para el botón Copiar Criterios */
+                .grupo-componente .btn-secondary {
                     background-color: #34495e;
                     color: white;
                     border-color: #34495e;
@@ -193,20 +207,20 @@ function Trabajos({ user }) {
                 }
 
                 /* --- TABLA DE SELECCIÓN DE GRUPO --- */
-                .grupo-componente .grupos-table-wrapper { /* Envoltorio para centrar la tabla */
+                .grupo-componente .grupos-table-wrapper {
                     display: flex;
                     justify-content: center;
                     width: 100%;
                 }
                 .grupo-componente .grupos-table {
-                    width: 90%; /* Ajustado al 90% para centrar bien */
+                    width: 90%;
                     max-width: 800px;
                     margin-top: 2rem;
-                    border-collapse: separate; /* Cambiado a separate */
-                    border-spacing: 0; /* Eliminar espacio entre celdas */
+                    border-collapse: separate;
+                    border-spacing: 0;
                     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
                     border-radius: 12px;
-                    overflow: hidden; /* Asegura que el border-radius funcione */
+                    overflow: hidden;
                 }
                 .grupo-componente .grupos-table thead th {
                     background-color: var(--main-color);
@@ -236,7 +250,7 @@ function Trabajos({ user }) {
                     gap: 10px;
                 }
                 .grupo-componente .grupos-table .btn-primary {
-                    padding: 0.6rem 1.2rem; /* Botón más pequeño en la tabla */
+                    padding: 0.6rem 1.2rem;
                     font-size: 0.9rem;
                 }
 
@@ -244,7 +258,6 @@ function Trabajos({ user }) {
                 /* ESTILOS PARA EL PANEL DE CALIFICACIÓN TIPO ASISTENCIA */
                 /* ================================================= */
 
-                /* CAMBIO CLAVE: Usa un fondo oscuro sólido para simular un modal de pantalla completa elegante */
                 .grupo-componente .modal-backdrop-solid { 
                     position: fixed; 
                     top: 0; left: 0;
@@ -269,7 +282,6 @@ function Trabajos({ user }) {
                     margin: 0; 
                 }
                 
-                /* Corrección de alineación de botones de Bimestre */
                 .grupo-componente .bimestre-selector {
                     display: flex;
                     gap: 15px; 
@@ -287,13 +299,12 @@ function Trabajos({ user }) {
                 }
 
                 .grupo-componente .asistencia-body {
-                    max-height: 65vh; /* Altura máxima para la lista de alumnos */
+                    max-height: 65vh;
                     overflow-y: auto;
                     padding-right: 10px;
                 }
 
                 .grupo-componente .asistencia-row {
-                    /* Columna 1: Nombre (250px), Columna 2: Criterios (espacio restante), Columna 3: Promedio Final (100px) */
                     display: grid; 
                     grid-template-columns: 280px 1fr 120px; 
                     align-items: center;
@@ -320,7 +331,7 @@ function Trabajos({ user }) {
                     display: flex;
                     flex-grow: 1;
                     justify-content: flex-start;
-                    gap: 10px; /* Más espacio entre botones de criterio */
+                    gap: 10px;
                 }
 
                 .grupo-componente .bimestre-header-btn {
@@ -364,7 +375,7 @@ function Trabajos({ user }) {
                     margin: 0;
                     background-color: var(--dark-color-alt);
                     border-radius: 8px;
-                    grid-column: 1 / -1; /* Ocupa todo el ancho en la fila de grid */
+                    grid-column: 1 / -1;
                 }
                 .grupo-componente .bimestre-desplegable.desplegado {
                     max-height: 500px;
@@ -404,8 +415,8 @@ function Trabajos({ user }) {
 
                 .grupo-componente .cuadritos-grid {
                     display: grid; 
-                    grid-template-columns: repeat(auto-fill, minmax(38px, 1fr)); /* Cuadritos un poco más grandes */
-                    gap: 8px; /* Más espacio */
+                    grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+                    gap: 8px;
                     align-items: center;
                     padding: 10px 0;
                 }
@@ -438,7 +449,7 @@ function Trabajos({ user }) {
                 }
 
                 .grupo-componente .btn-agregar-dias {
-                    background-color: #34495e; /* Azul secundario formal */
+                    background-color: #34495e;
                     color: white;
                     border: none;
                     border-radius: 6px;
@@ -455,12 +466,6 @@ function Trabajos({ user }) {
                 }
 
                 /* --- MODAL DE CRITERIOS (CON NUEVOS ESTILOS) --- */
-                .grupo-componente .modal-overlay {
-                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                    background-color: rgba(0, 0, 0, 0.8);
-                    display: flex; justify-content: center; align-items: center; z-index: 1050;
-                }
-
                 .grupo-componente .modal-content {
                     background-color: var(--dark-color-alt);
                     padding: 2.5rem; border-radius: 12px; width: 90%;
@@ -528,12 +533,12 @@ function Trabajos({ user }) {
                 }
                 .grupo-componente .porcentaje-wrapper::after {
                     content: '%';
-                    position: absolute; /* Aseguramos que el % no mueva el input */
+                    position: absolute;
                     right: 15px;
                     top: 50%;
                     transform: translateY(-50%);
                     color: #888;
-                    pointer-events: none; /* Evita que el '%' interfiera con el input */
+                    pointer-events: none;
                 }
                 .grupo-componente .criterio-form input[type="number"] {
                     padding-right: 35px;
@@ -545,7 +550,7 @@ function Trabajos({ user }) {
                     color: var(--dark-color);
                     font-weight: 600;
                     border: 1px solid var(--main-color);
-                    line-height: 1; /* Para centrar el texto correctamente */
+                    line-height: 1;
                 }
                 .grupo-componente .criterio-form .btn:hover {
                     background-color: #d4b03f;
@@ -577,7 +582,6 @@ function Trabajos({ user }) {
                 }
                 
                 /* --- ESTILOS DE SCROLLBAR (Mejorados) --- */
-                /* Ocultar barra de scroll interna */
                 .grupo-componente .asistencia-body::-webkit-scrollbar {
                     display: none;
                 }
@@ -585,7 +589,6 @@ function Trabajos({ user }) {
                     scrollbar-width: none;
                     -ms-overflow-style: none;
                 }
-                /* Para Webkit (Chrome, Safari, Edge) para el modal principal */
                 .grupo-componente .modal-backdrop-solid::-webkit-scrollbar {
                     width: 8px;
                 }
@@ -619,7 +622,6 @@ function Trabajos({ user }) {
 
                     opacity: 0;
                     visibility: hidden;
-                    /* El 3.5s es el tiempo total de la animación */
                     animation: fadeInOut 3.5s ease-in-out forwards; 
                 }
 
@@ -637,9 +639,9 @@ function Trabajos({ user }) {
 
                 @keyframes fadeInOut {
                     0% { opacity: 0; visibility: hidden; transform: translate(-50%, -20px); }
-                    5% { opacity: 1; visibility: visible; transform: translate(-50%, 0); } /* Entra */
-                    90% { opacity: 1; visibility: visible; transform: translate(-50%, 0); } /* Permanece */
-                    100% { opacity: 0; visibility: hidden; transform: translate(-50%, -20px); } /* Sale */
+                    5% { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+                    90% { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+                    100% { opacity: 0; visibility: hidden; transform: translate(-50%, -20px); }
                 }
             `}</style>
             <div className="trabajos-container grupo-componente">
@@ -650,9 +652,25 @@ function Trabajos({ user }) {
                     grupo={grupoSeleccionado} 
                     asignatura={asignaturaSeleccionada}
                     onVolver={handleVolver} 
+                    setModalCriterios={setModalCriterios} // Pasa la función para abrir el modal
+                    criteriosPorBimestre={criteriosPorBimestre} // Pasa el estado para consumo
+                    setCriteriosPorBimestre={setCriteriosPorBimestre} // Pasa la función para actualizar
+                    setNotificacion={setNotificacion} // Pasa la función para notificar
                 />
             )}
             </div>
+            {/* 1. Notificación en el nivel superior */}
+            <Notificacion mensaje={notificacion.mensaje} tipo={notificacion.tipo} onClose={() => setNotificacion({ mensaje: null, tipo: '' })} />
+
+            {/* 2. Modal de Criterios en el nivel superior (para evitar problemas de z-index) */}
+            {modalCriterios && (
+                <ModalCriterios 
+                    criteriosPorBimestre={criteriosPorBimestre} 
+                    onGuardar={setCriteriosPorBimestre} 
+                    onClose={() => setModalCriterios(false)} 
+                    setNotificacion={setNotificacion} 
+                />
+            )}
         </>
     );
 }
@@ -660,21 +678,22 @@ function Trabajos({ user }) {
 
 // ======================================
 // --- 3. Sub-componente: Panel Principal de Calificaciones (MODIFICADO) ---
-// Ahora maneja el estado de los criterios como un objeto por bimestre.
+// Se han movido los estados de notificaciones y modal de criterios al padre (Trabajos).
 // ======================================
-const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
+const PanelCalificaciones = ({ 
+    grupo, 
+    asignatura, 
+    onVolver, 
+    setModalCriterios, 
+    criteriosPorBimestre, 
+    setCriteriosPorBimestre,
+    setNotificacion 
+}) => {
     const [bimestreActivo, setBimestreActivo] = useState(1);
-    // CAMBIO CLAVE: El estado de criterios ahora es un objeto que contiene los criterios por bimestre
-    // INICIALIZACIÓN: Esto asegura que, si no hay criterios en el backend, tengamos la estructura separada.
-    const [criteriosPorBimestre, setCriteriosPorBimestre] = useState({ 1: [], 2: [], 3: [] });
     const [calificaciones, setCalificaciones] = useState({});
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
-    const [notificacion, setNotificacion] = useState({ mensaje: null, tipo: '' });
-    const [modalCriterios, setModalCriterios] = useState(false);
     const [criterioAbierto, setCriterioAbierto] = useState(null); 
-    
-    // Estado para controlar cuántas tareas se muestran por criterio (por defecto 10)
     const [numTareas, setNumTareas] = useState({}); 
 
     // Obtener los criterios del bimestre activo
@@ -687,10 +706,10 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
             const token = localStorage.getItem('token');
             const config = { headers: { Authorization: `Bearer ${token}` } };
             try {
-                const res = await axios.get(`${API_URL}/calificaciones?grupoId=${grupo._id}&asignatura=${asignatura}`, config);
+                const url = `${API_URL}/calificaciones?grupoId=${grupo._id}&asignatura=${asignatura}`;
+                const res = await axios.get(url, config);
                 
-                // AJUSTE CLAVE: Asegurarse de que si el backend devuelve criterios, se mantenga la estructura de 3 bimestres.
-                // Si 'res.data?.criterios' existe, lo usamos. Si no existe, inicializamos con la estructura vacía.
+                // AJUSTE CLAVE: Se actualizan los criterios en el padre (Trabajos)
                 const fetchedCriterios = {
                     1: res.data?.criterios?.[1] || [], 
                     2: res.data?.criterios?.[2] || [], 
@@ -700,26 +719,21 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
 
                 setCalificaciones(res.data?.calificaciones || {});
                 
-                // Recopila TODOS los criterios para calcular el maxIndex de tareas
+                // Lógica de numTareas (se mantiene igual)
                 const allCriterios = [...fetchedCriterios[1], ...fetchedCriterios[2], ...fetchedCriterios[3]];
                 
                 const initialNumTareas = allCriterios.reduce((acc, criterio) => {
                     let maxIndex = 0;
-                    // Buscar la tarea máxima en todos los bimestres para este criterio
                     Object.values(res.data?.calificaciones || {}).forEach(alumnoCal => {
                         Object.values(alumnoCal).forEach(bimestreCal => {
                             const tareas = bimestreCal[criterio.nombre];
                             if (tareas) {
-                                // Encontrar el índice de tarea más alto (0-indexado) en todas las calificaciones.
                                 const currentMax = Math.max(...Object.keys(tareas).map(Number));
-                                // Si se encuentra un índice, el siguiente espacio vacío es currentMax + 1.
-                                // Si es mayor que el maxIndex actual, se actualiza el maxIndex.
                                 if (currentMax >= maxIndex) maxIndex = currentMax + 1;
                             }
                         });
                     });
-                    // Establecer el número de inputs a mostrar: el máximo entre 10 y el índice máximo encontrado + 5 (para dar espacio extra).
-                    acc[criterio.nombre] = Math.max(10, maxIndex + 5); 
+                    acc[criterio.nombre] = Math.max(10, maxIndex + 5);
                     return acc;
                 }, {});
 
@@ -730,19 +744,21 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                     setModalCriterios(true);
                 }
             } catch (error) {
+                // Notificación de error si la carga falla
                 setNotificacion({ mensaje: 'Error al cargar los datos de calificaciones.', tipo: 'error' });
             } finally {
                 setIsLoadingData(false);
             }
         };
         if (grupo && asignatura) fetchCalificaciones();
-    }, [grupo, asignatura]);
+    // Dependencias ajustadas
+    }, [grupo, asignatura, setCriteriosPorBimestre, setModalCriterios, setNotificacion]); 
 
     const guardarCalificaciones = async () => {
         setIsSaving(true);
         const token = localStorage.getItem('token');
         const config = { headers: { Authorization: `Bearer ${token}` } };
-        // ENVÍO CLAVE: Envía el objeto de criterios completo, separado por bimestre.
+        // Envía el objeto de criterios completo, separado por bimestre, que viene del estado del padre.
         const payload = { grupoId: grupo._id, asignatura, criterios: criteriosPorBimestre, calificaciones };
         try {
             await axios.post(`${API_URL}/calificaciones`, payload, config);
@@ -754,8 +770,8 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
         }
     };
 
+    // ... (handleCalificacionChange, calcularPromedioCriterio, calcularPromedioBimestre, formatFechaTooltip, handleToggleCriterio, agregarTareas se mantienen iguales)
     const handleCalificacionChange = (alumnoId, bimestre, criterioNombre, tareaIndex, valor) => {
-        // La lógica se mantiene igual y es robusta
         const notaFloat = valor === '' ? null : parseFloat(valor);
         if (notaFloat !== null && (isNaN(notaFloat) || notaFloat < 0 || notaFloat > 10)) return;
         
@@ -791,7 +807,6 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
     };
 
     const calcularPromedioBimestre = (alumnoId, bimestre) => {
-        // Obtiene los criterios del bimestre específico
         const criteriosDelBimestre = criteriosPorBimestre[bimestre] || [];
         
         if (criteriosDelBimestre.length === 0) return 0;
@@ -817,21 +832,21 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
     };
 
     const agregarTareas = (criterioNombre) => {
-        // Aumenta el contador de tareas mostradas en 5
         setNumTareas(prev => ({...prev, [criterioNombre]: (prev[criterioNombre] || 10) + 5}));
     };
 
 
     if (isLoadingData) return <div className="trabajos-container grupo-componente" style={{textAlign: 'center', paddingTop: '10rem'}}><p style={{color: '#E9E9E9'}}>Cargando datos del grupo...</p></div>;
 
+
     return (
         <div className="modal-backdrop-solid grupo-componente"> 
-            <Notificacion mensaje={notificacion.mensaje} tipo={notificacion.tipo} onClose={() => setNotificacion({ mensaje: null, tipo: '' })} />
+            {/* Se eliminó la Notificación de aquí */}
             <div className="asistencia-modal-content">
                 <header className="main-header" style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 20px' }}>
                     <h2>Calificaciones: {grupo.nombre} - {asignatura}</h2>
                     <div>
-                        {/* Pasa el estado de criterios completo al modal */}
+                        {/* Pasa la función del padre para abrir el modal de criterios */}
                         <button className="btn" onClick={() => setModalCriterios(true)}>Criterios</button>
                         <button className="btn btn-cancel" onClick={onVolver} style={{marginLeft: '10px'}}>Cerrar</button>
                     </div>
@@ -842,7 +857,6 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                     ))}
                 </div>
                 
-                {/* CLAVE: Usamos criteriosActivos, que solo contiene los del bimestre seleccionado */}
                 {criteriosActivos.length > 0 ? (
                     <div className="asistencia-grid">
                         <div className="asistencia-body">
@@ -867,8 +881,6 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                                     </div>
                                     {criterioAbierto?.alumnoId === alumno._id && (
                                         <div className={`bimestre-desplegable desplegado`}>
-                                            
-                                            {/* FIX: Contenedor para centrar el cuadro de resumen del criterio */}
                                             <div className="criterio-resumen-wrapper">
                                                 <div className="criterio-resumen">
                                                     <span className="criterio-info">
@@ -879,10 +891,8 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                                                     </span>
                                                 </div>
                                             </div>
-                                            {/* FIN FIX */}
 
                                             <div className="cuadritos-grid">
-                                                {/* Usamos numTareas[criterioAbierto.criterioNombre] para determinar cuántos inputs mostrar */}
                                                 {Array.from({ length: numTareas[criterioAbierto.criterioNombre] || 10 }).map((_, tareaIndex) => {
                                                     const entrada = calificaciones[alumno._id]?.[bimestreActivo]?.[criterioAbierto.criterioNombre]?.[tareaIndex];
                                                     return <input 
@@ -911,24 +921,15 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                     <button className="btn btn-primary" onClick={guardarCalificaciones} disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar Calificaciones'}</button>
                 </div>
             </div>
-            {/* CLAVE: Pasa el estado de criterios completo y setCriteriosPorBimestre */}
-            {modalCriterios && (
-                <ModalCriterios 
-                    criteriosPorBimestre={criteriosPorBimestre} 
-                    onGuardar={setCriteriosPorBimestre} // Ahora actualiza el objeto completo
-                    onClose={() => setModalCriterios(false)} 
-                    setNotificacion={setNotificacion} 
-                />
-            )}
+            {/* Se eliminó el ModalCriterios de aquí */}
         </div>
     );
 };
 
 // ======================================
-// --- 4. Componente: Lista de Grupos ---
+// --- 4. Componente: Lista de Grupos (SIN CAMBIOS) ---
 // ======================================
 const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => {
-    // Definimos el ID del usuario actual, priorizando _id (MongoDB)
     const userId = user?._id || user?.id; 
     
     return (
@@ -936,13 +937,11 @@ const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => {
             <header className="main-header" style={{ justifyContent: 'center', paddingTop: '0' }}><h1>Gestión de Calificaciones</h1></header>
             <h3 className="subtitulo">Selecciona un grupo y asignatura para calificar</h3>
             
-            {/* FIX: Contenedor para centrar la tabla y limitar su ancho */}
             <div className="grupos-table-wrapper">
                 <table className="grupos-table">
                     <thead><tr><th>Grupo</th><th>Mi Asignatura</th><th>Acciones</th></tr></thead>
                     <tbody>
                         {grupos.map(grupo => {
-                            // FIX 2: Usar el ID del usuario actual (userId) para encontrar la asignación.
                             const miAsignacion = grupo.profesoresAsignados.find(asig => asig.profesor?._id === userId); 
                             const miAsignatura = miAsignacion ? miAsignacion.asignatura : 'N/A';
                             
@@ -954,7 +953,6 @@ const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => {
                                         <button 
                                             className="btn btn-primary" 
                                             onClick={() => onSeleccionarGrupo(grupo, miAsignatura)}
-                                            // FIX 3: Solo deshabilitar si la asignatura es 'N/A'
                                             disabled={miAsignatura === 'N/A'}
                                         >
                                             Calificar
@@ -971,12 +969,11 @@ const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => {
 };
 
 // ======================================
-// --- 5. Componente: Modal para Criterios de Evaluación (MODIFICADO) ---
-// Implementa criterios individuales por bimestre y función de copiar.
+// --- 5. Componente: Modal para Criterios de Evaluación (SIN CAMBIOS ESTRUCTURALES) ---
+// Se mantiene igual.
 // ======================================
 const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificacion }) => {
     // 1. Estado para manejar los criterios internamente, clonando el prop inicial.
-    // CLAVE: Esto asegura que los cambios no afecten al estado padre hasta que se guarde.
     const [criteriosLocales, setCriteriosLocales] = useState(criteriosPorBimestre || { 1: [], 2: [], 3: [] });
     // 2. Estado para el bimestre actualmente seleccionado en el modal.
     const [bimestreActivo, setBimestreActivo] = useState(1);
@@ -989,7 +986,6 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
 
     // Función para cambiar de bimestre y verificar si el actual suma 100%
     const handleSetBimestre = (bim) => {
-        // Validación suave: si hay criterios, el total debe ser 100% para evitar inconsistencias
         if (criteriosDelBimestre.length > 0 && totalPorcentaje !== 100) {
             setNotificacion({ 
                 mensaje: `El Bimestre ${bimestreActivo} tiene criterios definidos (${totalPorcentaje}%). Por favor, ajústalo a 100% antes de cambiar.`, 
@@ -1004,7 +1000,6 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
     const addCriterio = () => {
         const porciento = parseInt(porcentaje, 10);
         
-        // Validación de datos
         if (!nombre.trim() || isNaN(porciento) || porciento <= 0 || totalPorcentaje + porciento > 100) {
             setNotificacion({ 
                 mensaje: 'Verifica los datos. El porcentaje debe ser positivo y el total no debe exceder 100%.', 
@@ -1013,7 +1008,6 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
             return;
         }
         
-        // No permitir nombres duplicados dentro del mismo bimestre
         if (criteriosDelBimestre.some(c => c.nombre.toLowerCase() === nombre.trim().toLowerCase())) {
              setNotificacion({ 
                 mensaje: 'Ya existe un criterio con ese nombre en este bimestre.', 
@@ -1024,7 +1018,6 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
 
         const nuevoCriterio = { nombre: nombre.trim(), porcentaje: porciento };
 
-        // Actualizar el estado inmutablemente
         setCriteriosLocales(prev => ({
             ...prev,
             [bimestreActivo]: [...criteriosDelBimestre, nuevoCriterio]
@@ -1045,10 +1038,8 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
 
     // Función principal de guardado
     const handleGuardar = () => {
-        // Verificar que TODOS los bimestres que tienen criterios definidos sumen 100%
         for (const [bimestre, criterios] of Object.entries(criteriosLocales)) {
              const totalBimestre = criterios.reduce((acc, curr) => acc + (Number(curr.porcentaje) || 0), 0);
-             // Si hay criterios definidos (criterios.length > 0), deben sumar 100.
              if (criterios.length > 0 && totalBimestre !== 100) {
                 setNotificacion({ 
                     mensaje: `ERROR: El Bimestre ${bimestre} debe sumar exactamente 100% para guardar. Actualmente suma ${totalBimestre}%.`, 
@@ -1058,7 +1049,6 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
              }
         }
         
-        // Si todo está bien, guardar
         onGuardar(criteriosLocales); 
         onClose();
         setNotificacion({ mensaje: 'Criterios de evaluación actualizados.', tipo: 'exito' });
@@ -1072,7 +1062,6 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
             return;
         }
         
-        // Debe sumar 100% el origen para ser copiado.
         const totalOrigen = criteriosOrigen.reduce((acc, curr) => acc + (Number(curr.porcentaje) || 0), 0);
         if (totalOrigen !== 100) {
             setNotificacion({ mensaje: `El Bimestre ${bimestreOrigen} debe sumar 100% antes de ser copiado.`, tipo: 'error' });
@@ -1081,7 +1070,7 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
 
         setCriteriosLocales(prev => ({
             ...prev,
-            [bimestreDestino]: criteriosOrigen.map(c => ({...c})) // Copia profunda
+            [bimestreDestino]: criteriosOrigen.map(c => ({...c}))
         }));
         setBimestreActivo(bimestreDestino);
         setNotificacion({ mensaje: `Criterios del Bimestre ${bimestreOrigen} copiados a Bimestre ${bimestreDestino}.`, tipo: 'exito' });
@@ -1092,7 +1081,6 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 <h2>Definir Criterios de Evaluación por Bimestre</h2>
                 
-                {/* Selector de Bimestre */}
                 <div className="bimestre-selector" style={{ justifyContent: 'center', borderBottom: 'none' }}>
                     {[1, 2, 3].map(bim => (
                         <button 
@@ -1105,7 +1093,6 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
                     ))}
                 </div>
                 
-                {/* Botón de Copiar Criterios */}
                 <div style={{ textAlign: 'center', marginTop: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid #444', paddingBottom: '1.5rem' }}>
                     {bimestreActivo > 1 && (
                         <button 
@@ -1125,7 +1112,6 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
                     {criteriosDelBimestre.map((c, index) => (
                         <div key={index} className="criterio-item">
                             <span>{c.nombre} - <strong>{c.porcentaje}%</strong></span>
-                            {/* Ajuste de estilo para el botón de eliminar */}
                             <button 
                                 onClick={() => removeCriterio(index)}
                                 style={{
@@ -1163,11 +1149,9 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
                 
                 <div className="modal-actions">
                     <button className="btn btn-cancel" onClick={onClose}>Cancelar</button>
-                    {/* El guardado ya no se basa solo en el bimestre activo, sino en todos. */}
                     <button 
                         className="btn btn-primary" 
                         onClick={handleGuardar} 
-                        // Deshabilita si el bimestre activo no suma 100% pero tiene criterios
                         disabled={criteriosDelBimestre.length > 0 && totalPorcentaje !== 100}
                     >
                         Guardar Todos los Criterios
