@@ -104,6 +104,9 @@ function Trabajos({ user }) {
 
               --body-font: 'Poppins', sans-serif;
               --font-semi-bold: 600;
+              /* CORRECCIÓN: Fondo para toda la página */
+              background-color: var(--dark-color); 
+              min-height: 100vh;
             }
 
             /* --- ESTRUCTURA GENERAL Y TÍTULOS --- */
@@ -230,7 +233,9 @@ function Trabajos({ user }) {
               top: 0; left: 0;
               width: 100%; height: 100%;
               background-color: var(--dark-color);
-              display: block;
+              display: flex; /* CAMBIO: Usar flex para centrar contenido */
+              justify-content: center; /* Centrar horizontalmente */
+              align-items: flex-start; /* Alinear desde arriba */
               z-index: 1000;
               padding: 5rem 1rem 2rem 1rem;
               box-sizing: border-box;
@@ -238,13 +243,24 @@ function Trabajos({ user }) {
             }
 
             .grupo-componente .modal-content.asistencia-modal-content {
-              background-color: transparent;
-              padding: 0;
-              border-radius: 0;
-              width: 100%;
-              max-width: none;
-              box-shadow: none;
+              background-color: var(--dark-color-alt); /* CAMBIO: Darle fondo al modal interior */
+              border-radius: 12px;
+              box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+              padding: 20px; /* Añadir padding */
+              width: 95%; /* Reducir ancho */
+              max-width: 1200px;
+              margin: 0; /* Asegurar que no haya márgenes internos extra */
             }
+            
+            /* Corrección de alineación de botones de Bimestre */
+            .grupo-componente .bimestre-selector {
+                display: flex;
+                gap: 15px; /* Espaciado entre botones de bimestre */
+                margin-bottom: 1.5rem;
+                padding-bottom: 10px;
+                border-bottom: 1px solid #333; /* Línea de separación sutil */
+            }
+
 
             .grupo-componente .asistencia-grid {
               padding: 1rem 0;
@@ -276,7 +292,10 @@ function Trabajos({ user }) {
               grid-template-columns: 250px 1fr 100px;
               align-items: center;
               padding: 5px 10px;
+              background-color: var(--dark-color); /* Fondo de la fila de alumno */
+              border-radius: 6px;
               border-bottom: 1px solid var(--dark-color-alt);
+              margin-bottom: 5px;
             }
 
             .grupo-componente .alumno-nombre {
@@ -356,7 +375,7 @@ function Trabajos({ user }) {
 
             .grupo-componente .criterio-resumen-wrapper {
                 display: flex;
-                justify-content: center; /* Centra el resumen del criterio */
+                justify-content: center; 
                 width: 100%;
                 margin-bottom: 10px;
             }
