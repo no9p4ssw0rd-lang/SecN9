@@ -8,7 +8,9 @@ import logoImage from './Logoescuela.png';
 // --- CAMBIO: URL de la API desde variables de entorno para Vercel ---
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-// --- Componente de Notificación (Utilidad) ---
+// ======================================
+// --- 1. Componente de Notificación (Utilidad) ---
+// ======================================
 function Notificacion({ mensaje, tipo, onClose }) {
   useEffect(() => {
     if (mensaje) {
@@ -26,7 +28,9 @@ function Notificacion({ mensaje, tipo, onClose }) {
   );
 }
 
-// --- Componente Principal de Calificaciones (Vista Admin) ---
+// ======================================
+// --- 2. Componente Principal de Calificaciones (Vista Admin) ---
+// ======================================
 function Calificaciones({ user }) {
   const [grupos, setGrupos] = useState([]);
   const [selectedGrupo, setSelectedGrupo] = useState(null);
@@ -147,8 +151,7 @@ function Calificaciones({ user }) {
       return row;
     });
 
-    // Agrega la fila de promedios bimestrales (T1, T2, T3)
-    const promedioBimestralRow = ['PROMEDIO BIMESTRAL']; // Nueva etiqueta para claridad
+    const promedioBimestralRow = ['PROMEDIO BIMESTRAL'];
     [0, 1, 2].forEach(index => {
       if (bimestresSeleccionados[index]) {
         const promedio = calcularPromedioBimestre(alumno._id, index);
@@ -160,9 +163,13 @@ function Calificaciones({ user }) {
     // Agrega la fila de promedio final general
     const promedioFinalGeneral = calcularPromedioFinal(alumno._id);
     const finalRow = ['PROMEDIO FINAL'];
-    // Solo mostramos el final si se seleccionaron los bimestres de ese promedio.
-    if (bimestresSeleccionados.some(b => b)) {
-        finalRow.push({ content: promedioFinalGeneral > 0 ? promedioFinalGeneral.toFixed(2) : 'N/A', colSpan: bimestresSeleccionados.filter(b=>b).length });
+    // Asegura que el promedio final ocupe el espacio de los trimestres seleccionados
+    const numBimestresSeleccionados = bimestresSeleccionados.filter(b=>b).length;
+    if (numBimestresSeleccionados > 0) {
+        finalRow.push({ 
+            content: promedioFinalGeneral > 0 ? promedioFinalGeneral.toFixed(2) : 'N/A', 
+            colSpan: numBimestresSeleccionados 
+        });
     }
     tableBody.push(finalRow);
 
@@ -175,7 +182,7 @@ function Calificaciones({ user }) {
       styles: { halign: 'center', cellPadding: 2.5 },
       headStyles: { fillColor: [212, 175, 55], textColor: 255 },
       didDrawCell: (data) => {
-        // Estilo para la fila de promedio bimestral y final
+        // Aplica negritas a las dos últimas filas (Promedio Bimestral y Promedio Final)
         if (data.row.index >= tableBody.length - 2) { 
             doc.setFont(undefined, 'bold');
         }
@@ -377,7 +384,6 @@ function Calificaciones({ user }) {
                             })}
                           </React.Fragment>
                         ))}
-                        {/* Muestra el promedio trimestral */}
                         {[0, 1, 2].map(bimestreIndex => {
                           const promedio = calcularPromedioBimestre(alumno._id, bimestreIndex);
                           return (
@@ -386,7 +392,6 @@ function Calificaciones({ user }) {
                             </td>
                           )
                         })}
-                        {/* Muestra el promedio final general */}
                         <td className={`promedio-final-cell ${promFinal > 0 && promFinal < 6 ? 'reprobado' : 'aprobado'}`}>
                           <strong>{promFinal > 0 ? promFinal.toFixed(2) : '-'}</strong>
                         </td>
@@ -407,4 +412,68 @@ function Calificaciones({ user }) {
   );
 }
 
-// ... (Resto del código de ModalShare y export default Calificaciones)
+// ======================================
+// --- 3. Componente: Modal para Compartir ---
+// ======================================
+function ModalShare({ alumno, onClose, onSend }) {
+    const [recipientEmail, setRecipientEmail] = useState('');
+    const [recipientPhone, setRecipientPhone] = useState('');
+
+    const handleEmailSubmit = (e) => {
+        e.preventDefault();
+        if (recipientEmail) {
+            onSend('email', recipientEmail, alumno);
+        }
+    };
+
+    const handleWhatsAppSubmit = (e) => {
+        e.preventDefault();
+        if (recipientPhone) {
+            onSend('whatsapp', recipientPhone, alumno);
+        }
+    };
+
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <h3>Enviar Boleta de {`${alumno.apellidoPaterno} ${alumno.nombre}`}</h3>
+                
+                <form onSubmit={handleEmailSubmit} className="share-form">
+                    <label htmlFor="email-input">Enviar por Correo Electrónico:</label>
+                    <div className="input-group">
+                        <input
+                            id="email-input"
+                            type="email"
+                            value={recipientEmail}
+                            onChange={(e) => setRecipientEmail(e.target.value)}
+                            placeholder="ejemplo@correo.com"
+                            required
+                        />
+                        <button type="submit" className="button">Enviar Email</button>
+                    </div>
+                </form>
+
+                <form onSubmit={handleWhatsAppSubmit} className="share-form">
+                    <label htmlFor="phone-input">Enviar a WhatsApp:</label>
+                    <div className="input-group">
+                        <input
+                            id="phone-input"
+                            type="tel"
+                            value={recipientPhone}
+                            onChange={(e) => setRecipientPhone(e.target.value)}
+                            placeholder="521234567890 (cód. país + número)"
+                            required
+                        />
+                        <button type="submit" className="button whatsapp">Enviar WhatsApp</button>
+                    </div>
+                </form>
+                
+                <div className="modal-actions">
+                    <button type="button" className="button-secondary" onClick={onClose}>Cancelar</button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export default Calificaciones;
