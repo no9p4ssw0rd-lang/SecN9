@@ -40,8 +40,7 @@ function Trabajos({ user }) {
     const fetchGrupos = async () => {
       const token = localStorage.getItem('token');
       
-      // FIX 1: Usar user._id si está disponible, sino user.id. 
-      // Se necesita un ID para la verificación posterior.
+      // Usar user._id si está disponible, sino user.id. 
       const userId = user?._id || user?.id; 
 
       // Asegurar que el token y el ID del usuario existan
@@ -117,7 +116,7 @@ function Trabajos({ user }) {
         }
 
         .grupo-componente .trabajos-container {
-            padding-top: 5rem; 
+            padding-top: 5rem; /* Ajuste para el padding superior */
             padding-bottom: 2rem;
             max-width: 1200px;
             margin: 0 auto;
@@ -286,64 +285,191 @@ function Trabajos({ user }) {
             padding: 8px 12px;
             font-size: 0.8rem;
             white-space: nowrap;
-            flex-shrink: 0; /* EVITA QUE SE ENCOJA */
+            flex-shrink: 0; /* EVITA QUE SE ENCOJA, MANTIENE EL TAMAÑO */
             border: 1px solid #555;
             border-radius: 6px;
             background-color: var(--dark-color-alt);
             cursor: pointer;
         }
+        .grupo-componente .bimestre-header-btn:hover {
+            border-color: var(--main-color);
+            filter: brightness(1.2);
+        }
+        .grupo-componente .bimestre-header-btn.activo {
+            background-color: var(--main-color);
+            color: var(--dark-color);
+            font-weight: bold;
+            border-color: var(--main-color);
+        }
 
         .grupo-componente .promedio-final-display {
             padding-right: 15px;
             text-align: right;
-            font-weight: bold;
+            font-weight: bold;
         }
-        
-        /* Contenedor de tareas desplegado (detalle) */
+        
+        .grupo-componente .bimestre-desplegable {
+            grid-column: 1 / -1; 
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out, padding 0.4s ease-out, margin 0.4s ease-out;
+            padding: 0 20px;
+            margin: 0;
+            background-color: var(--dark-color-alt);
+            border-radius: 0 0 12px 12px;
+        }
         .grupo-componente .bimestre-desplegable.desplegado {
             max-height: 500px;
             padding: 20px;
-            margin-bottom: 5px; 
+            margin-bottom: 5px;
         }
-        
-        /* FIX de la grilla de cuadritos a flexbox horizontal con scroll */
+        
+        /* Contenedor de cuadritos de calificación - FLEX HORIZONTAL */
         .grupo-componente .cuadritos-grid {
             display: flex; 
-            flex-wrap: nowrap; 
+            flex-wrap: nowrap;
             gap: 6px;
             align-items: center;
-            overflow-x: auto; /* IMPORTANTE: Habilita el scroll horizontal */
+            overflow-x: auto; /* Permite scroll horizontal */
             padding-bottom: 10px;
         }
-        
+        
+        /* Estilos de input y botón en el cuadritos-grid */
         .grupo-componente .cuadrito-calificacion {
             width: 38px; 
             height: 32px;
-            flex-shrink: 0; /* No se encoge */
-            flex-grow: 0; 
+            background-color: #4a4a4a;
+            border: 1px solid #777;
+            border-radius: 4px;
+            color: white;
+            text-align: center; 
+            font-weight: bold;
+            font-family: var(--body-font);
+            flex-shrink: 0; /* Asegura que no se achique */
+        }
+        
+        /* FIX: OCULTAR FLECHITAS DE INPUT TYPE=NUMBER Y CENTRAR TEXTO */
+        .grupo-componente .cuadrito-calificacion {
             -moz-appearance: textfield; 
+        }
+        .grupo-componente .cuadrito-calificacion::-webkit-outer-spin-button,
+        .grupo-componente .cuadrito-calificacion::-webkit-inner-spin-button {
+            -webkit-appearance: none; 
+            margin: 0;
+        }
+        
+        .grupo-componente .cuadrito-calificacion::placeholder {
+            color: #999;
+            font-size: 0.8em;
+        }
+        
+        .grupo-componente .btn-agregar-dias {
+            background-color: var(--main-color);
+            color: var(--dark-color);
+            border: none;
+            border-radius: 4px;
+            width: 38px;
+            height: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+        
+        /* --- MODAL DE CRITERIOS (con mejoras de espaciado) --- */
+        .grupo-componente .criterio-resumen-wrapper {
+            display: flex;
+            justify-content: center; 
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .grupo-componente .criterio-resumen {
+            background-color: var(--main-color);
+            color: var(--dark-color);
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px; 
             text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
-        /* Media Queries para móviles */
+        .grupo-componente .criterio-total.error strong {
+            color: var(--danger-color);
+        }
+
+        /* --- OCULTAR BARRA DE SCROLL INTERNA --- */
+        .grupo-componente .asistencia-body::-webkit-scrollbar {
+            display: none;
+        }
+        .grupo-componente .asistencia-body {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        /* --- ESTILO DE SCROLLBAR PERSONALIZADO (Principal) --- */
+        .grupo-componente .modal-backdrop-solid {
+            /* Para Firefox */
+            scrollbar-width: thin;
+            scrollbar-color: var(--main-color) var(--dark-color-alt);
+        }
+        /* Para Webkit (Chrome, Safari, Edge) */
+        .grupo-componente .modal-backdrop-solid::-webkit-scrollbar {
+            width: 8px;
+        }
+        .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-track {
+            background: var(--dark-color-alt);
+        }
+        .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-thumb {
+            background-color: var(--main-color);
+            border-radius: 10px;
+            border: 2px solid var(--dark-color-alt);
+        }
+        .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-thumb:hover {
+            background-color: #d4b03f; /* Un tono más claro del color principal */
+        }
+        
+        /* Media Queries */
         @media (max-width: 768px) {
+            .grupo-componente .trabajos-container {
+                padding-top: 0;
+            }
+            .grupo-componente .main-header {
+                flex-direction: column;
+                align-items: flex-start;
+                padding-top: 1rem;
+            }
+            .grupo-componente .main-header h1 {
+                margin-bottom: 10px;
+            }
             .grupo-componente .asistencia-row {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr; /* Columna única en móvil */
                 gap: 10px;
                 padding: 10px;
             }
-            .grupo-componente .bimestres-container {
-                flex-wrap: wrap; /* Permitir que los botones se envuelvan */
-                padding: 0;
-                margin-top: 5px;
-                overflow-x: hidden; /* Ocultar scroll si se envuelve */
-            }
-            .grupo-componente .bimestre-header-btn {
-                width: 48%; /* Dos botones por fila */
-                flex-grow: 1;
+            .grupo-componente .alumno-nombre {
+                width: auto;
+                padding-left: 0;
             }
             .grupo-componente .promedio-final-display {
                 text-align: left;
+                padding-right: 0;
+            }
+            .grupo-componente .bimestres-container {
+                flex-wrap: wrap; /* Permitir que los botones se envuelvan */
+                justify-content: space-between;
+                padding: 0;
+            }
+            .grupo-componente .modal-content {
+                max-width: 95%;
+            }
+            .grupo-componente .grupos-table {
+                width: 100%;
+                max-width: none;
             }
         }
       `}</style>
@@ -357,7 +483,7 @@ function Trabajos({ user }) {
             onVolver={handleVolver} 
           />
         )}
-        </div>
+      </div>
     </>
   );
 }
@@ -365,9 +491,11 @@ function Trabajos({ user }) {
 
 // ======================================
 // --- 3. Sub-componente: Panel Principal de Calificaciones ---
+// Modificado para usar criterios por bimestre.
 // ======================================
 const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
     const [bimestreActivo, setBimestreActivo] = useState(1);
+    // Estado MODIFICADO: Ahora guarda los criterios por número de bimestre (ej: {1: [], 2: [], 3: []})
     const [criteriosBimestre, setCriteriosBimestre] = useState({ 1: [], 2: [], 3: [] });
     const [calificaciones, setCalificaciones] = useState({});
     const [isLoadingData, setIsLoadingData] = useState(true);
@@ -376,8 +504,10 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
     const [modalCriterios, setModalCriterios] = useState(false);
     const [criterioAbierto, setCriterioAbierto] = useState(null); 
     
+    // Estado para controlar cuántas tareas se muestran por criterio (por defecto 10)
     const [numTareas, setNumTareas] = useState({}); 
 
+    // Obtener los criterios del bimestre activo
     const criterios = criteriosBimestre[bimestreActivo] || [];
 
 
@@ -389,11 +519,15 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
             try {
                 const res = await axios.get(`${API_URL}/calificaciones?grupoId=${grupo._id}&asignatura=${asignatura}`, config);
                 
+                // MODIFICADO: Al cargar, mapear los criterios al nuevo estado
+                // Asumiendo que el backend devuelve un objeto como: { 1: [criterios], 2: [criterios] }
                 setCriteriosBimestre(res.data?.criteriosBimestre || { 1: [], 2: [], 3: [] });
                 setCalificaciones(res.data?.calificaciones || {});
                 
+                // Inicializa numTareas basado en los datos existentes o a 10
                 const initialNumTareas = {1: {}, 2: {}, 3: {}};
                 
+                // Iterar sobre todos los bimestres y criterios para calcular maxIndex
                 Object.keys(res.data?.criteriosBimestre || {}).forEach(bimestre => {
                     (res.data?.criteriosBimestre[bimestre] || []).forEach(criterio => {
                         let maxIndex = 0;
@@ -410,8 +544,9 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
                 
                 setNumTareas(initialNumTareas);
 
+                // Revisa los criterios del primer bimestre al cargar.
                 if (!res.data || !res.data.criteriosBimestre || !res.data.criteriosBimestre[1] || res.data.criteriosBimestre[1].length === 0) {
-                    // La lógica de abrir modal se maneja en el useEffect del bimestre
+                    setModalCriterios(true);
                 }
             } catch (error) {
                 setNotificacion({ mensaje: 'Error al cargar los datos de calificaciones.', tipo: 'error' });
@@ -426,6 +561,7 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
         setIsSaving(true);
         const token = localStorage.getItem('token');
         const config = { headers: { Authorization: `Bearer ${token}` } };
+        // MODIFICADO: Enviar criteriosBimestre al backend
         const payload = { grupoId: grupo._id, asignatura, criteriosBimestre, calificaciones };
         try {
             await axios.post(`${API_URL}/calificaciones`, payload, config);
@@ -437,26 +573,31 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
         }
     };
     
+    // Función para actualizar los criterios (llamada desde la modal)
     const handleGuardarCriteriosBimestre = (nuevosCriterios) => {
         setCriteriosBimestre(prev => ({
             ...prev,
             [bimestreActivo]: nuevosCriterios
         }));
 
+        // Limpia el criterio abierto para evitar errores visuales si se modificó
         setCriterioAbierto(null); 
     };
     
+    // Al cambiar de bimestre, si no hay criterios, abre la modal
     useEffect(() => {
         if (!isLoadingData) {
             if (!criteriosBimestre[bimestreActivo] || criteriosBimestre[bimestreActivo].length === 0) {
                 setModalCriterios(true);
             }
         }
+        // También cerramos el panel de tareas al cambiar de bimestre.
         setCriterioAbierto(null);
     }, [bimestreActivo, isLoadingData, criteriosBimestre]);
     
 
     const handleCalificacionChange = (alumnoId, bimestre, criterioNombre, tareaIndex, valor) => {
+        // La lógica se mantiene igual y es robusta
         const notaFloat = valor === '' ? null : parseFloat(valor);
         if (notaFloat !== null && (isNaN(notaFloat) || notaFloat < 0 || notaFloat > 10)) return;
         
@@ -492,6 +633,7 @@ const PanelCalificaciones = ({ grupo, asignatura, onVolver }) => {
     };
 
     const calcularPromedioBimestre = (alumnoId, bimestre) => {
+        // MODIFICADO: Usar los criterios del bimestre actual.
         const criteriosDelBimestre = criteriosBimestre[bimestre] || [];
         if (criteriosDelBimestre.length === 0) return 0;
         
