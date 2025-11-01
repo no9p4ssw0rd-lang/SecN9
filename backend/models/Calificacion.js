@@ -1,5 +1,8 @@
 import express from 'express';
-import Calificacion from '../models/Calificacion.js'; 
+// 🛑 CORRECCIÓN: Si el modelo Calificacion.js NO usa 'export default Calificacion',
+// debes usar una importación con nombre, por ejemplo, import { Calificacion } from '...';
+// Basado en el error de Render, cambiamos a importación con nombre (desestructurando).
+import { Calificacion } from '../models/Calificacion.js'; 
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
@@ -10,6 +13,7 @@ const router = express.Router();
  * @access  Private (Profesores)
  */
 router.get('/', authMiddleware, async (req, res) => {
+// ... El resto de la lógica de la ruta GET (sin cambios) ...
   try {
     const { grupoId, asignatura } = req.query;
     if (!grupoId || !asignatura) {
@@ -22,7 +26,6 @@ router.get('/', authMiddleware, async (req, res) => {
     });
 
     if (!registroDeCalificaciones) {
-      // ✅ CORRECCIÓN: Devolver la estructura de objeto (Mixed) para 'criterios'
       return res.json({ 
         criterios: { 1: [], 2: [], 3: [] }, 
         calificaciones: {} 
@@ -43,6 +46,7 @@ router.get('/', authMiddleware, async (req, res) => {
  * @access  Private (Profesores)
  */
 router.post('/', authMiddleware, async (req, res) => {
+// ... El resto de la lógica de la ruta POST (sin cambios) ...
     const { grupoId, asignatura, criterios, calificaciones } = req.body;
     
     if (!grupoId || !asignatura || !criterios || calificaciones === undefined) {
