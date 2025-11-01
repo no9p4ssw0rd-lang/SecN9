@@ -1,3 +1,50 @@
+/* =====================================================
+--- 0. MODELO DE BACKEND (Mongoose Schema) ---
+=====================================================
+NOTA: Este código debe estar en un archivo separado en su backend (e.g., Calificacion.js) 
+y se incluye aquí solo para referencia y completitud del contexto.
+*/
+import mongoose from 'mongoose';
+
+const CalificacionSchema = new mongoose.Schema({
+  // Vínculo con el grupo al que pertenecen estas calificaciones
+  grupo: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Grupo',
+    required: true,
+  },
+  // La materia a la que corresponden estas calificaciones. Esencial para la unicidad.
+  asignatura: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  // Criterios de evaluación para esta materia específica (Indexado por bimestre: {1: [], 2: [], 3: []})
+  criterios: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
+  },
+  // Objeto con las calificaciones detalladas que el profesor ingresa
+  calificaciones: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
+  }
+}, {
+  timestamps: true
+});
+
+// ÍNDICE COMPUESTO: Asegura que la COMBINACIÓN de 'grupo' y 'asignatura' sea única.
+CalificacionSchema.index({ grupo: 1, asignatura: 1 }, { unique: true });
+
+// Exportar el modelo de Mongoose (se mantiene para la completitud)
+// const Calificacion = mongoose.model("Calificacion", CalificacionSchema);
+// export default Calificacion;
+
+
+/* =====================================================
+--- CÓDIGO DE FRONTEND (React Component) ---
+=====================================================
+*/
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
@@ -6,7 +53,7 @@ import axios from 'axios';
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 // ======================================
-// 🚀 1. Componente de Notificación
+// 1. Componente de Notificación (Integrado)
 // ======================================
 function Notificacion({ mensaje, tipo, onClose }) {
     useEffect(() => {
@@ -26,7 +73,7 @@ function Notificacion({ mensaje, tipo, onClose }) {
 
 
 // ======================================
-// 🏢 2. Componente Principal: Trabajos
+// 2. Componente Principal: Trabajos
 // ======================================
 function Trabajos({ user }) {
 
@@ -464,8 +511,7 @@ function Trabajos({ user }) {
                     background-color: #4b6587;
                 }
 
-                /* --- MODAL DE CRITERIOS (ESTILOS MODIFICADOS PARA APARIENCIA FORMAL) --- */
-                
+                /* --- MODAL DE CRITERIOS (CON NUEVOS ESTILOS) --- */
                 .grupo-componente .modal-content {
                     background-color: #1a1a2e; /* Fondo oscuro más profundo */
                     padding: 2.5rem; border-radius: 12px; width: 90%;
@@ -548,8 +594,8 @@ function Trabajos({ user }) {
                     background-color: #34495e;
                     transform: translateY(-1px);
                 }
-                
-                /* ESTILOS DE SCROLLBAR (Mejorados) */
+
+                /* --- ESTILOS DE SCROLLBAR (Mejorados) --- */
                 .grupo-componente .asistencia-body::-webkit-scrollbar {
                     display: none;
                 }
@@ -645,7 +691,7 @@ function Trabajos({ user }) {
 
 
 // ======================================
-// 📊 3. Sub-componente: Panel Principal de Calificaciones
+// 3. Sub-componente: Panel Principal de Calificaciones
 // ======================================
 const PanelCalificaciones = ({
     grupo,
@@ -737,6 +783,7 @@ const PanelCalificaciones = ({
         }
     };
 
+    // ... (handleCalificacionChange, calcularPromedioCriterio, calcularPromedioBimestre, formatFechaTooltip, handleToggleCriterio, agregarTareas se mantienen iguales)
     const handleCalificacionChange = (alumnoId, bimestre, criterioNombre, tareaIndex, valor) => {
         const notaFloat = valor === '' ? null : parseFloat(valor);
         if (notaFloat !== null && (isNaN(notaFloat) || notaFloat < 0 || notaFloat > 10)) return;
@@ -807,6 +854,7 @@ const PanelCalificaciones = ({
 
     return (
         <div className="modal-backdrop-solid grupo-componente">
+            {/* Se eliminó la Notificación de aquí */}
             <div className="asistencia-modal-content">
                 <header className="main-header" style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 20px' }}>
                     <h2>Calificaciones: {grupo.nombre} - {asignatura}</h2>
@@ -886,12 +934,13 @@ const PanelCalificaciones = ({
                     <button className="btn btn-primary" onClick={guardarCalificaciones} disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar Calificaciones'}</button>
                 </div>
             </div>
+            {/* Se eliminó el ModalCriterios de aquí */}
         </div>
     );
 };
 
 // ======================================
-// 📑 4. Componente: Lista de Grupos
+// 4. Componente: Lista de Grupos (SIN CAMBIOS)
 // ======================================
 const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => {
     const userId = user?._id || user?.id;
@@ -933,7 +982,7 @@ const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => {
 };
 
 // ======================================
-// ⚙️ 5. Componente: Modal para Criterios de Evaluación
+// 5. Componente: Modal para Criterios de Evaluación
 // ======================================
 const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificacion }) => {
     // 1. Estado para manejar los criterios internamente, clonando el prop inicial.
