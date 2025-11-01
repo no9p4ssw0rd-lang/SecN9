@@ -341,7 +341,7 @@ function Calificaciones({ user }) {
                     <th rowSpan="2">Acciones</th>
                   </tr>
                   <tr>
-                    {materias.flatMap(materia => [<th key={`${materia}-b1`}>T1</th>, <th key={`${materia}-b2`}>B2</th>, <th key={`${materia}-b3`}>B3</th>])}
+                    {materias.flatMap(materia => [<th key={`${materia}-b1`}>T1</th>, <th key={`${materia}-b2`}>T2</th>, <th key={`${materia}-b3`}>T3</th>])}
                     <th className="promedio-header">T1</th>
                     <th className="promedio-header">T2</th>
                     <th className="promedio-header">T3</th>
