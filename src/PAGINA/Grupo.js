@@ -389,10 +389,25 @@ function Grupo({ user }) {
 
         doc.addImage(logoImage, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
 
-        doc.setFontSize(12);
-        doc.text('Escuela Secundaria No. 9 "Amado Nervo"', margin, margin + 5);
-        doc.text(`Reporte de Asistencia - Grupo: ${grupo.nombre}`, margin, margin + 5);
-        doc.text(`Asignatura: ${miAsignacion.asignatura}`, margin, margin + 12);
+     doc.setFontSize(12);
+
+// 1. Inicializar la posición Y
+let yPos = margin + 5; 
+
+// 2. Primera línea: Escuela
+doc.text('Escuela Secundaria No. 9 "Amado Nervo"', margin, yPos);
+
+// 3. Aumentar la posición Y para la siguiente línea
+yPos += 10; 
+
+// 4. Segunda línea: Reporte de Asistencia (ahora está en 'yPos')
+doc.text(`Reporte de Asistencia - Grupo: ${grupo.nombre}`, margin, yPos);
+
+// 5. Aumentar la posición Y para la siguiente línea
+yPos += 10; 
+
+// 6. Tercera línea: Asignatura (ahora está en 'yPos')
+doc.text(`Asignatura: ${miAsignacion.asignatura}`, margin, yPos);
         
         const head = [
             [

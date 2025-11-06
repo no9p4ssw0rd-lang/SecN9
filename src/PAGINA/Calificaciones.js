@@ -127,10 +127,15 @@ function Calificaciones({ user }) {
     doc.addImage(logoImage, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
 
     doc.setFontSize(12);
-    doc.text('Escuela Secundaria No. 9 "Amado Nervo"', margin, margin + 5);
-    doc.setFontSize(12);
-    doc.text('Boleta de Calificaciones', margin, margin + 5);
-    doc.setFontSize(12);
+
+let yPos = margin + 5;
+doc.text('Escuela Secundaria No. 9 "Amado Nervo"', margin, yPos);
+
+
+yPos += 10; 
+doc.text('Boleta de Calificaciones', margin, yPos);
+
+
     doc.text(`Alumno: ${nombreCompleto}`, margin, margin + 15);
     doc.text(`Grupo: ${selectedGrupo.nombre}`, margin, margin + 21);
 
