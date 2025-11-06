@@ -128,16 +128,35 @@ function Calificaciones({ user }) {
 
     doc.setFontSize(12);
 
-let yPos = margin + 5;
-doc.text('Escuela Secundaria No. 9 "Amado Nervo"', margin, yPos);
+    // --- AJUSTES DE POSICIÓN Y ESPACIADO ---
+    let yPos = margin + 5;
+    
+    // 1. Escuela Secundaria
+    doc.text('Escuela Secundaria No. 9 "Amado Nervo"', margin, yPos);
+    
+    // Incremento para la siguiente línea (e.g., 7mm)
+    yPos += 7; 
+    
+    // 2. Boleta de Calificaciones
+    doc.setFont(undefined, 'bold'); // Poner el título en negrita para resaltarlo
+    doc.text('Boleta de Calificaciones', margin, yPos);
+    doc.setFont(undefined, 'normal'); // Volver a normal
+    
+    // Incremento
+    yPos += 7; 
 
-
-yPos += 10; 
-doc.text('Boleta de Calificaciones', margin, yPos);
-
-
-    doc.text(`Alumno: ${nombreCompleto}`, margin, margin + 15);
-    doc.text(`Grupo: ${selectedGrupo.nombre}`, margin, margin + 21);
+    // 3. Alumno
+    doc.text(`Alumno: ${nombreCompleto}`, margin, yPos);
+    
+    // Incremento
+    yPos += 7; 
+    
+    // 4. Grupo
+    doc.text(`Grupo: ${selectedGrupo.nombre}`, margin, yPos);
+    
+    // 5. Espacio de separación antes de la tabla
+    yPos += 5; // Espacio extra de 5mm antes de la tabla
+    // --- FIN AJUSTES DE POSICIÓN ---
 
     const tableHeaders = ['Materia'];
     if (bimestresSeleccionados[0]) tableHeaders.push("Trim. 1");
@@ -164,7 +183,8 @@ doc.text('Boleta de Calificaciones', margin, yPos);
     tableBody.push(promedioRow);
 
     autoTable(doc, {
-      startY: margin + 30,
+      // *** USAR LA POSICIÓN Y CALCULADA Y CORREGIDA ***
+      startY: yPos,
       head: [tableHeaders],
       body: tableBody,
       theme: 'grid',
@@ -183,7 +203,8 @@ doc.text('Boleta de Calificaciones', margin, yPos);
     }
     
     return doc.output('datauristring');
-  };
+};
+// ... resto del componente Calificaciones
   
   const generatePdfConsolidado = async () => {
     const doc = new jsPDF({ orientation: 'landscape' });

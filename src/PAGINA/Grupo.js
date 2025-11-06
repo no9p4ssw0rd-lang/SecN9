@@ -357,7 +357,9 @@ function Grupo({ user }) {
     reader.readAsBinaryString(archivoXLS);
   };
     
-  const generarPDF = async (grupo) => {
+  // ... código anterior (imports, estados, etc.)
+
+const generarPDF = async (grupo) => {
     const miAsignacion = grupo.profesoresAsignados.find(
       asig => asig.profesor?._id === user.id
     );
@@ -389,25 +391,28 @@ function Grupo({ user }) {
 
         doc.addImage(logoImage, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
 
-     doc.setFontSize(12);
+        doc.setFontSize(12);
 
-// 1. Inicializar la posición Y
-let yPos = margin + 5; 
+        // 1. Inicializar la posición Y
+        let yPos = margin + 5; 
 
-// 2. Primera línea: Escuela
-doc.text('Escuela Secundaria No. 9 "Amado Nervo"', margin, yPos);
+        // 2. Primera línea: Escuela
+        doc.text('Escuela Secundaria No. 9 "Amado Nervo"', margin, yPos);
 
-// 3. Aumentar la posición Y para la siguiente línea
-yPos += 10; 
+        // 3. Aumentar la posición Y para la siguiente línea (menos que 10 para evitar superposición con el logo)
+        yPos += 7; 
 
-// 4. Segunda línea: Reporte de Asistencia (ahora está en 'yPos')
-doc.text(`Reporte de Asistencia - Grupo: ${grupo.nombre}`, margin, yPos);
+        // 4. Segunda línea: Reporte de Asistencia (ahora está en 'yPos')
+        doc.text(`Reporte de Asistencia - Grupo: ${grupo.nombre}`, margin, yPos);
 
-// 5. Aumentar la posición Y para la siguiente línea
-yPos += 10; 
+        // 5. Aumentar la posición Y para la siguiente línea
+        yPos += 7; // Usar 7mm entre líneas para mantenerlas juntas
 
-// 6. Tercera línea: Asignatura (ahora está en 'yPos')
-doc.text(`Asignatura: ${miAsignacion.asignatura}`, margin, yPos);
+        // 6. Tercera línea: Asignatura (ahora está en 'yPos')
+        doc.text(`Asignatura: ${miAsignacion.asignatura}`, margin, yPos);
+        
+        // 7. AUMENTO CLAVE: Añadir un espacio adicional (e.g., 7mm) para que el texto NO toque la tabla.
+        yPos += 7; // Espacio entre el texto de "Asignatura" y el inicio de la tabla
         
         const head = [
             [
@@ -450,7 +455,8 @@ doc.text(`Asignatura: ${miAsignacion.asignatura}`, margin, yPos);
         autoTable(doc, {
             head: head,
             body: tableRows,
-            startY: margin + 25,
+            // *** CORRECCIÓN CLAVE: Usar la posición Y calculada con el espacio extra. ***
+            startY: yPos,
             headStyles: { 
                 halign: 'center',
                 valign: 'middle',
@@ -474,7 +480,9 @@ doc.text(`Asignatura: ${miAsignacion.asignatura}`, margin, yPos);
         console.error("Error al generar PDF:", error);
         mostrarNotificacion("Error al cargar los datos de asistencia para el PDF.", "error");
     }
-  };
+};
+
+// ... resto del componente (handleAsignacionChange, handleFileChange, etc.)
 
   if (loading) return (
     <div className="grupo-componente" style={{ paddingTop: '100px', textAlign: 'center' }}>
