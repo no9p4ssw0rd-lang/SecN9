@@ -114,6 +114,8 @@ const CriterioCell = React.memo(({
         // 2. Si el valor es numérico (o sea, se está calificando) Y la tarea NO tiene nombre,
         // abre el modal. Esto evita que aparezca al modificar una calificación existente.
         const notaNumerica = valor === '' ? null : parseFloat(valor);
+        
+        // 🎯 Lógica Corregida: Si hay nota válida (no null y no NaN) Y la tarea no tiene nombre, pedimos el nombre.
         if (notaNumerica !== null && !isNaN(notaNumerica) && !tareaData.nombre) {
             setTareaPorNombrar({
                 criterioNombre,
@@ -1012,7 +1014,8 @@ const PanelCalificaciones = ({
 
 
     useEffect(() => {
-        const fetchGrupos = async () => {
+        const fetchCalificaciones = async () => {
+            setIsLoadingData(true);
             const token = localStorage.getItem('token');
             const userId = user?._id || user?.id; // Este uso es ahora correcto
             const config = { headers: { Authorization: `Bearer ${token}` } };
