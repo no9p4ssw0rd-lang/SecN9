@@ -389,6 +389,8 @@ function Grupo({ user }) {
 
         doc.addImage(logoImage, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
 
+        doc.setFontSize(12);
+        doc.text('Escuela Secundaria No. 9 "Amado Nervo"', margin, margin + 5);
         doc.text(`Reporte de Asistencia - Grupo: ${grupo.nombre}`, margin, margin + 5);
         doc.text(`Asignatura: ${miAsignacion.asignatura}`, margin, margin + 12);
         
