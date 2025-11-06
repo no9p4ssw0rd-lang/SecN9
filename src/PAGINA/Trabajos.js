@@ -50,7 +50,7 @@ const ModalNombreTarea = ({ criterioNombre, tareaIndex, onGuardar, onClose }) =>
             <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
                 <h3 style={{ textAlign: 'center' }}>Asignar Nombre a Trabajo</h3>
                 <p style={{ textAlign: 'center', marginBottom: '1.5rem', color: '#ccc', fontSize: '0.9rem' }}>
-                    Asignarás el nombre a la **Tarea {tareaIndex + 1}** del criterio **{criterioNombre}** para **todos** los alumnos.
+                    Asignarás el nombre a la Tarea {tareaIndex + 1} del criterio {criterioNombre} para todos los alumnos.
                 </p>
 
                 <input
