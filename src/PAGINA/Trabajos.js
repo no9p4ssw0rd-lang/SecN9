@@ -26,11 +26,127 @@ function Notificacion({ mensaje, tipo, onClose }) {
 
 
 // ======================================
+// --- COMPONENTE NUEVO: Modal para Nombre de Tarea ---
+// ======================================
+const ModalNombreTarea = ({ criterioNombre, tareaIndex, onGuardar, onClose }) => {
+    const [nombreTarea, setNombreTarea] = useState('');
+
+    const handleSave = () => {
+        if (nombreTarea.trim()) {
+            onGuardar(nombreTarea, criterioNombre, tareaIndex);
+        }
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            handleSave();
+        }
+    };
+
+    return (
+        <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1060 }}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+                <h3 style={{ textAlign: 'center' }}>Asignar Nombre a Trabajo</h3>
+                <p style={{ textAlign: 'center', marginBottom: '1.5rem', color: '#ccc', fontSize: '0.9rem' }}>
+                    Asignarás el nombre a la **Tarea {tareaIndex + 1}** del criterio **{criterioNombre}** para **todos** los alumnos.
+                </p>
+
+                <input
+                    type="text"
+                    placeholder={`Nombre del Trabajo ${tareaIndex + 1}`}
+                    value={nombreTarea}
+                    onChange={e => setNombreTarea(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    autoFocus
+                    style={{
+                        width: '100%',
+                        padding: '12px',
+                        marginBottom: '1.5rem',
+                        fontSize: '1.1rem',
+                        borderRadius: '6px',
+                        border: '1px solid #555',
+                        backgroundColor: '#333',
+                        color: 'white',
+                    }}
+                />
+
+                <div className="modal-actions" style={{ justifyContent: 'space-between', marginTop: '0' }}>
+                    <button className="btn btn-cancel" onClick={onClose} disabled={!nombreTarea.trim()}>Cancelar</button>
+                    <button
+                        className="btn btn-primary"
+                        onClick={handleSave}
+                        disabled={!nombreTarea.trim()}
+                    >
+                        Guardar Nombre
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+// ======================================
+// --- COMPONENTE NUEVO: Celda de Calificación ---
+// Maneja la lógica de la celda individual y abre el modal de nombre.
+// ======================================
+const CriterioCell = React.memo(({
+    alumnoId,
+    bimestreActivo,
+    criterioNombre,
+    tareaIndex,
+    calificaciones,
+    handleCalificacionChange,
+    formatFechaTooltip,
+    setTareaPorNombrar,
+}) => {
+    // La estructura de la data es: { nota: X, fecha: Y, nombre: Z }
+    const entrada = calificaciones[alumnoId]?.[bimestreActivo]?.[criterioNombre]?.[tareaIndex];
+    const tareaData = entrada || {};
+
+    const handleChange = (e) => {
+        const valor = e.target.value;
+
+        // 1. Manejar la entrada de calificación.
+        handleCalificacionChange(alumnoId, bimestreActivo, criterioNombre, tareaIndex, valor);
+
+        // 2. Si el valor es numérico y la celda NO tiene un nombre asignado,
+        // establece el estado en el padre para abrir el modal de nombre (solo se hace una vez).
+        const notaNumerica = valor === '' ? null : parseFloat(valor);
+        if (notaNumerica !== null && !isNaN(notaNumerica) && !tareaData.nombre) {
+            setTareaPorNombrar({
+                criterioNombre,
+                tareaIndex,
+            });
+        }
+    };
+
+    // Ajustamos el Tooltip para mostrar el nombre
+    const fechaFormatted = formatFechaTooltip(tareaData.fecha);
+    const tooltipText = tareaData.nombre ?
+        `${tareaData.nombre} (${tareaIndex + 1})\nFecha: ${fechaFormatted}` :
+        `Tarea ${tareaIndex + 1}: ${fechaFormatted}`;
+
+    return (
+        <input
+            type="number"
+            min="0" max="10" step="0.1"
+            className="cuadrito-calificacion"
+            placeholder={`${tareaIndex + 1}`}
+            value={tareaData.nota ?? ''}
+            title={tooltipText}
+            onChange={handleChange}
+        />
+    );
+});
+
+
+// ======================================
 // --- 2. Componente Principal: Trabajos ---
 // Se encarga de manejar el modal de criterios y las notificaciones para toda la pantalla.
 // ======================================
 function Trabajos({ user }) {
-    
+
     const [grupos, setGrupos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -41,11 +157,11 @@ function Trabajos({ user }) {
     const [modalCriterios, setModalCriterios] = useState(false);
     const [criteriosPorBimestre, setCriteriosPorBimestre] = useState({ 1: [], 2: [], 3: [] });
     const [notificacion, setNotificacion] = useState({ mensaje: null, tipo: '' });
-    
+
     useEffect(() => {
         const fetchGrupos = async () => {
             const token = localStorage.getItem('token');
-            const userId = user?._id || user?.id; 
+            const userId = user?._id || user?.id;
 
             if (!token || !userId) {
                 setLoading(false);
@@ -65,7 +181,7 @@ function Trabajos({ user }) {
                 setLoading(false);
             }
         };
-        
+
         fetchGrupos();
     }, [user]);
 
@@ -75,7 +191,7 @@ function Trabajos({ user }) {
         // Resetea el estado de criterios para el nuevo grupo/asignatura
         setCriteriosPorBimestre({ 1: [], 2: [], 3: [] });
     };
-    
+
     const handleVolver = () => {
         setGrupoSeleccionado(null);
         setAsignaturaSeleccionada(null);
@@ -90,7 +206,7 @@ function Trabajos({ user }) {
                 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
                 /* ================================================= */
-                /* ESTILOS EXCLUSIVOS PARA Trabajos.js               */
+                /* ESTILOS EXCLUSIVOS PARA Trabajos.js               */
                 /* ================================================= */
 
                 /* --- FUENTES Y VARIABLES GLOBALES --- */
@@ -106,7 +222,7 @@ function Trabajos({ user }) {
 
                     --body-font: 'Poppins', sans-serif;
                     --font-semi-bold: 600;
-                    background-color: var(--dark-color); 
+                    background-color: var(--dark-color);
                     min-height: 100vh;
                 }
                 /* ... Estilos restantes ... */
@@ -114,7 +230,7 @@ function Trabajos({ user }) {
                 .grupo-componente .modal-overlay {
                     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
                     background-color: rgba(0, 0, 0, 0.8);
-                    display: flex; justify-content: center; align-items: center; 
+                    display: flex; justify-content: center; align-items: center;
                     z-index: 1050; /* Z-INDEX ALTO */
                 }
                 .notificacion-flotante {
@@ -183,13 +299,13 @@ function Trabajos({ user }) {
                     transform: translateY(-2px);
                     border-color: var(--main-color);
                 }
-                .grupo-componente .btn-primary { 
-                    background-color: var(--main-color); 
+                .grupo-componente .btn-primary {
+                    background-color: var(--main-color);
                     color: var(--dark-color);
                     border-color: var(--main-color);
                     font-weight: 600;
                 }
-                .grupo-componente .btn-cancel { 
+                .grupo-componente .btn-cancel {
                     background-color: #2c3e50;
                     color: white;
                     border-color: #2c3e50;
@@ -258,260 +374,260 @@ function Trabajos({ user }) {
                 /* ESTILOS PARA EL PANEL DE CALIFICACIÓN TIPO ASISTENCIA */
                 /* ================================================= */
 
-                .grupo-componente .modal-backdrop-solid { 
-                    position: fixed; 
+                .grupo-componente .modal-backdrop-solid {
+                    position: fixed;
                     top: 0; left: 0;
                     width: 100%; height: 100%;
                     background-color: var(--dark-color);
-                    display: flex; 
-                    justify-content: center; 
-                    align-items: flex-start; 
+                    display: flex;
+                    justify-content: center;
+                    align-items: flex-start;
                     z-index: 1000;
                     padding: 5rem 1rem 2rem 1rem;
                     box-sizing: border-box;
                     overflow-y: auto;
                 }
-                
-    /* ESTILOS EXCLUSIVOS PARA Trabajos.js               */
-    /* ================================================= */
 
-    /* --- FUENTES Y VARIABLES GLOBALES --- */
-    .grupo-componente {
-        --dark-color: #191D28;
-        --dark-color-alt: #1E222D;
-        --main-color: #b9972b; /* Tono Dorado/Amarillo formal */
-        --title-color: #FFFFFF;
-        --text-color: #E9E9E9;
-        --danger-color: #d32f2f; /* Rojo formal */
-        --success-color: #27ae60; /* Verde formal */
-        --warning-color: #f39c12; /* Naranja/Amarillo de advertencia */
+                /* ESTILOS EXCLUSIVOS PARA Trabajos.js               */
+                /* ================================================= */
 
-        --body-font: 'Poppins', sans-serif;
-        --font-semi-bold: 600;
-        background-color: var(--dark-color); 
-        min-height: 100vh;
-    }
+                /* --- FUENTES Y VARIABLES GLOBALES --- */
+                .grupo-componente {
+                    --dark-color: #191D28;
+                    --dark-color-alt: #1E222D;
+                    --main-color: #b9972b; /* Tono Dorado/Amarillo formal */
+                    --title-color: #FFFFFF;
+                    --text-color: #E9E9E9;
+                    --danger-color: #d32f2f; /* Rojo formal */
+                    --success-color: #27ae60; /* Verde formal */
+                    --warning-color: #f39c12; /* Naranja/Amarillo de advertencia */
 
-    /* Base de Modales y Notificaciones (Mantenidas) */
-    .grupo-componente .modal-overlay {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background-color: rgba(0, 0, 0, 0.8);
-        display: flex; justify-content: center; align-items: center; 
-        z-index: 1050;
-    }
-    .notificacion-flotante {
-        position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 2000; 
-        padding: 12px 25px; border-radius: 8px; font-weight: 600; font-size: 1rem;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); opacity: 0; visibility: hidden;
-        animation: fadeInOut 3.5s ease-in-out forwards; 
-    }
-    .notificacion-flotante.exito { background-color: var(--success-color); color: var(--dark-color); border: 1px solid #1a8a49; }
-    .notificacion-flotante.error { background-color: var(--danger-color); color: var(--title-color); border: 1px solid #a32222; }
-    @keyframes fadeInOut {
-        0% { opacity: 0; visibility: hidden; transform: translate(-50%, -20px); }
-        5% { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
-        90% { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
-        100% { opacity: 0; visibility: hidden; transform: translate(-50%, -20px); }
-    }
+                    --body-font: 'Poppins', sans-serif;
+                    --font-semi-bold: 600;
+                    background-color: var(--dark-color);
+                    min-height: 100vh;
+                }
 
-    /* Estilos de Contenedor y Títulos (Mantenidos) */
-    .grupo-componente .trabajos-container { padding-top: 8rem; padding-bottom: 2rem; max-width: 1200px; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; }
-    .grupo-componente h1, h2, h3 { color: var(--title-color); font-weight: var(--font-semi-bold); }
-    .grupo-componente .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 2px solid var(--dark-color-alt); padding-bottom: 1.5rem; width: 100%; }
-    .grupo-componente .main-header h1 { font-size: 2.5rem; }
-    .grupo-componente .main-header h2 { font-size: 1.8rem; }
-    .grupo-componente .subtitulo { text-align: center; margin-bottom: 3rem; font-size: 1.4rem; color: var(--main-color); }
+                /* Base de Modales y Notificaciones (Mantenidas) */
+                .grupo-componente .modal-overlay {
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                    background-color: rgba(0, 0, 0, 0.8);
+                    display: flex; justify-content: center; align-items: center;
+                    z-index: 1050;
+                }
+                .notificacion-flotante {
+                    position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 2000;
+                    padding: 12px 25px; border-radius: 8px; font-weight: 600; font-size: 1rem;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); opacity: 0; visibility: hidden;
+                    animation: fadeInOut 3.5s ease-in-out forwards;
+                }
+                .notificacion-flotante.exito { background-color: var(--success-color); color: var(--dark-color); border: 1px solid #1a8a49; }
+                .notificacion-flotante.error { background-color: var(--danger-color); color: var(--title-color); border: 1px solid #a32222; }
+                @keyframes fadeInOut {
+                    0% { opacity: 0; visibility: hidden; transform: translate(-50%, -20px); }
+                    5% { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+                    90% { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+                    100% { opacity: 0; visibility: hidden; transform: translate(-50%, -20px); }
+                }
 
-    /* --- ESTILOS DE BOTONES BASE --- */
-    .grupo-componente .btn {
-        display: inline-block; padding: 0.8rem 1.5rem; border-radius: .5rem;
-        font-weight: 500; transition: all .3s; cursor: pointer; color: var(--text-color);
-        background-color: #3C414C; border: 1px solid #555;
-    }
-    .grupo-componente .btn:hover {
-        filter: brightness(1.1); transform: translateY(-2px); border-color: var(--main-color);
-    }
-    .grupo-componente .btn-primary { 
-        background-color: var(--main-color); color: var(--dark-color);
-        border-color: var(--main-color); font-weight: 600;
-    }
-    .grupo-componente .btn-cancel { 
-        background-color: #2c3e50; color: white; border-color: #2c3e50;
-    }
-    .grupo-componente .btn-secondary {
-        background-color: #34495e; color: white; border-color: #34495e;
-    }
-    .grupo-componente .btn:disabled {
-        opacity: 0.6; cursor: not-allowed; transform: none; filter: none;
-    }
-    
-    /* Estilos de asistencia (Mantenidos) */
-    .grupo-componente .modal-backdrop-solid { 
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background-color: var(--dark-color); display: flex; 
-        justify-content: center; align-items: flex-start; 
-        z-index: 1000; padding: 5rem 1rem 2rem 1rem; box-sizing: border-box;
-        overflow-y: auto;
-    }
-    /* ... otros estilos de asistencia (cuadritos, etc.) ... */
+                /* Estilos de Contenedor y Títulos (Mantenidos) */
+                .grupo-componente .trabajos-container { padding-top: 8rem; padding-bottom: 2rem; max-width: 1200px; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; }
+                .grupo-componente h1, h2, h3 { color: var(--title-color); font-weight: var(--font-semi-bold); }
+                .grupo-componente .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 2px solid var(--dark-color-alt); padding-bottom: 1.5rem; width: 100%; }
+                .grupo-componente .main-header h1 { font-size: 2.5rem; }
+                .grupo-componente .main-header h2 { font-size: 1.8rem; }
+                .grupo-componente .subtitulo { text-align: center; margin-bottom: 3rem; font-size: 1.4rem; color: var(--main-color); }
+
+                /* --- ESTILOS DE BOTONES BASE --- */
+                .grupo-componente .btn {
+                    display: inline-block; padding: 0.8rem 1.5rem; border-radius: .5rem;
+                    font-weight: 500; transition: all .3s; cursor: pointer; color: var(--text-color);
+                    background-color: #3C414C; border: 1px solid #555;
+                }
+                .grupo-componente .btn:hover {
+                    filter: brightness(1.1); transform: translateY(-2px); border-color: var(--main-color);
+                }
+                .grupo-componente .btn-primary {
+                    background-color: var(--main-color); color: var(--dark-color);
+                    border-color: var(--main-color); font-weight: 600;
+                }
+                .grupo-componente .btn-cancel {
+                    background-color: #2c3e50; color: white; border-color: #2c3e50;
+                }
+                .grupo-componente .btn-secondary {
+                    background-color: #34495e; color: white; border-color: #34495e;
+                }
+                .grupo-componente .btn:disabled {
+                    opacity: 0.6; cursor: not-allowed; transform: none; filter: none;
+                }
+
+                /* Estilos de asistencia (Mantenidos) */
+                .grupo-componente .modal-backdrop-solid {
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                    background-color: var(--dark-color); display: flex;
+                    justify-content: center; align-items: flex-start;
+                    z-index: 1000; padding: 5rem 1rem 2rem 1rem; box-sizing: border-box;
+                    overflow-y: auto;
+                }
+                /* ... otros estilos de asistencia (cuadritos, etc.) ... */
 
 
-    /* ================================================= */
-    /* 🎨 MODAL DE CRITERIOS (ENFOQUE EN FORMULARIO Y BOTONES) */
-    /* ================================================= */
+                /* ================================================= */
+                /* 🎨 MODAL DE CRITERIOS (ENFOQUE EN FORMULARIO Y BOTONES) */
+                /* ================================================= */
 
-    .grupo-componente .modal-content {
-        background-color: var(--dark-color-alt);
-        padding: 2.5rem; border-radius: 12px; width: 90%;
-        max-width: 550px; /* Reducido para centralizar */
-        box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-    }
-    .grupo-componente .modal-content h2 {
-        text-align: center;
-        margin-bottom: 1.5rem;
-        font-size: 1.8rem;
-    }
-    .grupo-componente .modal-content .bimestre-selector {
-        justify-content: center;
-        border-bottom: none;
-        padding: 0;
-    }
-    .grupo-componente .modal-content .bimestre-selector .btn {
-        padding: 0.6rem 1.2rem;
-        font-weight: 500;
-        background-color: var(--dark-color);
-        color: var(--text-color);
-        border: 1px solid #444;
-        box-shadow: none;
-        transition: all 0.2s;
-    }
-    .grupo-componente .modal-content .bimestre-selector .btn-primary {
-        background-color: var(--main-color);
-        color: var(--dark-color);
-        border-color: var(--main-color);
-        font-weight: 700;
-    }
+                .grupo-componente .modal-content {
+                    background-color: var(--dark-color-alt);
+                    padding: 2.5rem; border-radius: 12px; width: 90%;
+                    max-width: 550px; /* Reducido para centralizar */
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+                }
+                .grupo-componente .modal-content h2 {
+                    text-align: center;
+                    margin-bottom: 1.5rem;
+                    font-size: 1.8rem;
+                }
+                .grupo-componente .modal-content .bimestre-selector {
+                    justify-content: center;
+                    border-bottom: none;
+                    padding: 0;
+                }
+                .grupo-componente .modal-content .bimestre-selector .btn {
+                    padding: 0.6rem 1.2rem;
+                    font-weight: 500;
+                    background-color: var(--dark-color);
+                    color: var(--text-color);
+                    border: 1px solid #444;
+                    box-shadow: none;
+                    transition: all 0.2s;
+                }
+                .grupo-componente .modal-content .bimestre-selector .btn-primary {
+                    background-color: var(--main-color);
+                    color: var(--dark-color);
+                    border-color: var(--main-color);
+                    font-weight: 700;
+                }
 
-    /* Listado de Criterios */
-    .grupo-componente h3 {
-        margin-top: 1rem;
-        font-size: 1.3rem;
-        border-bottom: 1px solid #333;
-        padding-bottom: 10px;
-    }
-    .grupo-componente .criterio-item {
-        background-color: var(--dark-color);
-        border-left: 5px solid var(--main-color);
-        margin-bottom: 8px;
-    }
-    .grupo-componente .criterio-item button {
-        color: var(--danger-color);
-        background: none; border: none; cursor: pointer;
-        line-height: 1; font-size: 1.4rem;
-        transition: color 0.2s;
-    }
-    .grupo-componente .criterio-item button:hover {
-        color: #ff5252;
-    }
+                /* Listado de Criterios */
+                .grupo-componente h3 {
+                    margin-top: 1rem;
+                    font-size: 1.3rem;
+                    border-bottom: 1px solid #333;
+                    padding-bottom: 10px;
+                }
+                .grupo-componente .criterio-item {
+                    background-color: var(--dark-color);
+                    border-left: 5px solid var(--main-color);
+                    margin-bottom: 8px;
+                }
+                .grupo-componente .criterio-item button {
+                    color: var(--danger-color);
+                    background: none; border: none; cursor: pointer;
+                    line-height: 1; font-size: 1.4rem;
+                    transition: color 0.2s;
+                }
+                .grupo-componente .criterio-item button:hover {
+                    color: #ff5252;
+                }
 
-    /* 📌 Formulario de Adición de Criterios (Mejora clave) */
-    .grupo-componente .criterio-form {
-        display: flex;
-        gap: 15px; /* Espaciado cómodo */
-        margin: 2rem 0 1.5rem 0;
-        align-items: center;
-    }
-    .grupo-componente .criterio-form input {
-        /* Estilo base de input más formal */
-        background: var(--dark-color);
-        border: 1px solid #444; 
-        border-radius: 6px;
-        color: var(--text-color);
-        padding: 10px 12px;
-        font-size: 1rem;
-        font-weight: 400; 
-        box-sizing: border-box;
-    }
-    .grupo-componente .criterio-form input:focus {
-        border-color: var(--main-color);
-        box-shadow: 0 0 3px rgba(185, 151, 43, 0.8);
-        background-color: #242935; 
-    }
-    .grupo-componente .criterio-form input[type="text"] {
-        flex-grow: 2; /* El nombre toma la mayor parte del espacio */
-        max-width: none;
-    }
-    
-    /* Wrapper para el input de porcentaje */
-    .grupo-componente .porcentaje-wrapper {
-        position: relative;
-        flex-grow: 0;
-        width: 100px; /* Ancho fijo para el porcentaje */
-    }
-    .grupo-componente .porcentaje-wrapper::after {
-        content: '%';
-        position: absolute;
-        right: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #666;
-        pointer-events: none;
-    }
-    .grupo-componente .criterio-form input[type="number"] {
-        padding-right: 30px;
-        text-align: right;
-    }
+                /* 📌 Formulario de Adición de Criterios (Mejora clave) */
+                .grupo-componente .criterio-form {
+                    display: flex;
+                    gap: 15px; /* Espaciado cómodo */
+                    margin: 2rem 0 1.5rem 0;
+                    align-items: center;
+                }
+                .grupo-componente .criterio-form input {
+                    /* Estilo base de input más formal */
+                    background: var(--dark-color);
+                    border: 1px solid #444;
+                    border-radius: 6px;
+                    color: var(--text-color);
+                    padding: 10px 12px;
+                    font-size: 1rem;
+                    font-weight: 400;
+                    box-sizing: border-box;
+                }
+                .grupo-componente .criterio-form input:focus {
+                    border-color: var(--main-color);
+                    box-shadow: 0 0 3px rgba(185, 151, 43, 0.8);
+                    background-color: #242935;
+                }
+                .grupo-componente .criterio-form input[type="text"] {
+                    flex-grow: 2; /* El nombre toma la mayor parte del espacio */
+                    max-width: none;
+                }
 
-    /* Botón Añadir */
-    .grupo-componente .criterio-form .btn {
-        padding: 10px 15px;
-        font-weight: 600;
-        line-height: 1.4;
-        border-radius: 6px;
-        white-space: nowrap;
-    }
+                /* Wrapper para el input de porcentaje */
+                .grupo-componente .porcentaje-wrapper {
+                    position: relative;
+                    flex-grow: 0;
+                    width: 100px; /* Ancho fijo para el porcentaje */
+                }
+                .grupo-componente .porcentaje-wrapper::after {
+                    content: '%';
+                    position: absolute;
+                    right: 10px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    color: #666;
+                    pointer-events: none;
+                }
+                .grupo-componente .criterio-form input[type="number"] {
+                    padding-right: 30px;
+                    text-align: right;
+                }
 
-    /* Total del Bimestre y Acciones */
-    .grupo-componente .criterio-total {
-        text-align: right; font-size: 1.1rem; font-weight: bold;
-        margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #444;
-    }
-    .grupo-componente .modal-actions {
-        margin-top: 1.5rem;
-    }
-    .grupo-componente .modal-actions .btn-primary {
-        padding: 0.8rem 1.5rem; 
-        transform: none; /* Asegurar que no se mueva en el hover aquí */
-    }
-    .grupo-componente .modal-actions .btn-cancel {
-        background-color: transparent;
-        color: var(--text-color);
-        border-color: #555;
-        padding: 0.8rem 1.5rem;
-    }
-    .grupo-componente .modal-actions .btn-cancel:hover {
-        background-color: #2a2f3c;
-        transform: none;
-    }
+                /* Botón Añadir */
+                .grupo-componente .criterio-form .btn {
+                    padding: 10px 15px;
+                    font-weight: 600;
+                    line-height: 1.4;
+                    border-radius: 6px;
+                    white-space: nowrap;
+                }
+
+                /* Total del Bimestre y Acciones */
+                .grupo-componente .criterio-total {
+                    text-align: right; font-size: 1.1rem; font-weight: bold;
+                    margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #444;
+                }
+                .grupo-componente .modal-actions {
+                    margin-top: 1.5rem;
+                }
+                .grupo-componente .modal-actions .btn-primary {
+                    padding: 0.8rem 1.5rem;
+                    transform: none; /* Asegurar que no se mueva en el hover aquí */
+                }
+                .grupo-componente .modal-actions .btn-cancel {
+                    background-color: transparent;
+                    color: var(--text-color);
+                    border-color: #555;
+                    padding: 0.8rem 1.5rem;
+                }
+                .grupo-componente .modal-actions .btn-cancel:hover {
+                    background-color: #2a2f3c;
+                    transform: none;
+                }
 
 
 
                 .grupo-componente .modal-content.asistencia-modal-content {
-                    background-color: var(--dark-color-alt); 
+                    background-color: var(--dark-color-alt);
                     border-radius: 12px;
                     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-                    padding: 20px; 
-                    width: 95%; 
+                    padding: 20px;
+                    width: 95%;
                     max-width: 1200px;
-                    margin: 0; 
+                    margin: 0;
                 }
-                
+
                 .grupo-componente .bimestre-selector {
                     display: flex;
-                    gap: 15px; 
+                    gap: 15px;
                     margin-bottom: 2rem;
                     padding: 10px 20px;
-                    border-bottom: 1px solid #333; 
+                    border-bottom: 1px solid #333;
                 }
                 .grupo-componente .bimestre-selector .btn {
                     padding: 10px 20px;
@@ -529,11 +645,11 @@ function Trabajos({ user }) {
                 }
 
                 .grupo-componente .asistencia-row {
-                    display: grid; 
-                    grid-template-columns: 280px 1fr 120px; 
+                    display: grid;
+                    grid-template-columns: 280px 1fr 120px;
                     align-items: center;
                     padding: 10px 20px;
-                    background-color: var(--dark-color); 
+                    background-color: var(--dark-color);
                     border-radius: 8px;
                     border-bottom: 1px solid var(--dark-color-alt);
                     margin-bottom: 5px;
@@ -609,7 +725,7 @@ function Trabajos({ user }) {
 
                 .grupo-componente .criterio-resumen-wrapper {
                     display: flex;
-                    justify-content: center; 
+                    justify-content: center;
                     width: 100%;
                     margin-bottom: 20px;
                 }
@@ -638,7 +754,7 @@ function Trabajos({ user }) {
                 }
 
                 .grupo-componente .cuadritos-grid {
-                    display: grid; 
+                    display: grid;
                     grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
                     gap: 8px;
                     align-items: center;
@@ -729,7 +845,7 @@ function Trabajos({ user }) {
                     height: 30px;
                     font-size: 1.5rem;
                 }
-                
+
                 /* MEJORA: Formulario de adición de criterios */
                 .grupo-componente .criterio-form {
                     display: flex;
@@ -752,7 +868,7 @@ function Trabajos({ user }) {
                     border-color: var(--main-color);
                     box-shadow: 0 0 5px rgba(185, 151, 43, 0.5); /* Sombra al enfocar */
                 }
-                
+
                 .grupo-componente .porcentaje-wrapper {
                     position: relative;
                     flex-grow: 1;
@@ -786,6 +902,7 @@ function Trabajos({ user }) {
                 .grupo-componente .criterio-form .btn:hover {
                     background-color: #d4b03f;
                     transform: none
+                }
                 .grupo-componente .criterio-total {
                     text-align: right; font-size: 1.3rem; font-weight: bold;
                     margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #444;
@@ -800,7 +917,7 @@ function Trabajos({ user }) {
                 .grupo-componente .criterio-total.error strong {
                     color: var(--danger-color);
                 }
-                
+
                 .grupo-componente .aviso-criterios {
                     text-align: center; padding: 3rem; background-color: var(--dark-color);
                     border-radius: 12px; margin: 2rem;
@@ -810,7 +927,7 @@ function Trabajos({ user }) {
                 .grupo-componente .aviso-criterios p {
                     margin-bottom: 2rem; font-size: 1.2rem; color: var(--warning-color);
                 }
-                
+
                 /* --- ESTILOS DE SCROLLBAR (Mejorados) --- */
                 .grupo-componente .asistencia-body::-webkit-scrollbar {
                     display: none;
@@ -831,7 +948,7 @@ function Trabajos({ user }) {
                     border: 2px solid var(--dark-color-alt);
                 }
                 .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-thumb:hover {
-                    background-color: #d4b03f; 
+                    background-color: #d4b03f;
                 }
                 /* ================================================= */
                 /* ESTILOS PARA LA NOTIFICACIÓN FLOTANTE (ALERTA) */
@@ -842,7 +959,7 @@ function Trabajos({ user }) {
                     top: 20px;
                     left: 50%;
                     transform: translateX(-50%);
-                    z-index: 2000; 
+                    z-index: 2000;
 
                     padding: 12px 25px;
                     border-radius: 8px;
@@ -852,18 +969,18 @@ function Trabajos({ user }) {
 
                     opacity: 0;
                     visibility: hidden;
-                    animation: fadeInOut 3.5s ease-in-out forwards; 
+                    animation: fadeInOut 3.5s ease-in-out forwards;
                 }
 
                 .notificacion-flotante.exito {
-                    background-color: var(--success-color); 
-                    color: var(--dark-color); 
+                    background-color: var(--success-color);
+                    color: var(--dark-color);
                     border: 1px solid #1a8a49;
                 }
 
                 .notificacion-flotante.error {
                     background-color: var(--danger-color);
-                    color: var(--title-color); 
+                    color: var(--title-color);
                     border: 1px solid #a32222;
                 }
 
@@ -875,270 +992,270 @@ function Trabajos({ user }) {
                 }
                 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
-/* ================================================= */
-/* ESTILOS EXCLUSIVOS PARA Trabajos.js               */
-/* ================================================= */
+                /* ================================================= */
+                /* ESTILOS EXCLUSIVOS PARA Trabajos.js               */
+                /* ================================================= */
 
-/* --- FUENTES Y VARIABLES GLOBALES --- */
-.grupo-componente {
-    --dark-color: #191D28;
-    --dark-color-alt: #1E222D;
-    --main-color: #b9972b; /* Tono Dorado/Amarillo formal */
-    --title-color: #FFFFFF;
-    --text-color: #E9E9E9;
-    --danger-color: #d32f2f; /* Rojo formal */
-    --success-color: #27ae60; /* Verde formal */
-    --warning-color: #f39c12; /* Naranja/Amarillo de advertencia */
+                /* --- FUENTES Y VARIABLES GLOBALES --- */
+                .grupo-componente {
+                    --dark-color: #191D28;
+                    --dark-color-alt: #1E222D;
+                    --main-color: #b9972b; /* Tono Dorado/Amarillo formal */
+                    --title-color: #FFFFFF;
+                    --text-color: #E9E9E9;
+                    --danger-color: #d32f2f; /* Rojo formal */
+                    --success-color: #27ae60; /* Verde formal */
+                    --warning-color: #f39c12; /* Naranja/Amarillo de advertencia */
 
-    --body-font: 'Poppins', sans-serif;
-    --font-semi-bold: 600;
-    background-color: var(--dark-color); 
-    min-height: 100vh;
-}
+                    --body-font: 'Poppins', sans-serif;
+                    --font-semi-bold: 600;
+                    background-color: var(--dark-color);
+                    min-height: 100vh;
+                }
 
-/* Base de Modales y Notificaciones (Mantenidas) */
-.grupo-componente .modal-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    display: flex; justify-content: center; align-items: center; 
-    z-index: 1050;
-}
-.notificacion-flotante {
-    position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 2000; 
-    padding: 12px 25px; border-radius: 8px; font-weight: 600; font-size: 1rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); opacity: 0; visibility: hidden;
-    animation: fadeInOut 3.5s ease-in-out forwards; 
-}
-.notificacion-flotante.exito { background-color: var(--success-color); color: var(--dark-color); border: 1px solid #1a8a49; }
-.notificacion-flotante.error { background-color: var(--danger-color); color: var(--title-color); border: 1px solid #a32222; }
-@keyframes fadeInOut {
-    0% { opacity: 0; visibility: hidden; transform: translate(-50%, -20px); }
-    5% { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
-    90% { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
-    100% { opacity: 0; visibility: hidden; transform: translate(-50%, -20px); }
-}
+                /* Base de Modales y Notificaciones (Mantenidas) */
+                .grupo-componente .modal-overlay {
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                    background-color: rgba(0, 0, 0, 0.8);
+                    display: flex; justify-content: center; align-items: center;
+                    z-index: 1050;
+                }
+                .notificacion-flotante {
+                    position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 2000;
+                    padding: 12px 25px; border-radius: 8px; font-weight: 600; font-size: 1rem;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); opacity: 0; visibility: hidden;
+                    animation: fadeInOut 3.5s ease-in-out forwards;
+                }
+                .notificacion-flotante.exito { background-color: var(--success-color); color: var(--dark-color); border: 1px solid #1a8a49; }
+                .notificacion-flotante.error { background-color: var(--danger-color); color: var(--title-color); border: 1px solid #a32222; }
+                @keyframes fadeInOut {
+                    0% { opacity: 0; visibility: hidden; transform: translate(-50%, -20px); }
+                    5% { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+                    90% { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+                    100% { opacity: 0; visibility: hidden; transform: translate(-50%, -20px); }
+                }
 
-/* Estilos de Contenedor y Títulos (Mantenidos) */
-.grupo-componente .trabajos-container { padding-top: 8rem; padding-bottom: 2rem; max-width: 1200px; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; }
-.grupo-componente h1, h2, h3 { color: var(--title-color); font-weight: var(--font-semi-bold); }
-.grupo-componente .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 2px solid var(--dark-color-alt); padding-bottom: 1.5rem; width: 100%; }
-.grupo-componente .main-header h1 { font-size: 2.5rem; }
-.grupo-componente .main-header h2 { font-size: 1.8rem; }
-.grupo-componente .subtitulo { text-align: center; margin-bottom: 3rem; font-size: 1.4rem; color: var(--main-color); }
+                /* Estilos de Contenedor y Títulos (Mantenidos) */
+                .grupo-componente .trabajos-container { padding-top: 8rem; padding-bottom: 2rem; max-width: 1200px; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; }
+                .grupo-componente h1, h2, h3 { color: var(--title-color); font-weight: var(--font-semi-bold); }
+                .grupo-componente .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 2px solid var(--dark-color-alt); padding-bottom: 1.5rem; width: 100%; }
+                .grupo-componente .main-header h1 { font-size: 2.5rem; }
+                .grupo-componente .main-header h2 { font-size: 1.8rem; }
+                .grupo-componente .subtitulo { text-align: center; margin-bottom: 3rem; font-size: 1.4rem; color: var(--main-color); }
 
-/* --- ESTILOS DE BOTONES BASE --- */
-.grupo-componente .btn {
-    display: inline-block; padding: 0.8rem 1.5rem; border-radius: .5rem;
-    font-weight: 500; transition: all .3s; cursor: pointer; color: var(--text-color);
-    background-color: #3C414C; border: 1px solid #555;
-}
-.grupo-componente .btn:hover {
-    filter: brightness(1.1); transform: translateY(-2px); border-color: var(--main-color);
-}
-.grupo-componente .btn-primary { 
-    background-color: var(--main-color); color: var(--dark-color);
-    border-color: var(--main-color); font-weight: 600;
-}
-.grupo-componente .btn-cancel { 
-    background-color: #2c3e50; color: white; border-color: #2c3e50;
-}
-.grupo-componente .btn-secondary {
-    background-color: #34495e; color: white; border-color: #34495e;
-}
-.grupo-componente .btn:disabled {
-    opacity: 0.6; cursor: not-allowed; transform: none; filter: none;
-}
-/* Estilos de tabla y calificaciones (no modificados aquí) */
-/* ... */
+                /* --- ESTILOS DE BOTONES BASE --- */
+                .grupo-componente .btn {
+                    display: inline-block; padding: 0.8rem 1.5rem; border-radius: .5rem;
+                    font-weight: 500; transition: all .3s; cursor: pointer; color: var(--text-color);
+                    background-color: #3C414C; border: 1px solid #555;
+                }
+                .grupo-componente .btn:hover {
+                    filter: brightness(1.1); transform: translateY(-2px); border-color: var(--main-color);
+                }
+                .grupo-componente .btn-primary {
+                    background-color: var(--main-color); color: var(--dark-color);
+                    border-color: var(--main-color); font-weight: 600;
+                }
+                .grupo-componente .btn-cancel {
+                    background-color: #2c3e50; color: white; border-color: #2c3e50;
+                }
+                .grupo-componente .btn-secondary {
+                    background-color: #34495e; color: white; border-color: #34495e;
+                }
+                .grupo-componente .btn:disabled {
+                    opacity: 0.6; cursor: not-allowed; transform: none; filter: none;
+                }
+                /* Estilos de tabla y calificaciones (no modificados aquí) */
+                /* ... */
 
 
-/* ================================================= */
-/* 🎨 ESTILOS MEJORADOS PARA MODAL DE CRITERIOS (ModalCriterios) */
-/* ================================================= */
+                /* ================================================= */
+                /* 🎨 ESTILOS MEJORADOS PARA MODAL DE CRITERIOS (ModalCriterios) */
+                /* ================================================= */
 
-.grupo-componente .modal-content {
-    background-color: var(--dark-color-alt);
-    padding: 2.5rem; border-radius: 12px; width: 90%;
-    max-width: 550px; /* Hacemos el modal ligeramente más estrecho para centralizar el contenido */
-    box-shadow: 0 10px 40px rgba(0,0,0,0.8); /* Sombra más pronunciada */
-}
-.grupo-componente .modal-content h2 {
-    text-align: center;
-    margin-bottom: 1.5rem; /* Menos espacio debajo del título principal */
-    font-size: 1.8rem;
-}
+                .grupo-componente .modal-content {
+                    background-color: var(--dark-color-alt);
+                    padding: 2.5rem; border-radius: 12px; width: 90%;
+                    max-width: 550px; /* Hacemos el modal ligeramente más estrecho para centralizar el contenido */
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.8); /* Sombra más pronunciada */
+                }
+                .grupo-componente .modal-content h2 {
+                    text-align: center;
+                    margin-bottom: 1.5rem; /* Menos espacio debajo del título principal */
+                    font-size: 1.8rem;
+                }
 
-/* 1. Selector de Bimestre */
-.grupo-componente .modal-content .bimestre-selector {
-    padding: 0; /* Quitamos el padding para que los botones lo definan */
-    gap: 10px;
-}
-.grupo-componente .modal-content .bimestre-selector .btn {
-    padding: 0.6rem 1.2rem;
-    font-weight: 500;
-    background-color: var(--dark-color); /* Fondo más oscuro */
-    color: var(--text-color);
-    border: 1px solid #444;
-    box-shadow: none;
-    transition: all 0.2s;
-}
-.grupo-componente .modal-content .bimestre-selector .btn:hover {
-    transform: translateY(-1px);
-}
-.grupo-componente .modal-content .bimestre-selector .btn-primary {
-    background-color: var(--main-color);
-    color: var(--dark-color);
-    border-color: var(--main-color);
-    font-weight: 700;
-    box-shadow: 0 0 5px rgba(185, 151, 43, 0.5); 
-}
+                /* 1. Selector de Bimestre */
+                .grupo-componente .modal-content .bimestre-selector {
+                    padding: 0; /* Quitamos el padding para que los botones lo definan */
+                    gap: 10px;
+                }
+                .grupo-componente .modal-content .bimestre-selector .btn {
+                    padding: 0.6rem 1.2rem;
+                    font-weight: 500;
+                    background-color: var(--dark-color); /* Fondo más oscuro */
+                    color: var(--text-color);
+                    border: 1px solid #444;
+                    box-shadow: none;
+                    transition: all 0.2s;
+                }
+                .grupo-componente .modal-content .bimestre-selector .btn:hover {
+                    transform: translateY(-1px);
+                }
+                .grupo-componente .modal-content .bimestre-selector .btn-primary {
+                    background-color: var(--main-color);
+                    color: var(--dark-color);
+                    border-color: var(--main-color);
+                    font-weight: 700;
+                    box-shadow: 0 0 5px rgba(185, 151, 43, 0.5);
+                }
 
-/* Estilo para el botón de Copiar */
-.grupo-componente .btn-secondary {
-    background-color: #3C414C; 
-    border-color: #555;
-    font-size: 0.95rem;
-    padding: 0.6rem 1.2rem;
-}
+                /* Estilo para el botón de Copiar */
+                .grupo-componente .btn-secondary {
+                    background-color: #3C414C;
+                    border-color: #555;
+                    font-size: 0.95rem;
+                    padding: 0.6rem 1.2rem;
+                }
 
-/* 2. Listado de Criterios Existentes */
-.grupo-componente h3 {
-    margin-top: 1rem;
-    font-size: 1.3rem;
-    border-bottom: 1px solid #333;
-    padding-bottom: 10px;
-}
-.grupo-componente .criterio-item {
-    background-color: var(--dark-color);
-    border-left: 5px solid var(--main-color);
-    margin-bottom: 8px;
-}
-.grupo-componente .criterio-item button {
-    color: var(--danger-color);
-    width: 30px; height: 30px; line-height: 1; font-size: 1.4rem;
-    background: none; border: none; cursor: pointer;
-    transition: color 0.2s;
-}
-.grupo-componente .criterio-item button:hover {
-    color: #ff5252;
-}
+                /* 2. Listado de Criterios Existentes */
+                .grupo-componente h3 {
+                    margin-top: 1rem;
+                    font-size: 1.3rem;
+                    border-bottom: 1px solid #333;
+                    padding-bottom: 10px;
+                }
+                .grupo-componente .criterio-item {
+                    background-color: var(--dark-color);
+                    border-left: 5px solid var(--main-color);
+                    margin-bottom: 8px;
+                }
+                .grupo-componente .criterio-item button {
+                    color: var(--danger-color);
+                    width: 30px; height: 30px; line-height: 1; font-size: 1.4rem;
+                    background: none; border: none; cursor: pointer;
+                    transition: color 0.2s;
+                }
+                .grupo-componente .criterio-item button:hover {
+                    color: #ff5252;
+                }
 
-/* 3. Formulario de Adición (Inputs y Botón Añadir) */
-.grupo-componente .criterio-form {
-    display: flex;
-    gap: 10px;
-    margin: 2rem 0 1.5rem 0;
-    align-items: center;
-}
-.grupo-componente .criterio-form input {
-    background: var(--dark-color);
-    border: 1px solid #444; /* Borde más sutil */
-    border-radius: 6px;
-    color: var(--text-color);
-    padding: 10px 12px; /* Reducimos ligeramente el padding */
-    font-size: 1rem;
-    font-weight: 400; /* Fuente más ligera */
-}
-.grupo-componente .criterio-form input:focus {
-    border-color: var(--main-color);
-    box-shadow: 0 0 3px rgba(185, 151, 43, 0.8);
-    background-color: #242935; /* Un poco más claro al enfocarse */
-}
-.grupo-componente .criterio-form input[type="text"] {
-    flex-grow: 2;
-    max-width: none;
-}
-.grupo-componente .porcentaje-wrapper {
-    max-width: 90px; /* Ajuste más compacto */
-}
-.grupo-componente .porcentaje-wrapper::after {
-    right: 10px;
-    color: #666;
-}
-.grupo-componente .criterio-form input[type="number"] {
-    padding-right: 30px;
-    text-align: right;
-}
-.grupo-componente .criterio-form .btn {
-    padding: 10px 15px; /* Ajuste para coincidir con la altura del input */
-    font-weight: 600;
-    line-height: 1.4; /* Asegura el alineamiento vertical */
-    border-radius: 6px;
-    white-space: nowrap;
-}
+                /* 3. Formulario de Adición (Inputs y Botón Añadir) */
+                .grupo-componente .criterio-form {
+                    display: flex;
+                    gap: 10px;
+                    margin: 2rem 0 1.5rem 0;
+                    align-items: center;
+                }
+                .grupo-componente .criterio-form input {
+                    background: var(--dark-color);
+                    border: 1px solid #444; /* Borde más sutil */
+                    border-radius: 6px;
+                    color: var(--text-color);
+                    padding: 10px 12px; /* Reducimos ligeramente el padding */
+                    font-size: 1rem;
+                    font-weight: 400; /* Fuente más ligera */
+                }
+                .grupo-componente .criterio-form input:focus {
+                    border-color: var(--main-color);
+                    box-shadow: 0 0 3px rgba(185, 151, 43, 0.8);
+                    background-color: #242935; /* Un poco más claro al enfocarse */
+                }
+                .grupo-componente .criterio-form input[type="text"] {
+                    flex-grow: 2;
+                    max-width: none;
+                }
+                .grupo-componente .porcentaje-wrapper {
+                    max-width: 90px; /* Ajuste más compacto */
+                }
+                .grupo-componente .porcentaje-wrapper::after {
+                    right: 10px;
+                    color: #666;
+                }
+                .grupo-componente .criterio-form input[type="number"] {
+                    padding-right: 30px;
+                    text-align: right;
+                }
+                .grupo-componente .criterio-form .btn {
+                    padding: 10px 15px; /* Ajuste para coincidir con la altura del input */
+                    font-weight: 600;
+                    line-height: 1.4; /* Asegura el alineamiento vertical */
+                    border-radius: 6px;
+                    white-space: nowrap;
+                }
 
-/* 4. Total del Bimestre y Acciones */
-.grupo-componente .criterio-total {
-    text-align: right; font-size: 1.1rem; font-weight: bold;
-    margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #444;
-}
-.grupo-componente .modal-actions {
-    margin-top: 1.5rem;
-}
-.grupo-componente .modal-actions .btn-primary {
-    padding: 0.8rem 1.5rem; /* Hacemos el botón de guardar más prominente */
-}
-.grupo-componente .modal-actions .btn-cancel {
-    background-color: transparent; /* Fondo transparente para el botón Cancelar */
-    color: var(--text-color);
-    border-color: #555;
-    padding: 0.8rem 1.5rem;
-}
-.grupo-componente .modal-actions .btn-cancel:hover {
-    background-color: #2a2f3c;
-    transform: none;
-}
+                /* 4. Total del Bimestre y Acciones */
+                .grupo-componente .criterio-total {
+                    text-align: right; font-size: 1.1rem; font-weight: bold;
+                    margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #444;
+                }
+                .grupo-componente .modal-actions {
+                    margin-top: 1.5rem;
+                }
+                .grupo-componente .modal-actions .btn-primary {
+                    padding: 0.8rem 1.5rem; /* Hacemos el botón de guardar más prominente */
+                }
+                .grupo-componente .modal-actions .btn-cancel {
+                    background-color: transparent; /* Fondo transparente para el botón Cancelar */
+                    color: var(--text-color);
+                    border-color: #555;
+                    padding: 0.8rem 1.5rem;
+                }
+                .grupo-componente .modal-actions .btn-cancel:hover {
+                    background-color: #2a2f3c;
+                    transform: none;
+                }
 
-/* ... Mantén el resto de estilos de asistencia y scrollbar ... */
-.grupo-componente .modal-backdrop-solid { 
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background-color: var(--dark-color); display: flex; 
-    justify-content: center; align-items: flex-start; 
-    z-index: 1000; padding: 5rem 1rem 2rem 1rem; box-sizing: border-box;
-    overflow-y: auto;
-}
-/* ... otros estilos de asistencia ... */
-.grupo-componente .modal-backdrop-solid::-webkit-scrollbar {
-    width: 8px;
-}
-.grupo-componente .modal-backdrop-solid::-webkit-scrollbar-track {
-    background: var(--dark-color-alt);
-}
-.grupo-componente .modal-backdrop-solid::-webkit-scrollbar-thumb {
-    background-color: var(--main-color);
-    border-radius: 10px;
-    border: 2px solid var(--dark-color-alt)
-}
-.grupo-componente .modal-backdrop-solid::-webkit-scrollbar-thumb:hover {
-    background-color: #d4b03f; 
-}
+                /* ... Mantén el resto de estilos de asistencia y scrollbar ... */
+                .grupo-componente .modal-backdrop-solid {
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                    background-color: var(--dark-color); display: flex;
+                    justify-content: center; align-items: flex-start;
+                    z-index: 1000; padding: 5rem 1rem 2rem 1rem; box-sizing: border-box;
+                    overflow-y: auto;
+                }
+                /* ... otros estilos de asistencia ... */
+                .grupo-componente .modal-backdrop-solid::-webkit-scrollbar {
+                    width: 8px;
+                }
+                .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-track {
+                    background: var(--dark-color-alt);
+                }
+                .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-thumb {
+                    background-color: var(--main-color);
+                    border-radius: 10px;
+                    border: 2px solid var(--dark-color-alt)
+                }
+                .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-thumb:hover {
+                    background-color: #d4b03f;
+                }
             `}</style>
             <div className="trabajos-container grupo-componente">
-            {!grupoSeleccionado ? (
-                <ListaDeGrupos grupos={grupos} user={user} onSeleccionarGrupo={handleSeleccionarGrupo} />
-            ) : (
-                <PanelCalificaciones 
-                    grupo={grupoSeleccionado} 
-                    asignatura={asignaturaSeleccionada}
-                    onVolver={handleVolver} 
-                    setModalCriterios={setModalCriterios} // Pasa la función para abrir el modal
-                    criteriosPorBimestre={criteriosPorBimestre} // Pasa el estado para consumo
-                    setCriteriosPorBimestre={setCriteriosPorBimestre} // Pasa la función para actualizar
-                    setNotificacion={setNotificacion} // Pasa la función para notificar
-                    user={user} // ✅ CORRECCIÓN: Pasar la prop user para eliminar el error de compilación
-                />
-            )}
+                {!grupoSeleccionado ? (
+                    <ListaDeGrupos grupos={grupos} user={user} onSeleccionarGrupo={handleSeleccionarGrupo} />
+                ) : (
+                    <PanelCalificaciones
+                        grupo={grupoSeleccionado}
+                        asignatura={asignaturaSeleccionada}
+                        onVolver={handleVolver}
+                        setModalCriterios={setModalCriterios} // Pasa la función para abrir el modal
+                        criteriosPorBimestre={criteriosPorBimestre} // Pasa el estado para consumo
+                        setCriteriosPorBimestre={setCriteriosPorBimestre} // Pasa la función para actualizar
+                        setNotificacion={setNotificacion} // Pasa la función para notificar
+                        user={user} // ✅ CORRECCIÓN: Pasar la prop user para eliminar el error de compilación
+                    />
+                )}
             </div>
             {/* 1. Notificación en el nivel superior */}
             <Notificacion mensaje={notificacion.mensaje} tipo={notificacion.tipo} onClose={() => setNotificacion({ mensaje: null, tipo: '' })} />
 
             {/* 2. Modal de Criterios en el nivel superior (para evitar problemas de z-index) */}
             {modalCriterios && (
-                <ModalCriterios 
-                    criteriosPorBimestre={criteriosPorBimestre} 
-                    onGuardar={setCriteriosPorBimestre} 
-                    onClose={() => setModalCriterios(false)} 
-                    setNotificacion={setNotificacion} 
+                <ModalCriterios
+                    criteriosPorBimestre={criteriosPorBimestre}
+                    onGuardar={setCriteriosPorBimestre}
+                    onClose={() => setModalCriterios(false)}
+                    setNotificacion={setNotificacion}
                 />
             )}
         </>
@@ -1147,14 +1264,14 @@ function Trabajos({ user }) {
 
 
 // ======================================
-// --- 3. Sub-componente: Panel Principal de Calificaciones ---
+// --- 3. Sub-componente: Panel Principal de Calificaciones (MODIFICADO) ---
 // ======================================
-const PanelCalificaciones = ({ 
-    grupo, 
-    asignatura, 
-    onVolver, 
-    setModalCriterios, 
-    criteriosPorBimestre, 
+const PanelCalificaciones = ({
+    grupo,
+    asignatura,
+    onVolver,
+    setModalCriterios,
+    criteriosPorBimestre,
     setCriteriosPorBimestre,
     setNotificacion,
     user // ✅ CORRECCIÓN: Recibir la prop user
@@ -1163,8 +1280,10 @@ const PanelCalificaciones = ({
     const [calificaciones, setCalificaciones] = useState({});
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
-    const [criterioAbierto, setCriterioAbierto] = useState(null); 
-    const [numTareas, setNumTareas] = useState({}); 
+    const [criterioAbierto, setCriterioAbierto] = useState(null);
+    const [numTareas, setNumTareas] = useState({});
+    // 🌟 ESTADO AGREGADO: Para controlar cuándo y qué tarea necesita un nombre.
+    const [tareaPorNombrar, setTareaPorNombrar] = useState(null);
 
     // Obtener los criterios del bimestre activo
     const criteriosActivos = criteriosPorBimestre[bimestreActivo] || [];
@@ -1186,20 +1305,20 @@ const PanelCalificaciones = ({
             try {
                 const url = `${API_URL}/calificaciones?grupoId=${grupo._id}&asignatura=${asignatura}`;
                 const res = await axios.get(url, config);
-                
+
                 // AJUSTE CLAVE: Se actualizan los criterios en el padre (Trabajos)
                 const fetchedCriterios = {
-                    1: res.data?.criterios?.[1] || [], 
-                    2: res.data?.criterios?.[2] || [], 
-                    3: res.data?.criterios?.[3] || [], 
+                    1: res.data?.criterios?.[1] || [],
+                    2: res.data?.criterios?.[2] || [],
+                    3: res.data?.criterios?.[3] || [],
                 };
                 setCriteriosPorBimestre(fetchedCriterios);
 
                 setCalificaciones(res.data?.calificaciones || {});
-                
-                // Lógica de numTareas (se mantiene igual)
+
+                // Lógica de numTareas (se mantiene igual, ajustando para la nueva estructura)
                 const allCriterios = [...fetchedCriterios[1], ...fetchedCriterios[2], ...fetchedCriterios[3]];
-                
+
                 const initialNumTareas = allCriterios.reduce((acc, criterio) => {
                     let maxIndex = 0;
                     Object.values(res.data?.calificaciones || {}).forEach(alumnoCal => {
@@ -1230,32 +1349,63 @@ const PanelCalificaciones = ({
         };
         if (grupo && asignatura) fetchCalificaciones();
     // Dependencias ajustadas
-    }, [grupo, asignatura, setCriteriosPorBimestre, setModalCriterios, setNotificacion, user]); // Añadimos 'user' a las dependencias
+    }, [grupo, asignatura, setCriteriosPorBimestre, setModalCriterios, setNotificacion, user]);
 
-    const guardarCalificaciones = async () => {
-        setIsSaving(true);
-        const token = localStorage.getItem('token');
-        const config = { headers: { Authorization: `Bearer ${token}` } };
-        // Envía el objeto de criterios completo, separado por bimestre, que viene del estado del padre.
-        const payload = { grupoId: grupo._id, asignatura, criterios: criteriosPorBimestre, calificaciones };
-        try {
-            await axios.post(`${API_URL}/calificaciones`, payload, config);
-            setNotificacion({ mensaje: '¡Calificaciones guardadas con éxito!', tipo: 'exito' });
-        } catch (error) {
-            setNotificacion({ mensaje: 'Error al guardar las calificaciones.', tipo: 'error' });
-        } finally {
-            setIsSaving(false);
-        }
+
+    // 🌟 FUNCIÓN CLAVE: Asigna el nombre de la tarea a todos los alumnos en la columna.
+    const handleGuardarNombreTarea = (tareaNombre, criterioNombre, tareaIndex) => {
+        if (!tareaNombre.trim()) return;
+
+        const nuevoNombre = tareaNombre.trim();
+        const alumnosIds = grupo.alumnos.map(a => a._id);
+
+        setCalificaciones(prev => {
+            const nextCalificaciones = { ...prev };
+
+            alumnosIds.forEach(alumnoId => {
+                const alumnoCal = nextCalificaciones[alumnoId] || {};
+                const bimestreCal = alumnoCal[bimestreActivo] || {};
+                const criterioCal = bimestreCal[criterioNombre] || {};
+                const tareaCal = criterioCal[tareaIndex] || {};
+
+                // Mantenemos la nota y la fecha si ya existen, y solo agregamos/actualizamos el nombre.
+                const notaExistente = tareaCal?.nota !== undefined ? tareaCal.nota : null;
+
+                nextCalificaciones[alumnoId] = {
+                    ...alumnoCal,
+                    [bimestreActivo]: {
+                        ...bimestreCal,
+                        [criterioNombre]: {
+                            ...criterioCal,
+                            [tareaIndex]: {
+                                nota: notaExistente, // Mantenemos la nota
+                                fecha: tareaCal.fecha || new Date().toISOString(), // Mantenemos la fecha o la actual si hay nota
+                                nombre: nuevoNombre // 🎯 Guardamos el nombre aquí para todos los alumnos
+                            }
+                        },
+                    },
+                };
+            });
+            return nextCalificaciones;
+        });
+
+        setTareaPorNombrar(null); // Cerrar el modal
+        setNotificacion({ mensaje: `Se asignó el nombre "${nuevoNombre}" a la Tarea ${tareaIndex + 1}.`, tipo: 'exito' });
     };
 
-    // Lógica de manipulación de calificaciones
+
+    // Lógica de manipulación de calificaciones (MODIFICADA para preservar el nombre)
     const handleCalificacionChange = (alumnoId, bimestre, criterioNombre, tareaIndex, valor) => {
         const notaFloat = valor === '' ? null : parseFloat(valor);
         if (notaFloat !== null && (isNaN(notaFloat) || notaFloat < 0 || notaFloat > 10)) return;
-        
+
+        // Obtenemos el nombre y la fecha del trabajo si ya existen para no perderlos
+        const datosAnteriores = calificaciones[alumnoId]?.[bimestre]?.[criterioNombre]?.[tareaIndex] || {};
+
         const nuevaEntrada = notaFloat === null ? null : {
             nota: notaFloat,
-            fecha: new Date().toISOString()
+            fecha: datosAnteriores.fecha || new Date().toISOString(),
+            nombre: datosAnteriores.nombre // Mantenemos el nombre si ya fue asignado
         };
 
         setCalificaciones(prev => ({
@@ -1286,14 +1436,14 @@ const PanelCalificaciones = ({
 
     const calcularPromedioBimestre = (alumnoId, bimestre) => {
         const criteriosDelBimestre = criteriosPorBimestre[bimestre] || [];
-        
+
         if (criteriosDelBimestre.length === 0) return 0;
-        
+
         const promedioPonderado = criteriosDelBimestre.reduce((acc, criterio) => {
             const promCriterio = calcularPromedioCriterio(alumnoId, bimestre, criterio.nombre);
             return acc + (promCriterio * (criterio.porcentaje / 100));
         }, 0);
-        
+
         return promedioPonderado.toFixed(2);
     };
 
@@ -1318,7 +1468,16 @@ const PanelCalificaciones = ({
 
 
     return (
-        <div className="modal-backdrop-solid grupo-componente"> 
+        <div className="modal-backdrop-solid grupo-componente">
+            {/* 🌟 Invocación del ModalNombreTarea */}
+            {tareaPorNombrar && (
+                <ModalNombreTarea
+                    criterioNombre={tareaPorNombrar.criterioNombre}
+                    tareaIndex={tareaPorNombrar.tareaIndex}
+                    onGuardar={handleGuardarNombreTarea}
+                    onClose={() => setTareaPorNombrar(null)}
+                />
+            )}
             {/* Contenido principal del panel de calificaciones */}
             <div className="asistencia-modal-content">
                 <header className="main-header" style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 20px' }}>
@@ -1334,7 +1493,7 @@ const PanelCalificaciones = ({
                         <button key={bim} className={`btn ${bimestreActivo === bim ? 'btn-primary' : ''}`} onClick={() => setBimestreActivo(bim)}>Trimestre {bim}</button>
                     ))}
                 </div>
-                
+
                 {criteriosActivos.length > 0 ? (
                     <div className="asistencia-grid">
                         <div className="asistencia-body">
@@ -1344,9 +1503,9 @@ const PanelCalificaciones = ({
                                         <div className="alumno-nombre">{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</div>
                                         <div className="bimestres-container">
                                             {criteriosActivos.map(criterio => (
-                                                <div 
-                                                    key={criterio.nombre} 
-                                                    className={`bimestre-header-btn ${criterioAbierto?.alumnoId === alumno._id && criterioAbierto?.criterioNombre === criterio.nombre ? 'activo' : ''}`} 
+                                                <div
+                                                    key={criterio.nombre}
+                                                    className={`bimestre-header-btn ${criterioAbierto?.alumnoId === alumno._id && criterioAbierto?.criterioNombre === criterio.nombre ? 'activo' : ''}`}
                                                     onClick={() => handleToggleCriterio(alumno._id, criterio.nombre)}
                                                 >
                                                     {criterio.nombre} ({criterio.porcentaje}%)
@@ -1371,19 +1530,20 @@ const PanelCalificaciones = ({
                                             </div>
 
                                             <div className="cuadritos-grid">
-                                                {Array.from({ length: numTareas[criterioAbierto.criterioNombre] || 10 }).map((_, tareaIndex) => {
-                                                    const entrada = calificaciones[alumno._id]?.[bimestreActivo]?.[criterioAbierto.criterioNombre]?.[tareaIndex];
-                                                    return <input 
-                                                        key={tareaIndex} 
-                                                        type="number" 
-                                                        min="0" max="10" step="0.1" 
-                                                        className="cuadrito-calificacion" 
-                                                        placeholder={`${tareaIndex + 1}`} 
-                                                        value={entrada?.nota ?? ''} 
-                                                        title={formatFechaTooltip(entrada?.fecha)} 
-                                                        onChange={(e) => handleCalificacionChange(alumno._id, bimestreActivo, criterioAbierto.criterioNombre, tareaIndex, e.target.value)} 
-                                                    />;
-                                                })}
+                                                {/* 🌟 Uso del nuevo componente CriterioCell */}
+                                                {Array.from({ length: numTareas[criterioAbierto.criterioNombre] || 10 }).map((_, tareaIndex) => (
+                                                    <CriterioCell
+                                                        key={tareaIndex}
+                                                        alumnoId={alumno._id}
+                                                        bimestreActivo={bimestreActivo}
+                                                        criterioNombre={criterioAbierto.criterioNombre}
+                                                        tareaIndex={tareaIndex}
+                                                        calificaciones={calificaciones}
+                                                        handleCalificacionChange={handleCalificacionChange}
+                                                        formatFechaTooltip={formatFechaTooltip}
+                                                        setTareaPorNombrar={setTareaPorNombrar}
+                                                    />
+                                                ))}
                                                 <button className="btn btn-agregar-dias" onClick={() => agregarTareas(criterioAbierto.criterioNombre)}>+5</button>
                                             </div>
                                         </div>
@@ -1404,31 +1564,31 @@ const PanelCalificaciones = ({
 };
 
 // ======================================
-// --- 4. Componente: Lista de Grupos ---
+// --- 4. Componente: Lista de Grupos (Original) ---
 // ======================================
 const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => {
-    const userId = user?._id || user?.id; 
-    
+    const userId = user?._id || user?.id;
+
     return (
         <>
             <header className="main-header" style={{ justifyContent: 'center', paddingTop: '0' }}><h1>Gestión de Calificaciones</h1></header>
             <h3 className="subtitulo">Selecciona un grupo y asignatura para calificar</h3>
-            
+
             <div className="grupos-table-wrapper">
                 <table className="grupos-table">
                     <thead><tr><th>Grupo</th><th>Mi Asignatura</th><th>Acciones</th></tr></thead>
                     <tbody>
                         {grupos.map(grupo => {
-                            const miAsignacion = grupo.profesoresAsignados.find(asig => asig.profesor?._id === userId); 
+                            const miAsignacion = grupo.profesoresAsignados.find(asig => asig.profesor?._id === userId);
                             const miAsignatura = miAsignacion ? miAsignacion.asignatura : 'N/A';
-                            
+
                             return (
                                 <tr key={grupo._id}>
                                     <td>{grupo.nombre}</td>
                                     <td>{miAsignatura}</td>
                                     <td className="acciones-cell">
-                                        <button 
-                                            className="btn btn-primary" 
+                                        <button
+                                            className="btn btn-primary"
                                             onClick={() => onSeleccionarGrupo(grupo, miAsignatura)}
                                             disabled={miAsignatura === 'N/A'}
                                         >
@@ -1446,7 +1606,7 @@ const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => {
 };
 
 // ======================================
-// --- 5. Componente: Modal para Criterios de Evaluación ---
+// --- 5. Componente: Modal para Criterios de Evaluación (Original) ---
 // ======================================
 const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificacion }) => {
     // 1. Estado para manejar los criterios internamente, clonando el prop inicial.
@@ -1455,7 +1615,7 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
     const [bimestreActivo, setBimestreActivo] = useState(1);
     const [nombre, setNombre] = useState('');
     const [porcentaje, setPorcentaje] = useState('');
-    
+
     // Criterios del bimestre activo
     const criteriosDelBimestre = criteriosLocales[bimestreActivo] || [];
     const totalPorcentaje = criteriosDelBimestre.reduce((acc, curr) => acc + (Number(curr.porcentaje) || 0), 0);
@@ -1463,9 +1623,9 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
     // Función para cambiar de bimestre y verificar si el actual suma 100%
     const handleSetBimestre = (bim) => {
         if (criteriosDelBimestre.length > 0 && totalPorcentaje !== 100) {
-            setNotificacion({ 
-                mensaje: `El Trimestre ${bimestreActivo} tiene criterios definidos (${totalPorcentaje}%). Por favor, ajústalo a 100% antes de cambiar.`, 
-                tipo: 'error' 
+            setNotificacion({
+                mensaje: `El Trimestre ${bimestreActivo} tiene criterios definidos (${totalPorcentaje}%). Por favor, ajústalo a 100% antes de cambiar.`,
+                tipo: 'error'
             });
             return;
         }
@@ -1475,19 +1635,19 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
     // Función para añadir un criterio al bimestre activo
     const addCriterio = () => {
         const porciento = parseInt(porcentaje, 10);
-        
+
         if (!nombre.trim() || isNaN(porciento) || porciento <= 0 || totalPorcentaje + porciento > 100) {
-            setNotificacion({ 
-                mensaje: 'Verifica los datos. El porcentaje debe ser positivo y el total no debe exceder 100%.', 
-                tipo: 'error' 
+            setNotificacion({
+                mensaje: 'Verifica los datos. El porcentaje debe ser positivo y el total no debe exceder 100%.',
+                tipo: 'error'
             });
             return;
         }
-        
+
         if (criteriosDelBimestre.some(c => c.nombre.toLowerCase() === nombre.trim().toLowerCase())) {
-             setNotificacion({ 
-                mensaje: 'Ya existe un criterio con ese nombre en este trimestre.', 
-                tipo: 'error' 
+             setNotificacion({
+                mensaje: 'Ya existe un criterio con ese nombre en este trimestre.',
+                tipo: 'error'
             });
             return;
         }
@@ -1499,7 +1659,7 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
             [bimestreActivo]: [...criteriosDelBimestre, nuevoCriterio]
         }));
 
-        setNombre(''); 
+        setNombre('');
         setPorcentaje('');
     };
 
@@ -1517,19 +1677,19 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
         for (const [bimestre, criterios] of Object.entries(criteriosLocales)) {
              const totalBimestre = criterios.reduce((acc, curr) => acc + (Number(curr.porcentaje) || 0), 0);
              if (criterios.length > 0 && totalBimestre !== 100) {
-                 setNotificacion({ 
-                    mensaje: `ERROR: El Trimestre ${bimestre} debe sumar exactamente 100% para guardar. Actualmente suma ${totalBimestre}%.`, 
-                    tipo: 'error' 
-                });
-                return; 
+                 setNotificacion({
+                     mensaje: `ERROR: El Trimestre ${bimestre} debe sumar exactamente 100% para guardar. Actualmente suma ${totalBimestre}%.`,
+                     tipo: 'error'
+                 });
+                 return;
              }
         }
-        
-        onGuardar(criteriosLocales); 
+
+        onGuardar(criteriosLocales);
         onClose();
         setNotificacion({ mensaje: 'Criterios de evaluación actualizados.', tipo: 'exito' });
     };
-    
+
     // Función para copiar los criterios de un bimestre anterior (ej. 1 -> 2)
     const handleCopiarCriterios = (bimestreOrigen, bimestreDestino) => {
         const criteriosOrigen = criteriosLocales[bimestreOrigen];
@@ -1537,7 +1697,7 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
             setNotificacion({ mensaje: `No hay criterios definidos en el Trimestre ${bimestreOrigen}.`, tipo: 'error' });
             return;
         }
-        
+
         const totalOrigen = criteriosOrigen.reduce((acc, curr) => acc + (Number(curr.porcentaje) || 0), 0);
         if (totalOrigen !== 100) {
             setNotificacion({ mensaje: `El Trimestre ${bimestreOrigen} debe sumar 100% antes de ser copiado.`, tipo: 'error' });
@@ -1556,23 +1716,23 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 <h2>Definir Criterios de Evaluación por Trimestre</h2>
-                
+
                 <div className="bimestre-selector" style={{ justifyContent: 'center', borderBottom: 'none' }}>
                     {[1, 2, 3].map(bim => (
-                        <button 
-                            key={bim} 
-                            className={`btn ${bimestreActivo === bim ? 'btn-primary' : 'btn-cancel'}`} 
+                        <button
+                            key={bim}
+                            className={`btn ${bimestreActivo === bim ? 'btn-primary' : 'btn-cancel'}`}
                             onClick={() => handleSetBimestre(bim)}
                         >
                             Trimestre {bim}
                         </button>
                     ))}
                 </div>
-                
+
                 <div style={{ textAlign: 'center', marginTop: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid #444', paddingBottom: '1.5rem' }}>
                     {bimestreActivo > 1 && (
-                        <button 
-                            className="btn btn-secondary" 
+                        <button
+                            className="btn btn-secondary"
                             onClick={() => handleCopiarCriterios(bimestreActivo - 1, bimestreActivo)}
                             disabled={criteriosDelBimestre.length > 0 || criteriosLocales[bimestreActivo - 1]?.length === 0}
                             title={criteriosDelBimestre.length > 0 ? "Elimina los criterios actuales para copiar." : `Copia criterios de Bimestre ${bimestreActivo - 1}`}
@@ -1588,7 +1748,7 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
                     {criteriosDelBimestre.map((c, index) => (
                         <div key={index} className="criterio-item">
                             <span>{c.nombre} - <strong>{c.porcentaje}%</strong></span>
-                            <button 
+                            <button
                                 onClick={() => removeCriterio(index)}
                                 style={{
                                     background: 'none',
@@ -1604,30 +1764,30 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
                     ))}
                     {criteriosDelBimestre.length === 0 && <p style={{textAlign: 'center', color: '#999'}}>No hay criterios definidos para este Trimestre.</p>}
                 </div>
-                
+
                 <div className="criterio-form">
                     <input type="text" placeholder="Nombre (Ej: Tareas)" value={nombre} onChange={e => setNombre(e.target.value)} />
                     <div className="porcentaje-wrapper">
                         <input type="number" placeholder="Porcentaje" min="1" max="100" value={porcentaje} onChange={e => setPorcentaje(e.target.value)} />
                     </div>
-                    <button 
-                        className="btn" 
-                        onClick={addCriterio} 
+                    <button
+                        className="btn"
+                        onClick={addCriterio}
                         disabled={totalPorcentaje >= 100 || !nombre.trim() || !porcentaje}
                     >
                         Añadir
                     </button>
                 </div>
-                
+
                 <div className={`criterio-total ${totalPorcentaje !== 100 ? 'error' : ''}`}>
                     <strong>Total del Trimestre {bimestreActivo}: {totalPorcentaje}% / 100%</strong>
                 </div>
-                
+
                 <div className="modal-actions">
                     <button className="btn btn-cancel" onClick={onClose}>Cancelar</button>
-                    <button 
-                        className="btn btn-primary" 
-                        onClick={handleGuardar} 
+                    <button
+                        className="btn btn-primary"
+                        onClick={handleGuardar}
                         disabled={criteriosDelBimestre.length > 0 && totalPorcentaje !== 100}
                     >
                         Guardar Todos los Criterios
