@@ -90,6 +90,7 @@ const ModalNombreTarea = ({ criterioNombre, tareaIndex, onGuardar, onClose }) =>
 
 // ======================================
 // --- COMPONENTE NUEVO: Celda de Calificación (CORREGIDO) ---
+// La corrección es la línea 91, que ahora solo pide el nombre si !tareaData.nombre
 // ======================================
 const CriterioCell = React.memo(({
     alumnoId,
@@ -115,7 +116,7 @@ const CriterioCell = React.memo(({
         // abre el modal. Esto evita que aparezca al modificar una calificación existente.
         const notaNumerica = valor === '' ? null : parseFloat(valor);
         
-        // 🎯 Lógica Corregida: Si hay nota válida (no null y no NaN) Y la tarea no tiene nombre, pedimos el nombre.
+        // Lógica Corregida: Si hay nota válida (no null y no NaN) Y la tarea no tiene nombre, pedimos el nombre.
         if (notaNumerica !== null && !isNaN(notaNumerica) && !tareaData.nombre) {
             setTareaPorNombrar({
                 criterioNombre,
@@ -1014,8 +1015,7 @@ const PanelCalificaciones = ({
 
 
     useEffect(() => {
-        const fetchCalificaciones = async () => {
-            setIsLoadingData(true);
+        const fetchGrupos = async () => {
             const token = localStorage.getItem('token');
             const userId = user?._id || user?.id; // Este uso es ahora correcto
             const config = { headers: { Authorization: `Bearer ${token}` } };
