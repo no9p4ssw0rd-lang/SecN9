@@ -682,7 +682,7 @@ const generarPDF = async (grupo) => {
                           <div className="bimestres-container">
                             {Array.from({ length: NUM_BIMESTRES }).map((_, bimIndex) => (
                               <div key={bimIndex} className={`bimestre-header-btn ${bimestreAbierto[alumno._id] === (bimIndex + 1) ? 'activo' : ''}`} onClick={() => handleToggleBimestre(alumno._id, bimIndex + 1)}>
-                                Bim. {bimIndex + 1}
+                                Trim. {bimIndex + 1}
                               </div>
                             ))}
                           </div>
