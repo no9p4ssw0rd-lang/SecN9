@@ -1,325 +1,226 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { useNavigate } from "react-router-dom";
+// 1. RUTA CORREGIDA: Apunta correctamente a la carpeta api/ usando './'
+import apiClient from './api/apiClient'; 
 import "./Home.css";
-import { useNavigate } from "react-router-dom"; 
-// La URL de tu backend ahora se leerá desde las variables de entorno
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
+// Ruta por defecto que existe en el servidor (coincide con el modelo)
+const DEFAULT_IMG_PATH = "/uploads/fotos/default.png";
 
-function Home({ user }) {
- 
-  const [profesores, setProfesores] = useState([]);
-  const [selectedProfesor, setSelectedProfesor] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [asignaturasSelect, setAsignaturasSelect] = useState([]);
-  const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
-  const [alerta, setAlerta] = useState(null); // Estado para alertas
+function Home({ user, handleNavClick }) {
+  const navigate = useNavigate();
+  const [profesores, setProfesores] = useState([]);
+  const [selectedProfesor, setSelectedProfesor] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [asignaturasSelect, setAsignaturasSelect] = useState([]);
+  const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
 
-  // 🔑 CAMBIO 1: Mover la lista de materias a un estado local
-  const [materiasDisponibles, setMateriasDisponibles] = useState([
-    "MATEMATICAS COOR.ACADEMICA", "TUTORIA", "ESPAÑOL", "INGLES TUTORIA", "INGLES","LENGUA EXTRANJERA",
-    "MATEMATICAS", "CIENCIAS I", "CIENCIAS II", "CIENCIAS III", "ELECTRONICA","INTEGRACION CURRICULAR","FISICA",
-    "INDUSTRIA DEL VESTIDO", "DISEÑO ARQUIT.", "INFORMATICA", "GEOGRAFIA","TECNOLOGÍA",
-    "HISTORIA", "F.CIVICA y ETICA", "F.CIVICA y ETICA-A.C", "F.CIVICA y ETICA-A.C TUTORIA",
-    "ARTES", "EDUCACION FISICA",
-  ]);
-  
-  // 🔑 NUEVO ESTADO: Para controlar la visibilidad del modal de administración de materias
-  const [materiasModalVisible, setMateriasModalVisible] = useState(false);
-  
-  // 🔑 NUEVO ESTADO: Para el campo de nueva materia
-  const [nuevaMateria, setNuevaMateria] = useState('');
+  const materias = [
+    "MATEMATICAS COOR.ACADEMICA", "TUTORIA", "ESPAÑOL", "INGLES TUTORIA", "INGLES",
+    "MATEMATICAS", "CIENCIAS I", "CIENCIAS II", "CIENCIAS III", "ELECTRONICA",
+    "INDUSTRIA DEL VESTIDO", "DISEÑO ARQUIT.", "INFORMATICA", "GEOGRAFIA-HISTORIA TUTORIA",
+    "HISTORIA", "F.CIVICA y ETICA", "F.CIVICA y ETICA-A.C", "F.CIVICA y ETICA-A.C TUTORIA",
+    "ARTES(MUSICA)", "EDUCACION FISICA",
+  ];
 
+  useEffect(() => {
+    const navMenu = document.getElementById("nav-menu");
+    const navToggle = document.getElementById("nav-toggle");
+    const navClose = document.getElementById("nav-close");
+    // Corrección de sintaxis de event listener
+    if (navToggle) navToggle.addEventListener("click", () => navMenu.classList.add("show-menu"));
+    if (navClose) navClose.addEventListener("click", () => navMenu.classList.remove("show-menu"));
+    
+    const scrollHeader = () => {
+      const header = document.getElementById("header");
+      if(header) {
+        if (window.scrollY >= 80) header.classList.add("scroll-header");
+        else header.classList.remove("scroll-header");
+      }
+    };
+    window.addEventListener("scroll", scrollHeader);
+    return () => window.removeEventListener("scroll", scrollHeader);
+  }, []);
 
-  const mostrarAlerta = (mensaje, tipo = "success") => {
-    setAlerta({ mensaje, tipo });
-    setTimeout(() => setAlerta(null), 3000);
-  };
+  useEffect(() => {
+    if (user?.role === "admin") fetchProfesores();
+  }, [user]);
 
-  useEffect(() => {
-    if (user?.role === "admin") {
-      fetchProfesores();
-    }
-  }, [user]);
+  const fetchProfesores = () => {
+    const token = localStorage.getItem("token");
+    if (!token) return console.error("⚠️ No hay token guardado.");
+    
+    // 2. CÓDIGO MÁS LIMPIO: Usando apiClient
+    apiClient.get("/auth/profesores", { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => setProfesores(res.data || []))
+      .catch((err) => console.error("Error al obtener profesores:", err));
+  };
 
-  const fetchProfesores = () => {
-    const token = localStorage.getItem("token");
-    if (!token) return console.error("⚠️ No hay token guardado.");
-    
-    axios.get(`${API_URL}/auth/profesores`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => setProfesores(res.data || []))
-      .catch((err) => {
-        console.error("Error al obtener profesores:", err);
-        mostrarAlerta("No se pudieron cargar los profesores.", "error");
-      });
-  };
+  const openModal = (profesor) => {
+    setSelectedProfesor(profesor);
+    setAsignaturasSelect(profesor.asignaturas || []);
+    setModalVisible(true);
+    setConfirmDeleteVisible(false);
+  };
 
-  const openModal = (profesor) => {
-    setSelectedProfesor(profesor);
-    setAsignaturasSelect(profesor.asignaturas || []);
-    setModalVisible(true);
-    setConfirmDeleteVisible(false);
-  };
+  const closeModal = () => {
+    setSelectedProfesor(null);
+    setModalVisible(false);
+    setConfirmDeleteVisible(false);
+    setAsignaturasSelect([]);
+  };
 
-  const closeModal = () => {
-    setModalVisible(false);
-    setSelectedProfesor(null);
-    setConfirmDeleteVisible(false);
-    setAsignaturasSelect([]);
-  };
+  // 3. URLs CENTRALIZADAS (CORREGIDA): La lógica de la imagen es simplificada
+  const profileImgUrl = (foto) => {
+    // Si la foto es la ruta por defecto, concatenamos la URL del servidor.
+    if (foto === DEFAULT_IMG_PATH || !foto) {
+        return `${apiClient.defaults.baseURL}${DEFAULT_IMG_PATH}`;
+    }
+    // Si no es la ruta por defecto, es la URL completa de Cloudinary y la usamos directamente.
+    return foto;
+  };
 
-  const profileImgUrl = (foto) => {
-    if (foto && foto.startsWith("http")) {
-      return foto;
-    }
-    return `https://placehold.co/150x150/EFEFEF/AAAAAA&text=Sin+Foto`; 
-  };
+  const handleAsignaturasChange = (materia) => {
+    setAsignaturasSelect((prev) =>
+      prev.includes(materia) ? prev.filter((m) => m !== materia) : [...prev, materia]
+    );
+  };
 
-  const handleAsignaturasChange = (materia) => {
-    setAsignaturasSelect((prev) =>
-      prev.includes(materia) ? prev.filter((m) => m !== materia) : [...prev, materia]
-    );
-  };
+  // Funciones que faltaban
+  const guardarAsignaturas = () => {
+    if (!selectedProfesor) return;
+    const token = localStorage.getItem("token");
+    
+    apiClient.put(`/profesores/${selectedProfesor._id}/asignaturas`, { asignaturas: asignaturasSelect }, { headers: { Authorization: `Bearer ${token}` } })
+      .then(() => {
+        fetchProfesores();
+        closeModal();
+      })
+      .catch((err) => console.error("Error al guardar asignaturas:", err));
+  };
 
-  const guardarAsignaturas = () => {
-    if (!selectedProfesor) return;
-    const token = localStorage.getItem("token");
-    
-    axios.put(`${API_URL}/auth/profesores/${selectedProfesor._id}/asignaturas`, { asignaturas: asignaturasSelect }, { headers: { Authorization: `Bearer ${token}` } })
-      .then(() => {
-        mostrarAlerta("Asignaturas actualizadas.", "success");
-        fetchProfesores();
-        closeModal();
-      })
-      .catch((err) => {
-        console.error("Error al guardar asignaturas:", err);
-        mostrarAlerta("Error al guardar las asignaturas.", "error");
-      });
-  };
+  const handleDeleteClick = () => setConfirmDeleteVisible(true);
 
-  const handleDeleteClick = () => setConfirmDeleteVisible(true); 
+  const confirmDelete = () => {
+    if (!selectedProfesor) return;
+    const token = localStorage.getItem("token");
+    
+    apiClient.delete(`/profesores/${selectedProfesor._id}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(() => {
+        fetchProfesores();
+        closeModal();
+      })
+      .catch((err) => console.error("Error al eliminar profesor:", err));
+  };
 
-  const confirmDelete = () => {
-    if (!selectedProfesor) return;
-    const token = localStorage.getItem("token");
-    
-    axios.delete(`${API_URL}/auth/profesores/${selectedProfesor._id}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(() => {
-        mostrarAlerta("Profesor eliminado correctamente.", "success");
-        fetchProfesores();
-        closeModal();
-      })
-      .catch((err) => {
-        console.error("Error al eliminar profesor:", err);
-        mostrarAlerta("Error al eliminar el profesor.", "error");
-      });
-  };
+  const cancelDelete = () => setConfirmDeleteVisible(false);
+  
+  const primerNombre = user?.nombre ? user.nombre.split(" ")[0] : "";
+  
+  // --------------------------------------------------------------------------
+  // LÓGICA DE DETENER FUGA DE CONTENIDO EN RUTAS SECUNDARIAS
+  // Si la ruta no es la raíz, la lógica de renderizado del componente Home NO debe ejecutarse.
+  // Sin la prop 'location' aquí, esta función se movería a App.js
+  // (Asumiendo que App.js se encarga de la guarda estructural)
+  // --------------------------------------------------------------------------
 
-  const cancelDelete = () => setConfirmDeleteVisible(false); 
+  return (
+    <div>
+      {/* HOME */}
+      <section className="home section" id="home">
+        <div className="home-container container grid">
+          <div className="home-data">
+            <h1 className="home-title">
+              {user ? (
+                <>Bienvenido <span className="user-name-gold">{primerNombre}</span> al sistema de <span>asistencia</span></>
+              ) : (
+                <>Bienvenido al sistema de <span>asistencia</span></>
+              )}
+            </h1>
+            {!user && <p>Por favor inicia sesión para acceder a todas las funciones.</p>}
+          </div>
+        </div>
+      </section>
+      
+      {/* PROFESORES ADMIN */}
+      {user?.role === "admin" && (
+        <section className="profesores section" id="profesores">
+          <h2 className="section-title">Perfiles de Profesores</h2>
+          <div className="profesores-table-container">
+            <table className="profesores-table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Asignaturas</th>
+                  <th>Fecha de Registro</th>
+                  <th>Perfil</th>
+                </tr>
+              </thead>
+              <tbody>
+                {profesores.map((prof) => (
+                  <tr key={prof._id}>
+                    <td>{prof.nombre}</td>
+                    <td>{prof.asignaturas?.join(", ") || "No asignada"}</td>
+                    <td>{prof.createdAt ? new Date(prof.createdAt).toLocaleDateString() : "N/A"}</td>
+                    <td><button className="btn-ver-perfil" onClick={() => openModal(prof)}>Ver perfil</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
-  // 🔑 NUEVAS FUNCIONES: Para agregar/quitar materia del estado local
-  const handleAgregarMateria = (e) => {
-    e.preventDefault();
-    const materiaNormalizada = nuevaMateria.trim().toUpperCase();
-    
-    if (!materiaNormalizada) {
-      return mostrarAlerta("El nombre de la materia no puede estar vacío.", "error");
-    }
-    if (materiasDisponibles.includes(materiaNormalizada)) {
-      return mostrarAlerta(`La materia "${materiaNormalizada}" ya existe.`, "error");
-    }
+      {/* MODAL PROFESOR */}
+      {modalVisible && selectedProfesor && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={closeModal}>&times;</button>
+            <img 
+                src={profileImgUrl(selectedProfesor.foto)} 
+                alt={selectedProfesor.nombre} 
+                className="profile-img-modal" 
+                onError={(e) => { e.target.onerror = null; e.target.src = `${apiClient.defaults.baseURL}${DEFAULT_IMG_PATH}` }}
+            />
+            <h3>{selectedProfesor.nombre}</h3>
+            
+            <div className="profesor-details">
+                <p><b>Correo:</b> {selectedProfesor.email}</p>
+                <p><b>Celular:</b> {selectedProfesor.celular}</p>
+                <p><b>Edad:</b> {selectedProfesor.edad}</p>
+                <p><b>Sexo:</b> {selectedProfesor.sexo}</p>
+            </div>
 
-    setMateriasDisponibles(prev => [...prev, materiaNormalizada]);
-    setNuevaMateria('');
-    mostrarAlerta(`Materia "${materiaNormalizada}" agregada con éxito (Local).`, "success");
-  };
+            <p className="asignaturas-title"><b>Asignaturas:</b></p>
+            <div className="checkbox-group">
+              {materias.map((m) => (
+                <label key={m} className="checkbox-label">
+                  <input type="checkbox" value={m} checked={asignaturasSelect.includes(m)} onChange={() => handleAsignaturasChange(m)} />
+                  <span>{m}</span>
+                </label>
+              ))}
+            </div>
+            
+            <div className="modal-actions">
+                <button className="btn-guardar" onClick={guardarAsignaturas}>Guardar asignaturas</button>
+                <button className="btn-eliminar" onClick={handleDeleteClick}>Eliminar profesor</button>
+            </div>
 
-  const handleEliminarMateria = (materia) => {
-    if (!window.confirm(`¿Estás seguro de que quieres eliminar la materia "${materia}"? Esto no se guarda permanentemente.`)) {
-      return;
-    }
-    setMateriasDisponibles(prev => prev.filter(m => m !== materia));
-    // Opcional: Quitarla de las asignaturas seleccionadas si estaba en un modal abierto
-    setAsignaturasSelect(prev => prev.filter(m => m !== materia)); 
-    mostrarAlerta(`Materia "${materia}" eliminada con éxito (Local).`, "success");
-  };
-
-
-  const primerNombre = user?.nombre ? user.nombre.split(" ")[0] : "";
-  
-  // 🔑 NUEVO: Componente Modal de Administración de Materias
-  const MateriasAdminModal = () => (
-    <div className="modal-overlay" onClick={() => setMateriasModalVisible(false)}>
-      <div className="modal-content admin-modal-content" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={() => setMateriasModalVisible(false)}>&times;</button>
-        
-        <h2>⚙️ Administración de Materias</h2>
-        
-        {/* Formulario para agregar */}
-        <form onSubmit={handleAgregarMateria} className="add-materia-form">
-          <input
-            type="text"
-            placeholder="Nombre de la nueva materia (Ej: DEPORTE)"
-            value={nuevaMateria}
-            onChange={(e) => setNuevaMateria(e.target.value)}
-            className="input-materia"
-          />
-          <button type="submit" className="btn-agregar-materia">Agregar Materia</button>
-        </form>
-
-        {/* Lista de materias para eliminar */}
-        <div className="materias-list-container">
-          <h3>Materias Actuales ({materiasDisponibles.length})</h3>
-          <ul className="materias-list">
-            {materiasDisponibles.map((m) => (
-              <li key={m}>
-                <span className="materia-text-black">{m}</span>
-                <button 
-                  onClick={() => handleEliminarMateria(m)} 
-                  className="btn-quitar-materia"
-                >
-                  Quitar
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    </div>
-  );
-
-
-  return (
-    <>
-      {alerta && <div className={`alerta-fixed ${alerta.tipo}`}>{alerta.mensaje}</div>}
-
-      <section className="home section" id="home">
-        <div className="home-container container grid">
-          <div className="home-data">
-            <h1 className="home-title">
-              {user ? (
-                <>Bienvenido <span className="user-name-gold">{primerNombre}</span> al sistema de <span>asistencia</span></>
-              ) : (
-                <>Bienvenido al sistema de <span>asistencia</span></>
-              )}
-            </h1>
-            {!user && <p>Por favor inicia sesión para acceder a todas las funciones.</p>}
-          </div>
-        </div>
-      </section>
-      
-      
-      {/* PROFESORES ADMIN */}
-      {user?.role === "admin" && (
-        <section className="profesores section" id="profesores">
-          <h2 className="section-title">Perfiles de Profesores</h2>
-          <div className="profesores-table-container">
-            <table className="profesores-table">
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>Asignaturas</th>
-                  <th>Fecha de Registro</th>
-                  <th>Perfil</th>
-                </tr>
-              </thead>
-              <tbody>
-                {profesores.map((prof) => (
-                  <tr key={prof._id}>
-                    <td>{prof.nombre}</td>
-                    <td>{prof.asignaturas?.join(", ") || "No asignada"}</td>
-                    <td>{prof.fechaRegistro ? new Date(prof.fechaRegistro).toLocaleDateString() : 'N/A'}</td>
-                    <td><button className="btn-ver-perfil" onClick={() => openModal(prof)}>Ver perfil</button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          
-          {/* 🔑 BOTÓN: Abrir Modal de Administración de Materias */}
-          <div style={{ textAlign: 'center', marginTop: '20px' }}>
-            <button 
-              className="btn-admin-materias" 
-              onClick={() => setMateriasModalVisible(true)}
-            >
-              Administrar Materias ⚙️
-            </button>
-          </div>
-        </section>
-      )}
-
-      
-      {/* 🔑 NUEVO: Renderiza el Modal de Administración si está visible */}
-      {user?.role === "admin" && materiasModalVisible && <MateriasAdminModal />}
-
-      {/* MODAL PROFESOR (Usa materiasDisponibles) */}
-      {modalVisible && selectedProfesor && (
-        <div className="modal-overlay" onClick={closeModal}>
-          {/* 🔑 CAMBIO CLAVE: Clase para modal ancho y horizontal */}
-          <div className="modal-content modal-content-horizontal" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={closeModal}>&times;</button>
-            
-            {/* 🔑 NUEVO CONTENEDOR FLEX: Agrupa la imagen y los detalles */}
-            <div className="profesor-header-horizontal">
-              <div className="profesor-info-left">
-                <img 
-                  src={profileImgUrl(selectedProfesor.foto)} 
-                  alt={selectedProfesor.nombre} 
-                  className="profile-img-modal" 
-                />
-                <h3 style={{marginTop: '10px'}}>{selectedProfesor.nombre}</h3>
-              </div>
-              
-              {/* 🔑 CAMBIO CLAVE: Detalles en formato columna para más espacio */}
-              <div className="profesor-details horizontal-details">
-                <p><b>Correo:</b> {selectedProfesor.email}</p>
-                <p><b>Celular:</b> {selectedProfesor.celular}</p>
-                <p><b>Edad:</b> {selectedProfesor.edad}</p>
-                <p><b>Sexo:</b> {selectedProfesor.sexo}</p>
-                <p className="fecha-registro-horizontal"><b>Fecha de registro:</b> {selectedProfesor.fechaRegistro ? new Date(selectedProfesor.fechaRegistro).toLocaleDateString() : 'N/A'}</p>
-              </div>
-            </div>
-            
-            <p className="asignaturas-title"><b>Asignaturas a Impartir:</b></p>
-            {/* 🔑 CAMBIO CLAVE: Aplicar estilos flex para la lista de asignaturas */}
-            <div className="checkbox-group checkbox-group-horizontal">
-              {/* 🔑 CAMBIO 3: Usar el estado de materias disponibles */}
-              {materiasDisponibles.map((m) => (
-                <label key={m} className="checkbox-label">
-                  <input 
-                    type="checkbox" 
-                    value={m} 
-                    checked={asignaturasSelect.includes(m)} 
-                    onChange={() => handleAsignaturasChange(m)} 
-                  />
-                  {/* 🔑 CAMBIO 4: Clase para texto negro */}
-                  <span className="materia-text-black">{m}</span>
-                </label>
-              ))}
-            </div>
-            
-            <div className="modal-actions">
-              <button className="btn-guardar" onClick={guardarAsignaturas}>Guardar asignaturas</button>
-              {!confirmDeleteVisible && <button className="btn-eliminar" onClick={handleDeleteClick}>Eliminar profesor</button>}
-            </div>
-
-            {confirmDeleteVisible && (
-              <div className="mini-alert">
-                <p>¿Seguro que deseas eliminar a {selectedProfesor.nombre}?</p>
-                <div className="mini-alert-buttons">
-                  <button className="mini-alert-yes" onClick={confirmDelete}>Sí, Eliminar</button>
-                  <button className="mini-alert-no" onClick={cancelDelete}>No</button>
-                </div>
-              </div>
-            )}
-            
-            {/* 🔑 MOVIDO: La fecha de registro se mueve dentro de profesor-details para la disposición horizontal */}
-            {/* <p className="fecha-registro"><b>Fecha de registro:</b> {selectedProfesor.fechaRegistro ? new Date(selectedProfesor.fechaRegistro).toLocaleDateString() : 'N/A'}</p> */}
-          </div>
-        </div>
-      )}
-    </>
-  ); 
+            {confirmDeleteVisible && (
+              <div className="mini-alert">
+                <p>¿Seguro que deseas eliminar a {selectedProfesor.nombre}?</p>
+                <div className="mini-alert-buttons">
+                  <button className="mini-alert-yes" onClick={confirmDelete}>Sí, Eliminar</button>
+                  <button className="mini-alert-no" onClick={cancelDelete}>No</button>
+                </div>
+              </div>
+            )}
+            <p className="fecha-registro"><b>Fecha de registro:</b> {selectedProfesor.createdAt ? new Date(selectedProfesor.createdAt).toLocaleDateString() : "N/A"}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default Home;
