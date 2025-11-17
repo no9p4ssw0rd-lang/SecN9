@@ -208,8 +208,7 @@ function Home({ user }) {
         </div>
       </section>
       
-      ---
-
+      
       {/* PROFESORES ADMIN */}
       {user?.role === "admin" && (
         <section className="profesores section" id="profesores">
@@ -249,7 +248,6 @@ function Home({ user }) {
         </section>
       )}
 
-      ---
       
       {/* 🔑 NUEVO: Renderiza el Modal de Administración si está visible */}
       {user?.role === "admin" && materiasModalVisible && <MateriasAdminModal />}
