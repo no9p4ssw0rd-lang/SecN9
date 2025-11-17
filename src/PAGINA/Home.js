@@ -255,24 +255,34 @@ function Home({ user }) {
       {/* MODAL PROFESOR (Usa materiasDisponibles) */}
       {modalVisible && selectedProfesor && (
         <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          {/* 🔑 CAMBIO CLAVE: Clase para modal ancho y horizontal */}
+          <div className="modal-content modal-content-horizontal" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={closeModal}>&times;</button>
-            <img 
-              src={profileImgUrl(selectedProfesor.foto)} 
-              alt={selectedProfesor.nombre} 
-              className="profile-img-modal" 
-            />
-            <h3>{selectedProfesor.nombre}</h3>
             
-            <div className="profesor-details">
-              <p><b>Correo:</b> {selectedProfesor.email}</p>
-              <p><b>Celular:</b> {selectedProfesor.celular}</p>
-              <p><b>Edad:</b> {selectedProfesor.edad}</p>
-              <p><b>Sexo:</b> {selectedProfesor.sexo}</p>
+            {/* 🔑 NUEVO CONTENEDOR FLEX: Agrupa la imagen y los detalles */}
+            <div className="profesor-header-horizontal">
+              <div className="profesor-info-left">
+                <img 
+                  src={profileImgUrl(selectedProfesor.foto)} 
+                  alt={selectedProfesor.nombre} 
+                  className="profile-img-modal" 
+                />
+                <h3 style={{marginTop: '10px'}}>{selectedProfesor.nombre}</h3>
+              </div>
+              
+              {/* 🔑 CAMBIO CLAVE: Detalles en formato columna para más espacio */}
+              <div className="profesor-details horizontal-details">
+                <p><b>Correo:</b> {selectedProfesor.email}</p>
+                <p><b>Celular:</b> {selectedProfesor.celular}</p>
+                <p><b>Edad:</b> {selectedProfesor.edad}</p>
+                <p><b>Sexo:</b> {selectedProfesor.sexo}</p>
+                <p className="fecha-registro-horizontal"><b>Fecha de registro:</b> {selectedProfesor.fechaRegistro ? new Date(selectedProfesor.fechaRegistro).toLocaleDateString() : 'N/A'}</p>
+              </div>
             </div>
-
-            <p className="asignaturas-title"><b>Asignaturas:</b></p>
-            <div className="checkbox-group">
+            
+            <p className="asignaturas-title"><b>Asignaturas a Impartir:</b></p>
+            {/* 🔑 CAMBIO CLAVE: Aplicar estilos flex para la lista de asignaturas */}
+            <div className="checkbox-group checkbox-group-horizontal">
               {/* 🔑 CAMBIO 3: Usar el estado de materias disponibles */}
               {materiasDisponibles.map((m) => (
                 <label key={m} className="checkbox-label">
@@ -303,7 +313,8 @@ function Home({ user }) {
               </div>
             )}
             
-            <p className="fecha-registro"><b>Fecha de registro:</b> {selectedProfesor.fechaRegistro ? new Date(selectedProfesor.fechaRegistro).toLocaleDateString() : 'N/A'}</p>
+            {/* 🔑 MOVIDO: La fecha de registro se mueve dentro de profesor-details para la disposición horizontal */}
+            {/* <p className="fecha-registro"><b>Fecha de registro:</b> {selectedProfesor.fechaRegistro ? new Date(selectedProfesor.fechaRegistro).toLocaleDateString() : 'N/A'}</p> */}
           </div>
         </div>
       )}

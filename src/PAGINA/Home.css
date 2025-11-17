@@ -448,4 +448,241 @@ button { cursor: pointer; border: none; outline: none; }
     .modal-content {
         padding: 1.5rem;
     }
+}/* ================================================= */
+/* ESTILOS ESPECÍFICOS DEL COMPONENTE HOME (NUEVOS) */
+/* ================================================= */
+
+/* --- Estilos para el Botón de Administrar Materias --- */
+.btn-admin-materias {
+    background-color: var(--gold-color);
+    color: var(--dark-color); /* Texto oscuro para el fondo dorado */
+    font-weight: var(--font-semi-bold);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-top: 1.5rem;
+    transition: background-color 0.3s ease, transform 0.2s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
+
+.btn-admin-materias:hover {
+    background-color: #c9a52a; /* Tonalidad de dorado más oscura */
+    transform: translateY(-2px);
+}
+
+/* --- Modal de Administración de Materias (MateriasAdminModal) --- */
+.modal-content.admin-modal-content {
+    max-width: 500px; /* Un poco más estrecho para la administración */
+    text-align: left;
+}
+
+/* Formulario de Agregar Materia */
+.add-materia-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 2rem;
+    padding: 10px;
+    border: 1px dashed var(--primary-color);
+    border-radius: 8px;
+    background-color: var(--light-gray-color);
+}
+
+.input-materia {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 1rem;
+    color: var(--text-color-dark);
+}
+
+.btn-agregar-materia {
+    background-color: var(--success-color);
+    color: var(--white-color);
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-weight: var(--font-medium);
+    transition: background-color 0.3s;
+}
+
+.btn-agregar-materia:hover {
+    background-color: #1e7e34;
+}
+
+/* Lista de Materias (Para Eliminar) */
+.materias-list-container {
+    margin-top: 20px;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    max-height: 40vh;
+    overflow-y: auto;
+    background-color: var(--white-color);
+}
+
+.materias-list h3 {
+    color: var(--text-color-dark);
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.materias-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.materias-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--light-gray-color);
+}
+
+.materias-list li:last-child {
+    border-bottom: none;
+}
+
+.materia-text-black {
+    color: var(--text-color-dark); /* Clase agregada en el JS */
+    font-weight: 500;
+}
+
+.btn-quitar-materia {
+    background-color: var(--danger-color);
+    color: var(--white-color);
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.85rem;
+    transition: background-color 0.3s;
+}
+
+.btn-quitar-materia:hover {
+    background-color: #c0392b;
+}
+
+/* --- Disposición Horizontal del Modal de Profesor --- */
+/* Hacer el modal más grande y usar flexbox */
+.modal-content.modal-content-horizontal {
+    max-width: 900px; /* Ancho considerable para más espacio */
+    padding: 2.5rem;
+}
+
+.profesor-header-horizontal {
+    display: flex;
+    gap: 3rem;
+    align-items: flex-start; /* Alineación arriba para mejor look */
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.profesor-info-left {
+    flex-shrink: 0; /* Evita que la columna de la imagen se comprima */
+    text-align: center;
+    width: 150px; /* Ancho fijo para la imagen y el nombre */
+}
+
+/* Asegura que el texto del nombre use el color oscuro del modal */
+.profesor-info-left h3 {
+    color: var(--text-color-dark);
+    margin: 0.5rem 0 0 0;
+}
+
+.profesor-details.horizontal-details {
+    flex-grow: 1; /* Permite que los detalles ocupen el espacio restante */
+    display: grid; /* Usamos grid para una disposición en dos columnas */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px 20px;
+    align-content: start; /* Empieza desde arriba */
+    padding: 1rem 1.5rem;
+}
+
+/* Ajuste específico para la fecha de registro para que ocupe una fila si es necesario */
+.profesor-details p.fecha-registro-horizontal {
+    grid-column: 1 / -1; /* Ocupa las dos columnas */
+    margin-top: 10px;
+}
+
+/* Ajuste de tipografía en el modal horizontal */
+.profesor-details p {
+    font-size: 0.95rem;
+}
+
+.asignaturas-title {
+    margin-bottom: 1.5rem;
+}
+
+.checkbox-group.checkbox-group-horizontal {
+    justify-content: center; /* Centrar los checkboxes horizontalmente */
+    /* Asegúrate de que el gap y flex-wrap sean correctos (ya lo están en el código) */
+}
+
+/* Media Query para el modal en móvil */
+@media screen and (max-width: 767px) {
+    .modal-content.modal-content-horizontal {
+        max-width: 95%;
+        padding: 1.5rem;
+    }
+    
+    .profesor-header-horizontal {
+        flex-direction: column; /* Apilar en móvil */
+        gap: 1rem;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .profesor-info-left {
+        width: 100%; /* Ocupa el ancho completo */
+    }
+    
+    .profesor-details.horizontal-details {
+        grid-template-columns: 1fr; /* Una sola columna en móvil */
+        gap: 5px 0;
+        padding: 1rem;
+        text-align: left;
+    }
+
+    .profesor-details p.fecha-registro-horizontal {
+        grid-column: auto; /* Deshace el span de dos columnas */
+    }
+
+    .modal-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .modal-actions button {
+        width: 100%;
+    }
+    
+    /* Admin Modal en móvil */
+    .modal-content.admin-modal-content {
+        max-width: 90%;
+    }
+    
+    .add-materia-form {
+        flex-direction: column;
+    }
+    
+    .materias-list-container {
+        max-height: 30vh;
+    }
+}
+
+/* Media Query adicional para tablet (modal horizontal) */
+@media screen and (min-width: 768px) and (max-width: 992px) {
+    .modal-content.modal-content-horizontal {
+        max-width: 750px;
+    }
+    
+    .profesor-header-horizontal {
+        gap: 2rem;
+    }
+}
+
+/* FIN DE ESTILOS HOME */
