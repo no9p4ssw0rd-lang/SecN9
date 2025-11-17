@@ -15,7 +15,7 @@ function Home({ user }) {
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
   const [alerta, setAlerta] = useState(null); // Estado para alertas
 
-  // 🔑 CAMBIO 1: Mover la lista de materias a un estado (para que pueda ser modificada)
+  // 🔑 CAMBIO 1: Mover la lista de materias a un estado local
   const [materiasDisponibles, setMateriasDisponibles] = useState([
     "MATEMATICAS COOR.ACADEMICA", "TUTORIA", "ESPAÑOL", "INGLES TUTORIA", "INGLES","LENGUA EXTRANJERA",
     "MATEMATICAS", "CIENCIAS I", "CIENCIAS II", "CIENCIAS III", "ELECTRONICA","INTEGRACION CURRICULAR","FISICA",
@@ -23,6 +23,9 @@ function Home({ user }) {
     "HISTORIA", "F.CIVICA y ETICA", "F.CIVICA y ETICA-A.C", "F.CIVICA y ETICA-A.C TUTORIA",
     "ARTES", "EDUCACION FISICA",
   ]);
+  
+  // 🔑 NUEVO ESTADO: Para controlar la visibilidad del modal de administración de materias
+  const [materiasModalVisible, setMateriasModalVisible] = useState(false);
   
   // 🔑 NUEVO ESTADO: Para el campo de nueva materia
   const [nuevaMateria, setNuevaMateria] = useState('');
@@ -37,7 +40,6 @@ function Home({ user }) {
     if (user?.role === "admin") {
       fetchProfesores();
     }
-    // ⚠️ Nota: Como la lista es Fija/Local, no hay un fetchMaterias del backend.
   }, [user]);
 
   const fetchProfesores = () => {
@@ -115,7 +117,7 @@ function Home({ user }) {
 
   const cancelDelete = () => setConfirmDeleteVisible(false); 
 
-  // 🔑 NUEVA FUNCIÓN: Para agregar una materia al estado local
+  // 🔑 NUEVAS FUNCIONES: Para agregar/quitar materia del estado local
   const handleAgregarMateria = (e) => {
     e.preventDefault();
     const materiaNormalizada = nuevaMateria.trim().toUpperCase();
@@ -127,23 +129,66 @@ function Home({ user }) {
       return mostrarAlerta(`La materia "${materiaNormalizada}" ya existe.`, "error");
     }
 
-    // Agrega la nueva materia al estado local (solo visible mientras la app esté activa)
     setMateriasDisponibles(prev => [...prev, materiaNormalizada]);
     setNuevaMateria('');
     mostrarAlerta(`Materia "${materiaNormalizada}" agregada con éxito (Local).`, "success");
   };
 
-  // 🔑 NUEVA FUNCIÓN: Para eliminar una materia del estado local
   const handleEliminarMateria = (materia) => {
+    if (!window.confirm(`¿Estás seguro de que quieres eliminar la materia "${materia}"? Esto no se guarda permanentemente.`)) {
+      return;
+    }
     setMateriasDisponibles(prev => prev.filter(m => m !== materia));
-    // También la quita de las asignaturas seleccionadas si estaba allí
-    setAsignaturasSelect(prev => prev.filter(m => m !== materia));
+    // Opcional: Quitarla de las asignaturas seleccionadas si estaba en un modal abierto
+    setAsignaturasSelect(prev => prev.filter(m => m !== materia)); 
     mostrarAlerta(`Materia "${materia}" eliminada con éxito (Local).`, "success");
   };
 
 
   const primerNombre = user?.nombre ? user.nombre.split(" ")[0] : "";
   
+  // 🔑 NUEVO: Componente Modal de Administración de Materias
+  const MateriasAdminModal = () => (
+    <div className="modal-overlay" onClick={() => setMateriasModalVisible(false)}>
+      <div className="modal-content admin-modal-content" onClick={(e) => e.stopPropagation()}>
+        <button className="modal-close" onClick={() => setMateriasModalVisible(false)}>&times;</button>
+        
+        <h2>⚙️ Administración de Materias</h2>
+        
+        {/* Formulario para agregar */}
+        <form onSubmit={handleAgregarMateria} className="add-materia-form">
+          <input
+            type="text"
+            placeholder="Nombre de la nueva materia (Ej: DEPORTE)"
+            value={nuevaMateria}
+            onChange={(e) => setNuevaMateria(e.target.value)}
+            className="input-materia"
+          />
+          <button type="submit" className="btn-agregar-materia">Agregar Materia</button>
+        </form>
+
+        {/* Lista de materias para eliminar */}
+        <div className="materias-list-container">
+          <h3>Materias Actuales ({materiasDisponibles.length})</h3>
+          <ul className="materias-list">
+            {materiasDisponibles.map((m) => (
+              <li key={m}>
+                <span className="materia-text-black">{m}</span>
+                <button 
+                  onClick={() => handleEliminarMateria(m)} 
+                  className="btn-quitar-materia"
+                >
+                  Quitar
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+
+
   return (
     <>
       {alerta && <div className={`alerta-fixed ${alerta.tipo}`}>{alerta.mensaje}</div>}
@@ -162,45 +207,6 @@ function Home({ user }) {
           </div>
         </div>
       </section>
-      
-      ---
-
-      {/* 🔑 NUEVA SECCIÓN: Administración de Materias (Solo Admin) */}
-      {user?.role === "admin" && (
-        <section className="admin-materias section" id="admin-materias">
-          <h2 className="section-title">⚙️ Administración de Materias</h2>
-          
-          {/* Formulario para agregar */}
-          <form onSubmit={handleAgregarMateria} className="add-materia-form">
-            <input
-              type="text"
-              placeholder="Nombre de la nueva materia (Ej: DEPORTE)"
-              value={nuevaMateria}
-              onChange={(e) => setNuevaMateria(e.target.value)}
-              className="input-materia"
-            />
-            <button type="submit" className="btn-agregar-materia">Agregar Materia</button>
-          </form>
-
-          {/* Lista de materias para eliminar */}
-          <div className="materias-list-container">
-            <h3>Materias Actuales ({materiasDisponibles.length})</h3>
-            <ul className="materias-list">
-              {materiasDisponibles.map((m) => (
-                <li key={m}>
-                  <span>{m}</span>
-                  <button 
-                    onClick={() => handleEliminarMateria(m)} 
-                    className="btn-quitar-materia"
-                  >
-                    Quitar
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-      )}
       
       ---
 
@@ -230,10 +236,23 @@ function Home({ user }) {
               </tbody>
             </table>
           </div>
+          
+          {/* 🔑 BOTÓN: Abrir Modal de Administración de Materias */}
+          <div style={{ textAlign: 'center', marginTop: '20px' }}>
+            <button 
+              className="btn-admin-materias" 
+              onClick={() => setMateriasModalVisible(true)}
+            >
+              Administrar Materias ⚙️
+            </button>
+          </div>
         </section>
       )}
 
       ---
+      
+      {/* 🔑 NUEVO: Renderiza el Modal de Administración si está visible */}
+      {user?.role === "admin" && materiasModalVisible && <MateriasAdminModal />}
 
       {/* MODAL PROFESOR (Usa materiasDisponibles) */}
       {modalVisible && selectedProfesor && (
@@ -256,7 +275,7 @@ function Home({ user }) {
 
             <p className="asignaturas-title"><b>Asignaturas:</b></p>
             <div className="checkbox-group">
-              {/* 🔑 CAMBIO 2: Ahora usa el estado 'materiasDisponibles' */}
+              {/* 🔑 CAMBIO 3: Usar el estado de materias disponibles */}
               {materiasDisponibles.map((m) => (
                 <label key={m} className="checkbox-label">
                   <input 
@@ -265,7 +284,8 @@ function Home({ user }) {
                     checked={asignaturasSelect.includes(m)} 
                     onChange={() => handleAsignaturasChange(m)} 
                   />
-                  <span>{m}</span>
+                  {/* 🔑 CAMBIO 4: Clase para texto negro */}
+                  <span className="materia-text-black">{m}</span>
                 </label>
               ))}
             </div>
