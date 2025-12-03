@@ -874,9 +874,10 @@ function Grupo({ user }) {
                   <div
                     className="custom-tooltip"
                     style={{
-                      top: hoveredCell.y - 25, // Aún más cerca (antes -35)
+                      top: hoveredCell.y, // Flush with the top of the cell
                       left: hoveredCell.x,
-                      transform: 'translateX(-50%) translateY(-100%)' // Mover hacia arriba completamente desde el punto Y
+                      transform: 'translateX(-50%) translateY(-100%)', // Move up by its own height
+                      paddingBottom: '10px' // Add some padding at the bottom to extend the hit area slightly downwards
                     }}
                     onMouseEnter={handleMouseEnterTooltip}
                     onMouseLeave={handleMouseLeaveTooltip}
