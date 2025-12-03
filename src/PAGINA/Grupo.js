@@ -278,12 +278,32 @@ function Grupo({ user }) {
     const siguienteEstadoIndex = (estados.indexOf(estadoActual) + 1) % estados.length;
     const nuevoEstado = estados[siguienteEstadoIndex];
 
+    // Obtener fecha de la columna o usar hoy
+    const keyColumna = `b${bimestre}-d${diaIndex}`;
+    let fechaParaGuardar = fechasColumnas[keyColumna];
+
+    // Si no hay fecha en la columna, usar HOY y actualizar la columna
+    if (!fechaParaGuardar) {
+      const hoy = new Date();
+      const y = hoy.getFullYear();
+      const m = String(hoy.getMonth() + 1).padStart(2, '0');
+      const d = String(hoy.getDate()).padStart(2, '0');
+      fechaParaGuardar = `${y}-${m}-${d}`; // ISO para el input
+
+      // Actualizar estado de la columna visualmente
+      setFechasColumnas(prev => ({ ...prev, [keyColumna]: fechaParaGuardar }));
+    }
+
+    // Formatear para guardar en el registro (dd/mm/yyyy)
+    const [y, m, d] = fechaParaGuardar.split('-');
+    const fechaFormateada = `${d}/${m}/${y}`;
+
     setAsistencia(prev => {
       const newState = { ...prev };
       if (nuevoEstado) {
         newState[key] = {
           estado: nuevoEstado,
-          fecha: new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
+          fecha: fechaFormateada
         };
       } else {
         delete newState[key];
@@ -294,6 +314,26 @@ function Grupo({ user }) {
 
   const agregarDias = (bimestre) => {
     setDiasPorBimestre(prev => ({ ...prev, [bimestre]: (prev[bimestre] || DIAS_INICIALES) + 5 }));
+  };
+
+  // 🌟 FUNCIÓN NUEVA: Manejar cambio de fecha en el encabezado
+  const handleFechaChange = (bimestre, diaIndex, nuevaFecha) => {
+    const keyColumna = `b${bimestre}-d${diaIndex}`;
+    setFechasColumnas(prev => ({ ...prev, [keyColumna]: nuevaFecha }));
+
+    // Actualizar la fecha de TODOS los registros existentes en esa columna
+    setAsistencia(prev => {
+      const newState = { ...prev };
+      Object.keys(newState).forEach(key => {
+        if (key.includes(`-b${bimestre}-d${diaIndex}`)) {
+          // Convertir YYYY-MM-DD a dd/mm/yyyy para guardar
+          const [y, m, d] = nuevaFecha.split('-');
+          const fechaFormateada = `${d}/${m}/${y}`;
+          newState[key] = { ...newState[key], fecha: fechaFormateada };
+        }
+      });
+      return newState;
+    });
   };
 
   const guardarAsistencia = async () => {
@@ -750,26 +790,39 @@ function Grupo({ user }) {
                               <span className="total-justificados" style={{ color: '#ffc107' }}>⚠️ {totales.justificados}</span>
                             </div>
                           </div>
+                        </div>
 
-                          <div className="cuadritos-grid">
-                            {Array.from({ length: diasPorBimestre[bimestreActivo] || DIAS_INICIALES }).map((_, diaIndex) => {
-                              const key = `${alumno._id}-b${bimestreActivo}-d${diaIndex + 1}`;
-                              const registro = asistencia[key];
-                              return (
+                        <div className="cuadritos-grid">
+                          {/* 🌟 FILA DE FECHAS */}
+                          {Array.from({ length: diasPorBimestre[bimestreActivo] || DIAS_INICIALES }).map((_, diaIndex) => {
+                            const key = `${alumno._id}-b${bimestreActivo}-d${diaIndex + 1}`;
+                            const registro = asistencia[key];
+                            const keyColumna = `b${bimestreActivo}-d${diaIndex + 1}`;
+                            const fechaColumna = fechasColumnas[keyColumna] || '';
+
+                            return (
+                              <div key={diaIndex} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                {/* Input de fecha arriba de cada cuadrito */}
+                                <input
+                                  type="date"
+                                  className="fecha-input-mini"
+                                  value={fechaColumna}
+                                  onChange={(e) => handleFechaChange(bimestreActivo, diaIndex + 1, e.target.value)}
+                                  title="Establecer fecha para este día"
+                                />
                                 <div
-                                  key={diaIndex}
                                   className={`cuadrito estado-${registro?.estado.toLowerCase() || ''}`}
                                   title={registro?.fecha ? `Fecha: ${registro.fecha}` : `Día ${diaIndex + 1}`}
                                   onClick={() => handleMarcarAsistencia(alumno._id, bimestreActivo, diaIndex + 1)}
                                 >
                                   {registro?.estado || ''}
                                 </div>
-                              );
-                            })}
-                            <button className="btn-agregar-dias" onClick={() => agregarDias(bimestreActivo)}>
-                              +5
-                            </button>
-                          </div>
+                              </div>
+                            );
+                          })}
+                          <button className="btn-agregar-dias" onClick={() => agregarDias(bimestreActivo)}>
+                            +5
+                          </button>
                         </div>
                       </React.Fragment>
                     )
@@ -812,7 +865,7 @@ function Grupo({ user }) {
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 }
 

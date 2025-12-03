@@ -149,20 +149,20 @@ function Home({ user }) {
           <h2 className="section-title">Últimas Actualizaciones</h2>
           <div className="novedades-container container">
             <div className="novedad-item">
-              <span className="novedad-icon">✨</span>
-              <p>Mejora en interfaz de alumnos</p>
+              <span className="novedad-icon">📄</span>
+              <p>Reporte PDF de Asignatura</p>
             </div>
             <div className="novedad-item">
-              <span className="novedad-icon">⚠️</span>
-              <p>Nueva función de asistencia justificada</p>
+              <span className="novedad-icon">🗑️</span>
+              <p>Limpieza de Calificaciones</p>
             </div>
             <div className="novedad-item">
-              <span className="novedad-icon">🚀</span>
-              <p>Optimización de carga de página</p>
+              <span className="novedad-icon">🔢</span>
+              <p>Redondeo de Promedios</p>
             </div>
             <div className="novedad-item">
-              <span className="novedad-icon">🎨</span>
-              <p>Diseño visual renovado</p>
+              <span className="novedad-icon">📅</span>
+              <p>Fechas en Asistencia</p>
             </div>
           </div>
         </section>
