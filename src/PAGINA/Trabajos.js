@@ -115,7 +115,7 @@ const CriterioCell = React.memo(({
         // 2. Si el valor es numérico (o sea, se está calificando) Y la tarea NO tiene nombre,
         // abre el modal. Esto evita que aparezca al modificar una calificación existente.
         const notaNumerica = valor === '' ? null : parseFloat(valor);
-        
+
         // Lógica Corregida: Si hay nota válida (no null y no NaN) Y la tarea no tiene nombre, pedimos el nombre.
         if (notaNumerica !== null && !isNaN(notaNumerica) && !tareaData.nombre) {
             setTareaPorNombrar({
@@ -201,8 +201,8 @@ function Trabajos({ user }) {
         setAsignaturaSeleccionada(null);
     };
 
-    if (loading) return <div className="trabajos-container grupo-componente" style={{textAlign: 'center', paddingTop: '10rem'}}><p style={{color: '#E9E9E9'}}>Cargando tus grupos...</p></div>;
-    if (error) return <div className="trabajos-container grupo-componente error-mensaje" style={{textAlign: 'center', paddingTop: '10rem'}}><p>{error}</p></div>;
+    if (loading) return <div className="trabajos-container grupo-componente" style={{ textAlign: 'center', paddingTop: '10rem' }}><p style={{ color: '#E9E9E9' }}>Cargando tus grupos...</p></div>;
+    if (error) return <div className="trabajos-container grupo-componente error-mensaje" style={{ textAlign: 'center', paddingTop: '10rem' }}><p>{error}</p></div>;
 
     return (
         <>
@@ -1072,7 +1072,7 @@ const PanelCalificaciones = ({
             }
         };
         if (grupo && asignatura) fetchGrupos();
-    // Dependencias ajustadas
+        // Dependencias ajustadas
     }, [grupo, asignatura, setCriteriosPorBimestre, setModalCriterios, setNotificacion, user]);
 
 
@@ -1201,11 +1201,11 @@ const PanelCalificaciones = ({
     };
 
     const agregarTareas = (criterioNombre) => {
-        setNumTareas(prev => ({...prev, [criterioNombre]: (prev[criterioNombre] || 10) + 5}));
+        setNumTareas(prev => ({ ...prev, [criterioNombre]: (prev[criterioNombre] || 10) + 5 }));
     };
 
 
-    if (isLoadingData) return <div className="trabajos-container grupo-componente" style={{textAlign: 'center', paddingTop: '10rem'}}><p style={{color: '#E9E9E9'}}>Cargando datos del grupo...</p></div>;
+    if (isLoadingData) return <div className="trabajos-container grupo-componente" style={{ textAlign: 'center', paddingTop: '10rem' }}><p style={{ color: '#E9E9E9' }}>Cargando datos del grupo...</p></div>;
 
 
     return (
@@ -1226,7 +1226,7 @@ const PanelCalificaciones = ({
                     <div>
                         {/* Botón para abrir el modal de criterios */}
                         <button className="btn" onClick={() => setModalCriterios(true)}>Criterios</button>
-                        <button className="btn btn-cancel" onClick={onVolver} style={{marginLeft: '10px'}}>Cerrar</button>
+                        <button className="btn btn-cancel" onClick={onVolver} style={{ marginLeft: '10px' }}>Cerrar</button>
                     </div>
                 </header>
                 <div className="bimestre-selector">
@@ -1238,7 +1238,7 @@ const PanelCalificaciones = ({
                 {criteriosActivos.length > 0 ? (
                     <div className="asistencia-grid">
                         <div className="asistencia-body">
-                            {grupo.alumnos.sort((a,b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map(alumno => (
+                            {grupo.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map(alumno => (
                                 <React.Fragment key={alumno._id}>
                                     <div className="asistencia-row">
                                         <div className="alumno-nombre">{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</div>
@@ -1253,7 +1253,7 @@ const PanelCalificaciones = ({
                                                 </div>
                                             ))}
                                         </div>
-                                        <div className="promedio-final-display" style={{color: calcularPromedioBimestre(alumno._id, bimestreActivo) >= 6 ? '#27ae60' : '#d32f2f'}}>
+                                        <div className="promedio-final-display" style={{ color: calcularPromedioBimestre(alumno._id, bimestreActivo) >= 6 ? '#27ae60' : '#d32f2f' }}>
                                             Prom: {calcularPromedioBimestre(alumno._id, bimestreActivo)}
                                         </div>
                                     </div>
@@ -1264,7 +1264,7 @@ const PanelCalificaciones = ({
                                                     <span className="criterio-info">
                                                         {criterioAbierto.criterioNombre} ({criteriosActivos.find(c => c.nombre === criterioAbierto.criterioNombre)?.porcentaje}%)
                                                     </span>
-                                                    <span className="criterio-prom" style={{color: calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre) >= 6 ? 'var(--dark-color)' : 'var(--danger-color)'}}>
+                                                    <span className="criterio-prom" style={{ color: calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre) >= 6 ? 'var(--dark-color)' : 'var(--danger-color)' }}>
                                                         Prom: {calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre).toFixed(2)}
                                                     </span>
                                                 </div>
@@ -1296,7 +1296,7 @@ const PanelCalificaciones = ({
                 ) : (
                     <div className="aviso-criterios"><p>⚠️ Por favor, define los criterios de evaluación para el **Trimestre {bimestreActivo}**.</p></div>
                 )}
-                <div className="modal-actions" style={{padding: '0 20px'}}>
+                <div className="modal-actions" style={{ padding: '0 20px' }}>
                     <button className="btn btn-primary" onClick={guardarCalificaciones} disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar Calificaciones'}</button>
                 </div>
             </div>
@@ -1319,25 +1319,25 @@ const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => {
                 <table className="grupos-table">
                     <thead><tr><th>Grupo</th><th>Mi Asignatura</th><th>Acciones</th></tr></thead>
                     <tbody>
-                        {grupos.map(grupo => {
-                            const miAsignacion = grupo.profesoresAsignados.find(asig => asig.profesor?._id === userId);
-                            const miAsignatura = miAsignacion ? miAsignacion.asignatura : 'N/A';
+                        {grupos.flatMap(grupo => {
+                            // Filtrar todas las asignaciones para este profesor
+                            const misAsignaciones = grupo.profesoresAsignados.filter(asig => asig.profesor?._id === userId);
 
-                            return (
-                                <tr key={grupo._id}>
+                            // Retornar una fila por cada asignatura asignada
+                            return misAsignaciones.map((asignacion, index) => (
+                                <tr key={`${grupo._id}-${index}`}>
                                     <td>{grupo.nombre}</td>
-                                    <td>{miAsignatura}</td>
+                                    <td>{asignacion.asignatura}</td>
                                     <td className="acciones-cell">
                                         <button
                                             className="btn btn-primary"
-                                            onClick={() => onSeleccionarGrupo(grupo, miAsignatura)}
-                                            disabled={miAsignatura === 'N/A'}
+                                            onClick={() => onSeleccionarGrupo(grupo, asignacion.asignatura)}
                                         >
                                             Calificar
                                         </button>
                                     </td>
                                 </tr>
-                            );
+                            ));
                         })}
                     </tbody>
                 </table>
@@ -1386,7 +1386,7 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
         }
 
         if (criteriosDelBimestre.some(c => c.nombre.toLowerCase() === nombre.trim().toLowerCase())) {
-             setNotificacion({
+            setNotificacion({
                 mensaje: 'Ya existe un criterio con ese nombre en este trimestre.',
                 tipo: 'error'
             });
@@ -1416,14 +1416,14 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
     // Función principal de guardado
     const handleGuardar = () => {
         for (const [bimestre, criterios] of Object.entries(criteriosLocales)) {
-             const totalBimestre = criterios.reduce((acc, curr) => acc + (Number(curr.porcentaje) || 0), 0);
-             if (criterios.length > 0 && totalBimestre !== 100) {
-                 setNotificacion({
-                     mensaje: `ERROR: El Trimestre ${bimestre} debe sumar exactamente 100% para guardar. Actualmente suma ${totalBimestre}%.`,
-                     tipo: 'error'
-                 });
-                 return;
-             }
+            const totalBimestre = criterios.reduce((acc, curr) => acc + (Number(curr.porcentaje) || 0), 0);
+            if (criterios.length > 0 && totalBimestre !== 100) {
+                setNotificacion({
+                    mensaje: `ERROR: El Trimestre ${bimestre} debe sumar exactamente 100% para guardar. Actualmente suma ${totalBimestre}%.`,
+                    tipo: 'error'
+                });
+                return;
+            }
         }
 
         onGuardar(criteriosLocales);
@@ -1447,7 +1447,7 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
 
         setCriteriosLocales(prev => ({
             ...prev,
-            [bimestreDestino]: criteriosOrigen.map(c => ({...c}))
+            [bimestreDestino]: criteriosOrigen.map(c => ({ ...c }))
         }));
         setBimestreActivo(bimestreDestino);
         setNotificacion({ mensaje: `Criterios del Trimestre ${bimestreOrigen} copiados a Trimestre ${bimestreDestino}.`, tipo: 'exito' });
@@ -1503,7 +1503,7 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
                             </button>
                         </div>
                     ))}
-                    {criteriosDelBimestre.length === 0 && <p style={{textAlign: 'center', color: '#999'}}>No hay criterios definidos para este Trimestre.</p>}
+                    {criteriosDelBimestre.length === 0 && <p style={{ textAlign: 'center', color: '#999' }}>No hay criterios definidos para este Trimestre.</p>}
                 </div>
 
                 <div className="criterio-form">
