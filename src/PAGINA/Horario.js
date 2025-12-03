@@ -17,8 +17,8 @@ const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
 const horas = [1, 2, 3, 4, 5, 6, 7];
 const paletaColores = [
-  "#f44336", "#e91e63", "#9c27b0", "#673ab7", "#3f51b5", "#2196f3", 
-  "#03a9f4", "#00bcd4", "#009688", "#4caf50", "#8bc34a", "#cddc39", 
+  "#f44336", "#e91e63", "#9c27b0", "#673ab7", "#3f51b5", "#2196f3",
+  "#03a9f4", "#00bcd4", "#009688", "#4caf50", "#8bc34a", "#cddc39",
   "#ffeb3b", "#ffc107", "#ff9800", "#ff5722"
 ];
 
@@ -81,7 +81,7 @@ function Horario({ user }) {
         setTimeout(() => { setIsLoading(false); setLoadingMessage(""); }, 300);
       });
   }, [anio, mostrarAlerta]);
-  
+
   const generarHorarioVacio = useCallback(() => {
     if (isLoading) return;
     if (!window.confirm("¿Estás seguro de que quieres limpiar todo el horario? Esta acción es irreversible.")) return;
@@ -122,7 +122,7 @@ function Horario({ user }) {
     setLeyenda(prev => { const copia = { ...prev }; delete copia[color]; return copia; });
     mostrarAlerta("Color eliminado de la leyenda", "info");
   }, [isLoading, mostrarAlerta]);
-  
+
   // Función auxiliar para obtener Base64 de las imágenes (usando las importaciones locales)
   const getBase64Image = (imgPath) => new Promise((resolve, reject) => {
     const img = new Image();
@@ -137,16 +137,16 @@ function Horario({ user }) {
     };
     img.onerror = (error) => reject(error);
   });
-  
+
   // --- Lógica de generación de PDF refactorizada (con logos locales) ---
   const generarContenidoPDF = async (doc) => {
     doc.setFont("helvetica", "normal");
-    
+
     // USANDO LAS VARIABLES DE LOGO IMPORTADAS LOCALMENTE
-    const [logoAgsBase64, logoDerBase64] = await Promise.all([ getBase64Image(logoAgs), getBase64Image(logoDerecho) ]);
+    const [logoAgsBase64, logoDerBase64] = await Promise.all([getBase64Image(logoAgs), getBase64Image(logoDerecho)]);
     doc.addImage(logoAgsBase64, "PNG", 15, 8, 40, 16);
     doc.addImage(logoDerBase64, "PNG", 255, 8, 25, 25);
-    
+
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.text("ESCUELA SECUNDARIA GENERAL, No. 9", doc.internal.pageSize.getWidth() / 2, 15, { align: "center" });
@@ -154,71 +154,81 @@ function Horario({ user }) {
     doc.text("“AMADO NERVO”", doc.internal.pageSize.getWidth() / 2, 22, { align: "center" });
     doc.setFontSize(10);
     doc.text(`HORARIO GENERAL ${anio}`, doc.internal.pageSize.getWidth() / 2, 29, { align: "center" });
-    
+
     const tablaElement = horarioTableRef.current;
     if (!tablaElement) throw new Error("Tabla de horario no encontrada.");
 
-    const canvas = await html2canvas(tablaElement, { 
-        scale: 2, 
-        backgroundColor: "#ffffff", 
-        useCORS: true,
-        onclone: (clonedDocument) => {
-            // Corrección de estilos para el PDF
-            clonedDocument.querySelectorAll('.asignaturas-cell').forEach(cell => {
-                cell.style.maxWidth = '150px';
-                cell.style.wordBreak = 'break-word';
-                cell.style.whiteSpace = 'normal';
-                cell.style.fontSize = '10px'; 
-            });
-            clonedDocument.querySelectorAll('.horas-row-horizontal').forEach(row => {
-                row.style.justifyContent = 'space-around';
-                row.style.display = 'flex';
-                row.style.width = '100%';
-            });
-            // Reemplazar inputs con divs de valor para exportación limpia
-            clonedDocument.querySelectorAll('.hora-box-horizontal').forEach(box => { 
-                const color = box.style.backgroundColor; 
-                const input = box.querySelector('input'); 
-                const value = input ? input.value : ''; 
-                box.style.backgroundColor = 'transparent'; 
-                const valueDiv = clonedDocument.createElement('div'); 
-                valueDiv.textContent = value;
-                valueDiv.style.backgroundColor = color === 'transparent' ? '#fff' : color; 
-                
-                valueDiv.style.cssText += `
+    const canvas = await html2canvas(tablaElement, {
+      scale: 2,
+      backgroundColor: "#ffffff",
+      useCORS: true,
+      onclone: (clonedDocument) => {
+        // Corrección de estilos para el PDF
+        // 1. Nombres de Profesores (Primera columna)
+        clonedDocument.querySelectorAll('.horario-table td:first-child').forEach(cell => {
+          cell.style.whiteSpace = 'normal';
+          cell.style.wordWrap = 'break-word';
+          cell.style.maxWidth = '150px';
+          cell.style.fontSize = '10px';
+          cell.style.lineHeight = '1.2';
+        });
+
+        // 2. Celdas de Asignaturas
+        clonedDocument.querySelectorAll('.asignaturas-cell').forEach(cell => {
+          cell.style.maxWidth = '150px';
+          cell.style.wordBreak = 'break-word';
+          cell.style.whiteSpace = 'normal';
+          cell.style.fontSize = '10px';
+        });
+        clonedDocument.querySelectorAll('.horas-row-horizontal').forEach(row => {
+          row.style.justifyContent = 'space-around';
+          row.style.display = 'flex';
+          row.style.width = '100%';
+        });
+        // Reemplazar inputs con divs de valor para exportación limpia
+        clonedDocument.querySelectorAll('.hora-box-horizontal').forEach(box => {
+          const color = box.style.backgroundColor;
+          const input = box.querySelector('input');
+          const value = input ? input.value : '';
+          box.style.backgroundColor = 'transparent';
+          const valueDiv = clonedDocument.createElement('div');
+          valueDiv.textContent = value;
+          valueDiv.style.backgroundColor = color === 'transparent' ? '#fff' : color;
+
+          valueDiv.style.cssText += `
                     width: 22px; height: 20px; text-align: center; font-size: 10px; 
                     border: 1px solid ${color === 'transparent' ? '#bbb' : 'grey'};
                     border-radius: 3px; padding: 0; box-sizing: border-box;
                     display: flex; align-items: center; justify-content: center;
                     font-weight: bold; color: black; text-shadow: none;
                 `;
-                if (input && input.parentNode) { input.parentNode.replaceChild(valueDiv, input); } 
-            });
-        }
+          if (input && input.parentNode) { input.parentNode.replaceChild(valueDiv, input); }
+        });
+      }
     });
 
     const imgData = canvas.toDataURL("image/png");
     const pdfWidth = doc.internal.pageSize.getWidth() - 20;
     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
     doc.addImage(imgData, "PNG", 10, 35, pdfWidth, pdfHeight);
-    
+
     let leyendaY = 35 + pdfHeight + 10;
     if (leyendaY > doc.internal.pageSize.getHeight() - 20 && Object.keys(leyenda).length > 0) { doc.addPage(); leyendaY = 15; }
-    
-    if (Object.keys(leyenda).length > 0) { 
-        doc.setFontSize(10); 
-        doc.setFont("helvetica", "bold"); 
-        doc.text("Leyenda:", 10, leyendaY); 
-        leyendaY += 7; 
-        Object.entries(leyenda).forEach(([color, desc]) => { 
-            if (leyendaY + 8 > doc.internal.pageSize.getHeight() - 10) { doc.addPage(); leyendaY = 15; } 
-            doc.setFillColor(color); 
-            doc.rect(10, leyendaY, 6, 6, "F"); 
-            doc.setTextColor(0); 
-            doc.setFont("helvetica", "normal"); 
-            doc.text(desc || "Sin descripción", 18, leyendaY + 5); 
-            leyendaY += 8; 
-        }); 
+
+    if (Object.keys(leyenda).length > 0) {
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.text("Leyenda:", 10, leyendaY);
+      leyendaY += 7;
+      Object.entries(leyenda).forEach(([color, desc]) => {
+        if (leyendaY + 8 > doc.internal.pageSize.getHeight() - 10) { doc.addPage(); leyendaY = 15; }
+        doc.setFillColor(color);
+        doc.rect(10, leyendaY, 6, 6, "F");
+        doc.setTextColor(0);
+        doc.setFont("helvetica", "normal");
+        doc.text(desc || "Sin descripción", 18, leyendaY + 5);
+        leyendaY += 8;
+      });
     }
   };
 
@@ -228,59 +238,59 @@ function Horario({ user }) {
     setLoadingMessage("Exportando PDF...");
     setProgress(10);
     try {
-        const doc = new jsPDF("landscape");
-        await generarContenidoPDF(doc);
-        setProgress(95);
-        doc.save(`Horario_${anio}.pdf`);
-        mostrarAlerta("PDF exportado correctamente 📄✅", "success");
+      const doc = new jsPDF("landscape");
+      await generarContenidoPDF(doc);
+      setProgress(95);
+      doc.save(`Horario_${anio}.pdf`);
+      mostrarAlerta("PDF exportado correctamente 📄✅", "success");
     } catch (error) {
-        console.error("Error al exportar PDF:", error);
-        mostrarAlerta("Hubo un error al generar el PDF ❌", "error");
+      console.error("Error al exportar PDF:", error);
+      mostrarAlerta("Hubo un error al generar el PDF ❌", "error");
     } finally {
-        setIsLoading(false);
-        setLoadingMessage("");
+      setIsLoading(false);
+      setLoadingMessage("");
     }
   }, [anio, leyenda, isLoading, mostrarAlerta]);
-  
+
   // --- Función de ENVÍO por correo (SendGrid) ---
   const enviarHorarioProfesores = useCallback(async () => {
     if (user.role !== "admin" || isLoading) return;
     const correos = profesores.map(p => p.email).filter(Boolean); // Usamos 'email'
     if (correos.length === 0) {
-        return mostrarAlerta("No hay correos de profesores registrados para enviar.", "error");
+      return mostrarAlerta("No hay correos de profesores registrados para enviar.", "error");
     }
 
     setIsLoading(true);
     setLoadingMessage(`Enviando a ${correos.length} profesores...`);
     setProgress(10);
     try {
-        const doc = new jsPDF("landscape");
-        await generarContenidoPDF(doc);
-        setProgress(85);
+      const doc = new jsPDF("landscape");
+      await generarContenidoPDF(doc);
+      setProgress(85);
 
-        const pdfDataUri = doc.output('datauristring');
-        const base64Pdf = pdfDataUri.split(',')[1];
-        
-        const payload = {
-            to: correos,
-            subject: `Horario Escolar General ${anio}`,
-            body: `Estimados profesores,<br><br>Se adjunta el horario general para el ciclo escolar <strong>${anio}</strong>.<br><br>Saludos cordiales,<br>Administración.`,
-            pdfData: base64Pdf,
-            fileName: `Horario_${anio}.pdf`
-        };
+      const pdfDataUri = doc.output('datauristring');
+      const base64Pdf = pdfDataUri.split(',')[1];
 
-        const token = localStorage.getItem("token");
-        // Uso de API_URL para Vercel/Render
-        await axios.post(`${API_URL}/api/enviar-horario`, payload, { headers: { Authorization: `Bearer ${token}` } });
-        
-        setProgress(100);
-        mostrarAlerta(`Horario enviado a ${correos.length} profesores ✅`, "success");
+      const payload = {
+        to: correos,
+        subject: `Horario Escolar General ${anio}`,
+        body: `Estimados profesores,<br><br>Se adjunta el horario general para el ciclo escolar <strong>${anio}</strong>.<br><br>Saludos cordiales,<br>Administración.`,
+        pdfData: base64Pdf,
+        fileName: `Horario_${anio}.pdf`
+      };
+
+      const token = localStorage.getItem("token");
+      // Uso de API_URL para Vercel/Render
+      await axios.post(`${API_URL}/api/enviar-horario`, payload, { headers: { Authorization: `Bearer ${token}` } });
+
+      setProgress(100);
+      mostrarAlerta(`Horario enviado a ${correos.length} profesores ✅`, "success");
     } catch (error) {
-        console.error("Error al enviar el horario:", error);
-        mostrarAlerta("Error al enviar el horario por correo ❌", "error");
+      console.error("Error al enviar el horario:", error);
+      mostrarAlerta("Error al enviar el horario por correo ❌", "error");
     } finally {
-        setIsLoading(false);
-        setLoadingMessage("");
+      setIsLoading(false);
+      setLoadingMessage("");
     }
   }, [user.role, isLoading, profesores, anio, leyenda, mostrarAlerta]);
 
@@ -293,19 +303,19 @@ function Horario({ user }) {
     setLoadingMessage("Guardando horario...");
     setProgress(10);
     try {
-        // Usamos el formato JSON (código nuevo) ya que es más limpio y adecuado para una API REST
-        const payload = { anio, datos: horario, leyenda }; 
-        await axios.post(`${API_URL}/horario`, payload, { 
-            headers: { Authorization: `Bearer ${token}` },
-            onUploadProgress: (e) => setProgress(Math.min(90, Math.round((e.loaded * 100) / (e.total || 1))))
-        });
-        setProgress(100);
-        mostrarAlerta("Horario guardado correctamente ✅", "success");
+      // Usamos el formato JSON (código nuevo) ya que es más limpio y adecuado para una API REST
+      const payload = { anio, datos: horario, leyenda };
+      await axios.post(`${API_URL}/horario`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+        onUploadProgress: (e) => setProgress(Math.min(90, Math.round((e.loaded * 100) / (e.total || 1))))
+      });
+      setProgress(100);
+      mostrarAlerta("Horario guardado correctamente ✅", "success");
     } catch (err) {
-        console.error(err);
-        mostrarAlerta("Error al guardar el horario ❌", "error");
+      console.error(err);
+      mostrarAlerta("Error al guardar el horario ❌", "error");
     } finally {
-        setTimeout(() => { setIsLoading(false); setLoadingMessage(""); }, 500);
+      setTimeout(() => { setIsLoading(false); setLoadingMessage(""); }, 500);
     }
   }, [user.role, anio, horario, leyenda, isLoading, mostrarAlerta]);
 
@@ -318,21 +328,21 @@ function Horario({ user }) {
     setLoadingMessage("Subiendo PDF...");
     setProgress(10);
     try {
-        const formData = new FormData();
-        formData.append("pdf", file);
-        formData.append("anio", anio);
-        const token = localStorage.getItem("token");
-        // Uso de API_URL para Vercel/Render
-        await axios.post(`${API_URL}/horario`, formData, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" }, onUploadProgress: (progressEvent) => { const percentCompleted = Math.min(90, Math.round((progressEvent.loaded * 100) / progressEvent.total)); setProgress(percentCompleted); } });
-        setProgress(100);
-        // Aquí deberías recargar o actualizar el estado si quieres mostrar el PDF
-        mostrarAlerta("PDF subido correctamente ✅", "success");
+      const formData = new FormData();
+      formData.append("pdf", file);
+      formData.append("anio", anio);
+      const token = localStorage.getItem("token");
+      // Uso de API_URL para Vercel/Render
+      await axios.post(`${API_URL}/horario`, formData, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" }, onUploadProgress: (progressEvent) => { const percentCompleted = Math.min(90, Math.round((progressEvent.loaded * 100) / progressEvent.total)); setProgress(percentCompleted); } });
+      setProgress(100);
+      // Aquí deberías recargar o actualizar el estado si quieres mostrar el PDF
+      mostrarAlerta("PDF subido correctamente ✅", "success");
     } catch (err) {
-        console.error(err);
-        mostrarAlerta("Error al subir PDF ❌", "error");
+      console.error(err);
+      mostrarAlerta("Error al subir PDF ❌", "error");
     } finally {
-        e.target.value = null; // Limpiar input file
-        setTimeout(() => { setIsLoading(false); setLoadingMessage(""); }, 500);
+      e.target.value = null; // Limpiar input file
+      setTimeout(() => { setIsLoading(false); setLoadingMessage(""); }, 500);
     }
   }, [anio, isLoading, mostrarAlerta]);
 
@@ -351,91 +361,91 @@ function Horario({ user }) {
           </div>
         </div>
       )}
-      
+
       {alerta && <div className={`alerta ${alerta.tipo}`}>{alerta.mensaje}</div>}
-      
+
       {/* Estructura Header del código nuevo */}
       <header className="horario-header">
         <h1>Gestión de Horarios</h1>
         <div className="titulo-anio">
-            {user.role === "admin" ? ( 
-                <input type="text" value={anio} onChange={e => setAnio(e.target.value)} className="anio-input" disabled={isLoading} /> 
-            ) : <h2>Ciclo Escolar: {anio}</h2>}
+          {user.role === "admin" ? (
+            <input type="text" value={anio} onChange={e => setAnio(e.target.value)} className="anio-input" disabled={isLoading} />
+          ) : <h2>Ciclo Escolar: {anio}</h2>}
         </div>
       </header>
-      
+
       {/* Panel de administración unificado */}
-      {user.role === "admin" && ( 
-        <div className="admin-panel"> 
-            <button className={`btn-admin ${modoBorrador ? "activo" : ""}`} onClick={() => setModoBorrador(!modoBorrador)} disabled={isLoading}>🧹 Borrador</button> 
-            <button className="btn-admin" onClick={() => setMostrarPaleta(!mostrarPaleta)} disabled={isLoading}>🖌️ Pincel</button> 
-            {mostrarPaleta && ( 
-                <div className="paleta-colores"> 
-                    {paletaColores.map(c => ( <div key={c} className="color-cuadro" style={{ backgroundColor: c }} onClick={() => { setColorSeleccionado(c); setModoBorrador(false); }} /> ))} 
-                </div> 
-            )} 
-            <button onClick={generarHorarioVacio} className="btn-admin" disabled={isLoading}>🗑️ Limpiar</button> 
-            <button onClick={guardarHorario} className="btn-admin" disabled={isLoading}> 💾 Guardar</button> 
-            <button onClick={exportarPDF} className="btn-admin" disabled={isLoading}> 📄 Exportar PDF </button> 
-            <button onClick={enviarHorarioProfesores} className="btn-admin" disabled={isLoading}> 📧 Enviar </button> 
-           
-            <input type="file" accept="application/pdf" ref={fileInputRef} style={{ display: "none" }} onChange={handleArchivoChange} disabled={isLoading} />
-        </div> 
+      {user.role === "admin" && (
+        <div className="admin-panel">
+          <button className={`btn-admin ${modoBorrador ? "activo" : ""}`} onClick={() => setModoBorrador(!modoBorrador)} disabled={isLoading}>🧹 Borrador</button>
+          <button className="btn-admin" onClick={() => setMostrarPaleta(!mostrarPaleta)} disabled={isLoading}>🖌️ Pincel</button>
+          {mostrarPaleta && (
+            <div className="paleta-colores">
+              {paletaColores.map(c => (<div key={c} className="color-cuadro" style={{ backgroundColor: c }} onClick={() => { setColorSeleccionado(c); setModoBorrador(false); }} />))}
+            </div>
+          )}
+          <button onClick={generarHorarioVacio} className="btn-admin" disabled={isLoading}>🗑️ Limpiar</button>
+          <button onClick={guardarHorario} className="btn-admin" disabled={isLoading}> 💾 Guardar</button>
+          <button onClick={exportarPDF} className="btn-admin" disabled={isLoading}> 📄 Exportar PDF </button>
+          <button onClick={enviarHorarioProfesores} className="btn-admin" disabled={isLoading}> 📧 Enviar </button>
+
+          <input type="file" accept="application/pdf" ref={fileInputRef} style={{ display: "none" }} onChange={handleArchivoChange} disabled={isLoading} />
+        </div>
       )}
-      
-      <div className="horario-table-container"> 
-        <table className="horario-table" ref={horarioTableRef}> 
-            <thead> 
-                <tr> 
-                    <th>Profesor</th> 
-                    <th>Asignaturas</th> 
-                    {dias.map(d => <th key={d}>{d}</th>)} 
-                </tr> 
-            </thead> 
-            <tbody> 
-                {/* Ordenar profesores alfabéticamente para una vista más limpia */}
-                {profesores.sort((a,b) => a.nombre.localeCompare(b.nombre)).map(prof => ( 
-                    <tr key={prof._id}> 
-                        <td>{prof.nombre}</td> 
-                        {/* APLICAMOS LA CLASE DE CORRECCIÓN AQUÍ */}
-                        <td className="asignaturas-cell">{(prof.asignaturas || ["General"]).join(", ")}</td> 
-                        {dias.map(d => ( 
-                            <td key={`${prof._id}-${d}`}> 
-                                <div className="horas-row-horizontal"> 
-                                    {horas.map(h => { 
-                                        // La clave usa 'General' como prefijo de asignatura, coherente con tu lógica
-                                        const cell = horario?.[prof.nombre]?.[`General-${d}-${h}`] || { text: "", color: "transparent" }; 
-                                        return ( 
-                                            <div key={`${d}-${h}`} className="hora-box-horizontal" style={{ backgroundColor: cell.color }} onClick={() => !isLoading && pintarHora(prof.nombre, "General", d, h)}> 
-                                                <div className="hora-num">{h}</div> 
-                                                {/* Limitamos el input a 7 caracteres para prevenir desbordamiento dentro de la caja */}
-                                                <input type="text" maxLength={7} value={cell.text} onChange={e => handleCellChange(prof.nombre, "General", d, h, e.target.value)} disabled={isLoading || user.role !== 'admin'} /> 
-                                            </div> 
-                                        ); 
-                                    })} 
-                                </div> 
-                            </td> 
-                        ))} 
-                    </tr> 
-                ))} 
-            </tbody> 
-        </table> 
+
+      <div className="horario-table-container">
+        <table className="horario-table" ref={horarioTableRef}>
+          <thead>
+            <tr>
+              <th>Profesor</th>
+              <th>Asignaturas</th>
+              {dias.map(d => <th key={d}>{d}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {/* Ordenar profesores alfabéticamente para una vista más limpia */}
+            {profesores.sort((a, b) => a.nombre.localeCompare(b.nombre)).map(prof => (
+              <tr key={prof._id}>
+                <td>{prof.nombre}</td>
+                {/* APLICAMOS LA CLASE DE CORRECCIÓN AQUÍ */}
+                <td className="asignaturas-cell">{(prof.asignaturas || ["General"]).join(", ")}</td>
+                {dias.map(d => (
+                  <td key={`${prof._id}-${d}`}>
+                    <div className="horas-row-horizontal">
+                      {horas.map(h => {
+                        // La clave usa 'General' como prefijo de asignatura, coherente con tu lógica
+                        const cell = horario?.[prof.nombre]?.[`General-${d}-${h}`] || { text: "", color: "transparent" };
+                        return (
+                          <div key={`${d}-${h}`} className="hora-box-horizontal" style={{ backgroundColor: cell.color }} onClick={() => !isLoading && pintarHora(prof.nombre, "General", d, h)}>
+                            <div className="hora-num">{h}</div>
+                            {/* Limitamos el input a 7 caracteres para prevenir desbordamiento dentro de la caja */}
+                            <input type="text" maxLength={7} value={cell.text} onChange={e => handleCellChange(prof.nombre, "General", d, h, e.target.value)} disabled={isLoading || user.role !== 'admin'} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-      
+
       {/* Leyenda */}
-      {user.role === "admin" && Object.keys(leyenda).length > 0 && ( 
-        <div className="leyenda"> 
-            <h3>Leyenda</h3> 
-            <div className="leyenda-colores"> 
-                {Object.entries(leyenda).map(([color, significado]) => ( 
-                    <div key={color} className="leyenda-item"> 
-                        <div className="color-cuadro-leyenda" style={{ backgroundColor: color }} /> 
-                        <input type="text" placeholder="Significado" value={significado} onChange={e => handleLeyendaChange(color, e.target.value)} disabled={isLoading} /> 
-                        <button className="btn-eliminar" onClick={() => eliminarLeyenda(color)} disabled={isLoading}>❌</button> 
-                    </div> 
-                ))} 
-            </div> 
-        </div> 
+      {user.role === "admin" && Object.keys(leyenda).length > 0 && (
+        <div className="leyenda">
+          <h3>Leyenda</h3>
+          <div className="leyenda-colores">
+            {Object.entries(leyenda).map(([color, significado]) => (
+              <div key={color} className="leyenda-item">
+                <div className="color-cuadro-leyenda" style={{ backgroundColor: color }} />
+                <input type="text" placeholder="Significado" value={significado} onChange={e => handleLeyendaChange(color, e.target.value)} disabled={isLoading} />
+                <button className="btn-eliminar" onClick={() => eliminarLeyenda(color)} disabled={isLoading}>❌</button>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );
