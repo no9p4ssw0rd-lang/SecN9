@@ -646,7 +646,7 @@ function Trabajos({ user }) {
 
                 .grupo-componente .asistencia-row {
                     display: grid;
-                    grid-template-columns: 350px 1fr 120px;
+                    grid-template-columns: 450px 1fr 120px;
                     align-items: center;
                     padding: 10px 20px;
                     background-color: var(--dark-color);
