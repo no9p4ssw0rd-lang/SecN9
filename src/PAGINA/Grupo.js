@@ -317,16 +317,26 @@ function Grupo({ user }) {
   // 🌟 ESTADO Y HANDLERS PARA TOOLTIP DE FECHA EDITABLE
   const [hoveredCell, setHoveredCell] = useState(null); // { alumnoId, bimestre, diaIndex, x, y }
   const [editingDate, setEditingDate] = useState(null); // { alumnoId, bimestre, diaIndex, fecha }
-  const closeTooltipTimer = useRef(null);
+  // const closeTooltipTimer = useRef(null); // YA NO SE USA TIMER
+
+  // Efecto para cerrar al dar click fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Si el click NO es en el tooltip Y NO es en un cuadrito (para evitar cerrar al cambiar de celda)
+      if (hoveredCell && !event.target.closest('.custom-tooltip') && !event.target.closest('.cuadrito')) {
+        setHoveredCell(null);
+        setEditingDate(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [hoveredCell]);
 
   const handleMouseEnterCell = (e, alumnoId, bimestre, diaIndex, fecha) => {
     if (!fecha) return; // Solo mostrar si hay fecha (celda con asistencia)
-
-    // Cancelar cualquier cierre pendiente si volvemos a entrar a una celda (o la misma)
-    if (closeTooltipTimer.current) {
-      clearTimeout(closeTooltipTimer.current);
-      closeTooltipTimer.current = null;
-    }
 
     const rect = e.target.getBoundingClientRect();
     setHoveredCell({
@@ -335,32 +345,21 @@ function Grupo({ user }) {
       diaIndex,
       fecha,
       x: rect.left + window.scrollX + (rect.width / 2),
-      y: rect.top + window.scrollY // Justo en el borde superior de la celda
+      y: rect.top + window.scrollY // Justo en el borde superior
     });
   };
 
   const handleMouseLeaveCell = () => {
-    // Pequeño delay para permitir mover el mouse al tooltip
-    closeTooltipTimer.current = setTimeout(() => {
-      if (!editingDate) {
-        setHoveredCell(null);
-      }
-    }, 500); // 500ms de gracia (AUMENTADO)
+    // YA NO CERRAMOS AL SALIR DEL MOUSE
+    // El usuario pidió que se quede hasta dar click fuera
   };
 
   const handleMouseEnterTooltip = () => {
-    if (closeTooltipTimer.current) {
-      clearTimeout(closeTooltipTimer.current);
-      closeTooltipTimer.current = null;
-    }
+    // No action needed
   };
 
   const handleMouseLeaveTooltip = () => {
-    closeTooltipTimer.current = setTimeout(() => {
-      if (!editingDate) {
-        setHoveredCell(null);
-      }
-    }, 500); // 500ms
+    // No action needed
   };
 
   const handleEditDateClick = () => {
