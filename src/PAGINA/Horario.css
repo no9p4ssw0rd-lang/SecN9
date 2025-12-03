@@ -60,17 +60,19 @@
 }
 
 /* Se unifican los estilos del botón al usar .btn-admin en el JSX */
-.btn-admin { 
+.btn-admin {
     background-color: #d4af37;
     color: #fff;
     border: none;
-    padding: 8px 15px; /* Ajuste para que se vea mejor */
+    padding: 8px 15px;
+    /* Ajuste para que se vea mejor */
     border-radius: 5px;
     cursor: pointer;
     font-weight: bold;
-    font-size: 14px; /* Ajuste de fuente */
+    font-size: 14px;
+    /* Ajuste de fuente */
     transition: all 0.3s ease;
-    box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .btn-admin:hover:not(:disabled) {
@@ -79,7 +81,8 @@
 }
 
 .btn-admin.activo {
-    background-color: #f44336; /* Rojo para borrador activo */
+    background-color: #f44336;
+    /* Rojo para borrador activo */
 }
 
 .btn-admin:disabled {
@@ -99,7 +102,7 @@
     border: 1px solid #ccc;
     background: #fff;
     border-radius: 5px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .color-cuadro {
@@ -123,15 +126,16 @@
     width: 100%;
     overflow-x: auto;
     border-radius: 8px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
     margin-bottom: 20px;
 }
 
 .horario-table {
-    width: 100%; 
+    width: 100%;
     min-width: 1200px;
     border-collapse: separate;
-    border-spacing: 3px;
+    border-spacing: 0;
+    /* Eliminamos spacing para bordes más limpios */
     font-size: 12px;
     table-layout: fixed;
     background-color: #fff;
@@ -140,51 +144,66 @@
 .horario-table th,
 .horario-table td {
     border: 1px solid #ccc;
-    padding: 4px;
+    padding: 10px;
+    /* Aumentado padding */
     text-align: center;
     vertical-align: middle;
     color: #000;
+}
+
+.horario-table tr {
+    height: 80px;
+    /* Altura mínima fija para evitar colapso */
 }
 
 .horario-table th {
     background: linear-gradient(to bottom, #f5d88b, #d4af37);
     color: #000;
     font-weight: bold;
-    font-size: 13px; /* Aumentado ligeramente */
+    font-size: 14px;
     white-space: nowrap;
+    padding: 12px;
 }
 
-.horario-table td:first-child { /* Columna Profesor */
+.horario-table td:first-child {
+    /* Columna Profesor */
     font-weight: bold;
     color: #000;
     text-align: left;
-    padding-left: 8px;
-    font-size: 12px;
+    padding-left: 12px;
+    font-size: 13px;
     background-color: #f9f9f9;
-    white-space: nowrap;
+    white-space: normal;
+    /* Permitir wrap en nombres largos */
+    width: 200px;
+    /* Ancho fijo para nombres */
 }
 
 /* --- CORRECCIÓN CLASE ASIGNATURAS --- */
 .horario-table .asignaturas-cell {
-    /* Forzar que el texto se envuelva en varias líneas */
-    max-width: 150px; 
-    min-width: 100px;
-    word-break: break-word; 
-    white-space: normal !important; /* Anula el nowrap del estilo general */
-    font-size: 11px; /* Reducir un poco la fuente */
-    line-height: 1.2;
+    width: 180px;
+    /* Ancho fijo */
+    word-break: break-word;
+    white-space: normal !important;
+    font-size: 12px;
+    line-height: 1.5;
+    /* Mejor interlineado */
     font-weight: normal !important;
     text-align: left !important;
+    padding: 10px !important;
 }
 
 /* --- Celdas de Hora --- */
 .horas-row-horizontal {
     display: flex;
-    justify-content: space-between; /* Ajuste para distribuir las 7 horas */
-    gap: 1px;
+    justify-content: space-between;
+    gap: 4px;
+    /* Más espacio entre cajitas */
     flex-wrap: nowrap;
     width: 100%;
     height: 100%;
+    align-items: center;
+    /* Centrado vertical */
 }
 
 .hora-box-horizontal {
@@ -192,11 +211,16 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin: 1px;
+    margin: 0;
     cursor: pointer;
     transition: transform 0.1s ease;
     flex-shrink: 0;
-    flex-grow: 1; /* Ocupa el espacio disponible */
+    flex-grow: 1;
+    height: 100%;
+    /* Ocupar toda la altura disponible */
+    min-height: 50px;
+    /* Altura mínima para la cajita */
+    border-radius: 4px;
 }
 
 .hora-box-horizontal:hover {
@@ -205,20 +229,25 @@
 
 .hora-num {
     font-weight: bold;
-    font-size: 7px;
+    font-size: 10px;
+    /* Aumentado de 7px */
     color: #555;
-    margin-bottom: 1px;
+    margin-bottom: 2px;
     line-height: 1;
 }
 
 .hora-box-horizontal input {
-    width: 95%; /* Ajuste para que se estire al 95% del contenedor */
-    max-width: 24px; /* Límite máximo para escritorio */
-    height: 18px;
+    width: 90%;
+    /* Ajuste para que se estire al 95% del contenedor */
+    max-width: 35px;
+    /* Aumentado de 24px */
+    height: 24px;
+    /* Aumentado de 18px */
     text-align: center;
-    font-size: 8px;
+    font-size: 11px;
+    /* Aumentado de 8px */
     border: 1px solid #bbb;
-    border-radius: 3px;
+    border-radius: 4px;
     padding: 0;
     box-sizing: border-box;
     background-color: #fafafa;
@@ -287,7 +316,8 @@
     border-radius: 4px;
 }
 
-.btn-eliminar { /* Botón de la leyenda */
+.btn-eliminar {
+    /* Botón de la leyenda */
     background-color: #f44336;
     color: #fff;
     padding: 5px 8px;
@@ -322,7 +352,7 @@
     font-size: 1.2rem;
     font-weight: bold;
     margin-bottom: 15px;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .progress-bar-custom {
@@ -331,7 +361,7 @@
     padding: 4px;
     width: 350px;
     height: 30px;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
     overflow: hidden;
 }
 
@@ -385,13 +415,27 @@
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateX(100%); }
-    to { opacity: 1; transform: translateX(0); }
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 @keyframes fadeOut {
-    from { opacity: 1; transform: translateX(0); }
-    to { opacity: 0; transform: translateX(100%); }
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
 }
 
 /* ======================= */
@@ -407,7 +451,8 @@
     .hora-box-horizontal input {
         width: 20px;
         height: 16px;
-        max-width: 20px; /* Reducción para pantallas medianas */
+        max-width: 20px;
+        /* Reducción para pantallas medianas */
     }
 
     .hora-num {
@@ -419,37 +464,47 @@
     .horario-page {
         padding: 80px 10px 10px 10px;
     }
+
     .horario-table {
-        min-width: 700px; /* Asegura que la tabla no se haga demasiado pequeña */
+        min-width: 700px;
+        /* Asegura que la tabla no se haga demasiado pequeña */
     }
+
     .admin-panel {
         flex-direction: column;
         align-items: stretch;
         width: 100%;
         padding: 0 10px;
     }
+
     .btn-admin {
         width: 100%;
         margin-bottom: 5px;
     }
+
     .paleta-colores {
         max-width: 100%;
         justify-content: center;
     }
+
     .leyenda {
         padding: 10px;
     }
+
     .leyenda-colores {
         flex-direction: column;
         align-items: flex-start;
         gap: 10px;
     }
+
     .leyenda-item input {
         width: 100%;
     }
+
     .loading-content {
         width: 90%;
     }
+
     .progress-bar-custom {
         width: 100%;
     }

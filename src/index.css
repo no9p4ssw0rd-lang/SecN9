@@ -5,8 +5,6 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  zoom: 85%;
-  /* Ajuste de zoom global solicitado por el usuario */
 }
 
 code {
