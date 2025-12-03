@@ -873,10 +873,10 @@ function Grupo({ user }) {
                   <div
                     className="custom-tooltip"
                     style={{
-                      top: hoveredCell.y + 20, // Overlap the cell significantly so there is NO gap
-                      left: hoveredCell.x,
-                      transform: 'translateX(-50%) translateY(-100%)', // Move up
-                      zIndex: 3000 // Ensure it's on top of everything
+                      top: hoveredCell.y - 15, // Más arriba (gap is fine now due to click-outside)
+                      left: hoveredCell.x - 20, // Más a la izquierda
+                      transform: 'translateX(-50%) translateY(-100%)',
+                      zIndex: 3000
                     }}
                     onMouseEnter={handleMouseEnterTooltip}
                     onMouseLeave={handleMouseLeaveTooltip}
