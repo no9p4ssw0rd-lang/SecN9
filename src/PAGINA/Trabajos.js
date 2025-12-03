@@ -646,7 +646,7 @@ function Trabajos({ user }) {
 
                 .grupo-componente .asistencia-row {
                     display: grid;
-                    grid-template-columns: 280px 1fr 120px;
+                    grid-template-columns: 350px 1fr 120px;
                     align-items: center;
                     padding: 10px 20px;
                     background-color: var(--dark-color);
@@ -755,14 +755,14 @@ function Trabajos({ user }) {
 
                 .grupo-componente .cuadritos-grid {
                     display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+                    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
                     gap: 8px;
                     align-items: center;
                     padding: 10px 0;
                 }
 
                 .grupo-componente .cuadrito-calificacion {
-                    width: 38px;
+                    width: 60px;
                     height: 38px;
                     background-color: #4a4a4a;
                     border: 1px solid #777;
@@ -793,7 +793,7 @@ function Trabajos({ user }) {
                     color: white;
                     border: none;
                     border-radius: 6px;
-                    width: 38px;
+                    width: 60px;
                     height: 38px;
                     font-weight: bold;
                     cursor: pointer;
@@ -808,14 +808,14 @@ function Trabajos({ user }) {
                 /* --- TASK HEADERS --- */
                 .grupo-componente .task-header-row {
                     display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+                    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
                     gap: 8px;
                     margin-bottom: 5px;
-                    padding-right: 46px; /* Space for the +5 button */
+                    padding-right: 68px; /* Space for the +5 button */
                 }
 
                 .grupo-componente .task-header-cell {
-                    width: 38px;
+                    width: 60px;
                     font-size: 0.7rem;
                     text-align: center;
                     color: #aaa;
@@ -918,15 +918,16 @@ function Trabajos({ user }) {
                 }
                 /* MEJORA: Botón Añadir más llamativo y con el color principal */
                 .grupo-componente .criterio-form .btn {
-                    padding: 14px 15px; /* Hace que el botón tenga la misma altura que los inputs */
+                    padding: 14px 25px; /* Más ancho para que no se vea apretado */
                     background-color: var(--main-color);
                     color: var(--dark-color);
                     font-weight: 700; /* Botón de acción principal muy visible */
                     border: none;
                     border-radius: 8px;
                     line-height: 1;
-                    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-                    transition: background-color 0.2s;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.3); /* Sombra más suave */
+                    transition: background-color 0.2s, transform 0.2s;
+                    margin-left: 10px; /* Separación extra */
                 }
                 .grupo-componente .criterio-form .btn:hover {
                     background-color: #d4b03f;
