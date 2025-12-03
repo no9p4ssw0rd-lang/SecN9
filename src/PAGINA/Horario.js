@@ -230,7 +230,7 @@ function Horario({ user }) {
 
       // Calcular posición para mostrar la siguiente sección
       // Ajuste manual para evitar duplicidad de filas (overlapCorrection)
-      const overlapCorrection = 15;
+      const overlapCorrection = 7;
       const alturaYaImpresa = (pageHeight - startY) + (pageHeight - 20) * (pageCount - 2) + overlapCorrection;
       doc.addImage(imgData, "PNG", 10, -alturaYaImpresa + 10, pdfWidth, pdfHeight);
 
