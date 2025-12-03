@@ -210,10 +210,43 @@ function Horario({ user }) {
     const imgData = canvas.toDataURL("image/png");
     const pdfWidth = doc.internal.pageSize.getWidth() - 20;
     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-    doc.addImage(imgData, "PNG", 10, 35, pdfWidth, pdfHeight);
 
-    let leyendaY = 35 + pdfHeight + 10;
-    if (leyendaY > doc.internal.pageSize.getHeight() - 20 && Object.keys(leyenda).length > 0) { doc.addPage(); leyendaY = 15; }
+    // Altura disponible en la primera página
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const startY = 35;
+    let heightLeft = pdfHeight;
+    let position = startY;
+    let pageCount = 1;
+
+    // Primera página
+    doc.addImage(imgData, "PNG", 10, position, pdfWidth, pdfHeight);
+    heightLeft -= (pageHeight - startY);
+
+    // Páginas adicionales
+    while (heightLeft > 0) {
+      position = heightLeft - pdfHeight;
+      doc.addPage();
+      pageCount++;
+
+      // Calcular posición para mostrar la siguiente sección
+      const alturaYaImpresa = (pageHeight - startY) + (pageHeight - 20) * (pageCount - 2);
+      doc.addImage(imgData, "PNG", 10, -alturaYaImpresa + 10 + startY, pdfWidth, pdfHeight);
+
+      heightLeft -= (pageHeight - 20);
+    }
+
+    // Leyenda - Nueva página si es necesario
+    let leyendaY = 0;
+    if (pageCount > 1) {
+      doc.addPage();
+      leyendaY = 15;
+    } else {
+      leyendaY = 35 + pdfHeight + 10;
+      if (leyendaY > pageHeight - 20) {
+        doc.addPage();
+        leyendaY = 15;
+      }
+    }
 
     if (Object.keys(leyenda).length > 0) {
       doc.setFontSize(10);
