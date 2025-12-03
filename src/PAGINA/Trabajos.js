@@ -29,12 +29,11 @@ function Notificacion({ mensaje, tipo, onClose }) {
 // --- COMPONENTE NUEVO: Modal para Nombre de Tarea ---
 // Se abre una vez por columna (tareaIndex) para asignar el nombre a todos.
 // ======================================
-const ModalNombreTarea = ({ criterioNombre, tareaIndex, onGuardar, onClose }) => {
-    const [nombreTarea, setNombreTarea] = useState('');
+const ModalNombreTarea = ({ criterioNombre, tareaIndex, nombreActual, onGuardar, onClose, onEliminar }) => {
+    const [nombreTarea, setNombreTarea] = useState(nombreActual || '');
 
     const handleSave = () => {
         if (nombreTarea.trim()) {
-            // Llama a la función del padre para guardar el nombre en el estado de calificaciones de TODOS los alumnos.
             onGuardar(nombreTarea, criterioNombre, tareaIndex);
         }
     };
@@ -73,7 +72,16 @@ const ModalNombreTarea = ({ criterioNombre, tareaIndex, onGuardar, onClose }) =>
                 />
 
                 <div className="modal-actions" style={{ justifyContent: 'space-between', marginTop: '0' }}>
-                    <button className="btn btn-cancel" onClick={onClose} disabled={!nombreTarea.trim()}>Cancelar</button>
+                    <button className="btn btn-cancel" onClick={onClose}>Cancelar</button>
+                    {nombreActual && (
+                        <button
+                            className="btn btn-danger"
+                            onClick={() => onEliminar(criterioNombre, tareaIndex)}
+                            style={{ backgroundColor: '#d32f2f', color: 'white', border: 'none' }}
+                        >
+                            Eliminar
+                        </button>
+                    )}
                     <button
                         className="btn btn-primary"
                         onClick={handleSave}
@@ -111,18 +119,6 @@ const CriterioCell = React.memo(({
 
         // 1. Manejar la entrada de calificación (Llama a la función modificada del padre).
         handleCalificacionChange(alumnoId, bimestreActivo, criterioNombre, tareaIndex, valor);
-
-        // 2. Si el valor es numérico (o sea, se está calificando) Y la tarea NO tiene nombre,
-        // abre el modal. Esto evita que aparezca al modificar una calificación existente.
-        const notaNumerica = valor === '' ? null : parseFloat(valor);
-
-        // Lógica Corregida: Si hay nota válida (no null y no NaN) Y la tarea no tiene nombre, pedimos el nombre.
-        if (notaNumerica !== null && !isNaN(notaNumerica) && !tareaData.nombre) {
-            setTareaPorNombrar({
-                criterioNombre,
-                tareaIndex,
-            });
-        }
     };
 
     // Ajustamos el Tooltip para mostrar el nombre
@@ -809,6 +805,35 @@ function Trabajos({ user }) {
                     background-color: #4b6587;
                 }
 
+                /* --- TASK HEADERS --- */
+                .grupo-componente .task-header-row {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+                    gap: 8px;
+                    margin-bottom: 5px;
+                    padding-right: 46px; /* Space for the +5 button */
+                }
+
+                .grupo-componente .task-header-cell {
+                    width: 38px;
+                    font-size: 0.7rem;
+                    text-align: center;
+                    color: #aaa;
+                    cursor: pointer;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    transition: color 0.2s;
+                }
+                .grupo-componente .task-header-cell:hover {
+                    color: var(--main-color);
+                    font-weight: bold;
+                }
+                .grupo-componente .task-header-cell.named {
+                    color: var(--main-color);
+                    font-weight: 600;
+                }
+
                 /* --- MODAL DE CRITERIOS (CON NUEVOS ESTILOS) --- */
                 .grupo-componente .modal-content {
                     background-color: var(--dark-color-alt);
@@ -1117,6 +1142,28 @@ const PanelCalificaciones = ({
         setNotificacion({ mensaje: `Se asignó el nombre "${nuevoNombre}" a la Tarea ${tareaIndex + 1}.`, tipo: 'exito' });
     };
 
+    // 🌟 FUNCIÓN NUEVA: Eliminar nombre y calificaciones de una columna
+    const handleEliminarTarea = (criterioNombre, tareaIndex) => {
+        const alumnosIds = grupo.alumnos.map(a => a._id);
+
+        setCalificaciones(prev => {
+            const nextCalificaciones = { ...prev };
+            alumnosIds.forEach(alumnoId => {
+                if (nextCalificaciones[alumnoId]?.[bimestreActivo]?.[criterioNombre]?.[tareaIndex]) {
+                    // Opción A: Eliminar completamente la entrada
+                    delete nextCalificaciones[alumnoId][bimestreActivo][criterioNombre][tareaIndex];
+
+                    // Opción B: Si quisieras solo borrar el nombre pero dejar la nota, harías:
+                    // nextCalificaciones[alumnoId][bimestreActivo][criterioNombre][tareaIndex].nombre = null;
+                }
+            });
+            return nextCalificaciones;
+        });
+
+        setTareaPorNombrar(null);
+        setNotificacion({ mensaje: `Se eliminó la Tarea ${tareaIndex + 1} y sus calificaciones.`, tipo: 'exito' });
+    };
+
 
     // Lógica de manipulación de calificaciones (MODIFICADA para preservar el nombre)
     const handleCalificacionChange = (alumnoId, bimestre, criterioNombre, tareaIndex, valor) => {
@@ -1215,7 +1262,9 @@ const PanelCalificaciones = ({
                 <ModalNombreTarea
                     criterioNombre={tareaPorNombrar.criterioNombre}
                     tareaIndex={tareaPorNombrar.tareaIndex}
+                    nombreActual={tareaPorNombrar.nombreActual} // Pasar nombre actual
                     onGuardar={handleGuardarNombreTarea}
+                    onEliminar={handleEliminarTarea} // Pasar función de eliminar
                     onClose={() => setTareaPorNombrar(null)}
                 />
             )}
@@ -1271,6 +1320,31 @@ const PanelCalificaciones = ({
                                             </div>
 
                                             <div className="cuadritos-grid">
+                                                {/* 🌟 HEADER ROW PARA TAREAS */}
+                                                <div className="task-header-row" style={{ gridColumn: '1 / -1' }}>
+                                                    {Array.from({ length: numTareas[criterioAbierto.criterioNombre] || 10 }).map((_, tareaIndex) => {
+                                                        // Buscar si alguna calificación en esta columna tiene nombre
+                                                        const nombreTarea = Object.values(calificaciones).find(
+                                                            alumnoCal => alumnoCal?.[bimestreActivo]?.[criterioAbierto.criterioNombre]?.[tareaIndex]?.nombre
+                                                        )?.[bimestreActivo]?.[criterioAbierto.criterioNombre]?.[tareaIndex]?.nombre;
+
+                                                        return (
+                                                            <div
+                                                                key={tareaIndex}
+                                                                className={`task-header-cell ${nombreTarea ? 'named' : ''}`}
+                                                                title={nombreTarea || `Tarea ${tareaIndex + 1}`}
+                                                                onClick={() => setTareaPorNombrar({
+                                                                    criterioNombre: criterioAbierto.criterioNombre,
+                                                                    tareaIndex,
+                                                                    nombreActual: nombreTarea
+                                                                })}
+                                                            >
+                                                                {nombreTarea || `T${tareaIndex + 1}`}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+
                                                 {/* 🌟 Uso del nuevo componente CriterioCell */}
                                                 {Array.from({ length: numTareas[criterioAbierto.criterioNombre] || 10 }).map((_, tareaIndex) => (
                                                     <CriterioCell
@@ -1454,85 +1528,88 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
     };
 
     return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <h2>Definir Criterios de Evaluación por Trimestre</h2>
+        <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1050 }}>
+            {/* WRAPPER CLAVE: Aplicamos la clase grupo-componente aquí para heredar estilos */}
+            <div className="grupo-componente" style={{ display: 'contents' }}>
+                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                    <h2>Definir Criterios de Evaluación por Trimestre</h2>
 
-                <div className="bimestre-selector" style={{ justifyContent: 'center', borderBottom: 'none' }}>
-                    {[1, 2, 3].map(bim => (
-                        <button
-                            key={bim}
-                            className={`btn ${bimestreActivo === bim ? 'btn-primary' : 'btn-cancel'}`}
-                            onClick={() => handleSetBimestre(bim)}
-                        >
-                            Trimestre {bim}
-                        </button>
-                    ))}
-                </div>
-
-                <div style={{ textAlign: 'center', marginTop: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid #444', paddingBottom: '1.5rem' }}>
-                    {bimestreActivo > 1 && (
-                        <button
-                            className="btn btn-secondary"
-                            onClick={() => handleCopiarCriterios(bimestreActivo - 1, bimestreActivo)}
-                            disabled={criteriosDelBimestre.length > 0 || criteriosLocales[bimestreActivo - 1]?.length === 0}
-                            title={criteriosDelBimestre.length > 0 ? "Elimina los criterios actuales para copiar." : `Copia criterios de Bimestre ${bimestreActivo - 1}`}
-                        >
-                            <span role="img" aria-label="copiar">📋</span> Copiar Criterios de Trimestre {bimestreActivo - 1}
-                        </button>
-                    )}
-                </div>
-
-
-                <h3>Criterios para Trimestre {bimestreActivo}</h3>
-                <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                    {criteriosDelBimestre.map((c, index) => (
-                        <div key={index} className="criterio-item">
-                            <span>{c.nombre} - <strong>{c.porcentaje}%</strong></span>
+                    <div className="bimestre-selector" style={{ justifyContent: 'center', borderBottom: 'none' }}>
+                        {[1, 2, 3].map(bim => (
                             <button
-                                onClick={() => removeCriterio(index)}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    marginLeft: '15px',
-                                    lineHeight: 1
-                                }}
+                                key={bim}
+                                className={`btn ${bimestreActivo === bim ? 'btn-primary' : 'btn-cancel'}`}
+                                onClick={() => handleSetBimestre(bim)}
                             >
-                                <span role="img" aria-label="eliminar">🗑️</span>
+                                Trimestre {bim}
                             </button>
-                        </div>
-                    ))}
-                    {criteriosDelBimestre.length === 0 && <p style={{ textAlign: 'center', color: '#999' }}>No hay criterios definidos para este Trimestre.</p>}
-                </div>
-
-                <div className="criterio-form">
-                    <input type="text" placeholder="Nombre (Ej: Tareas)" value={nombre} onChange={e => setNombre(e.target.value)} />
-                    <div className="porcentaje-wrapper">
-                        <input type="number" placeholder="Porcentaje" min="1" max="100" value={porcentaje} onChange={e => setPorcentaje(e.target.value)} />
+                        ))}
                     </div>
-                    <button
-                        className="btn"
-                        onClick={addCriterio}
-                        disabled={totalPorcentaje >= 100 || !nombre.trim() || !porcentaje}
-                    >
-                        Añadir
-                    </button>
-                </div>
 
-                <div className={`criterio-total ${totalPorcentaje !== 100 ? 'error' : ''}`}>
-                    <strong>Total del Trimestre {bimestreActivo}: {totalPorcentaje}% / 100%</strong>
-                </div>
+                    <div style={{ textAlign: 'center', marginTop: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid #444', paddingBottom: '1.5rem' }}>
+                        {bimestreActivo > 1 && (
+                            <button
+                                className="btn btn-secondary"
+                                onClick={() => handleCopiarCriterios(bimestreActivo - 1, bimestreActivo)}
+                                disabled={criteriosDelBimestre.length > 0 || criteriosLocales[bimestreActivo - 1]?.length === 0}
+                                title={criteriosDelBimestre.length > 0 ? "Elimina los criterios actuales para copiar." : `Copia criterios de Bimestre ${bimestreActivo - 1}`}
+                            >
+                                <span role="img" aria-label="copiar">📋</span> Copiar Criterios de Trimestre {bimestreActivo - 1}
+                            </button>
+                        )}
+                    </div>
 
-                <div className="modal-actions">
-                    <button className="btn btn-cancel" onClick={onClose}>Cancelar</button>
-                    <button
-                        className="btn btn-primary"
-                        onClick={handleGuardar}
-                        disabled={criteriosDelBimestre.length > 0 && totalPorcentaje !== 100}
-                    >
-                        Guardar Todos los Criterios
-                    </button>
+
+                    <h3>Criterios para Trimestre {bimestreActivo}</h3>
+                    <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                        {criteriosDelBimestre.map((c, index) => (
+                            <div key={index} className="criterio-item">
+                                <span>{c.nombre} - <strong>{c.porcentaje}%</strong></span>
+                                <button
+                                    onClick={() => removeCriterio(index)}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        marginLeft: '15px',
+                                        lineHeight: 1
+                                    }}
+                                >
+                                    <span role="img" aria-label="eliminar">🗑️</span>
+                                </button>
+                            </div>
+                        ))}
+                        {criteriosDelBimestre.length === 0 && <p style={{ textAlign: 'center', color: '#999' }}>No hay criterios definidos para este Trimestre.</p>}
+                    </div>
+
+                    <div className="criterio-form">
+                        <input type="text" placeholder="Nombre (Ej: Tareas)" value={nombre} onChange={e => setNombre(e.target.value)} />
+                        <div className="porcentaje-wrapper">
+                            <input type="number" placeholder="Porcentaje" min="1" max="100" value={porcentaje} onChange={e => setPorcentaje(e.target.value)} />
+                        </div>
+                        <button
+                            className="btn"
+                            onClick={addCriterio}
+                            disabled={totalPorcentaje >= 100 || !nombre.trim() || !porcentaje}
+                        >
+                            Añadir
+                        </button>
+                    </div>
+
+                    <div className={`criterio-total ${totalPorcentaje !== 100 ? 'error' : ''}`}>
+                        <strong>Total del Trimestre {bimestreActivo}: {totalPorcentaje}% / 100%</strong>
+                    </div>
+
+                    <div className="modal-actions">
+                        <button className="btn btn-cancel" onClick={onClose}>Cancelar</button>
+                        <button
+                            className="btn btn-primary"
+                            onClick={handleGuardar}
+                            disabled={criteriosDelBimestre.length > 0 && totalPorcentaje !== 100}
+                        >
+                            Guardar Todos los Criterios
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
