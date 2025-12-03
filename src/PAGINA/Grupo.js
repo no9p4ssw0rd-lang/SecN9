@@ -345,7 +345,7 @@ function Grupo({ user }) {
       if (!editingDate) {
         setHoveredCell(null);
       }
-    }, 300); // 300ms de gracia
+    }, 500); // 500ms de gracia (AUMENTADO)
   };
 
   const handleMouseEnterTooltip = () => {
@@ -360,7 +360,7 @@ function Grupo({ user }) {
       if (!editingDate) {
         setHoveredCell(null);
       }
-    }, 300);
+    }, 500); // 500ms
   };
 
   const handleEditDateClick = () => {
@@ -874,9 +874,9 @@ function Grupo({ user }) {
                   <div
                     className="custom-tooltip"
                     style={{
-                      top: hoveredCell.y - 35, // Posición ajustada más cerca (antes -40)
+                      top: hoveredCell.y - 25, // Aún más cerca (antes -35)
                       left: hoveredCell.x,
-                      transform: 'translateX(-50%)'
+                      transform: 'translateX(-50%) translateY(-100%)' // Mover hacia arriba completamente desde el punto Y
                     }}
                     onMouseEnter={handleMouseEnterTooltip}
                     onMouseLeave={handleMouseLeaveTooltip}

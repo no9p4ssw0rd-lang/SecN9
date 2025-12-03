@@ -917,3 +917,15 @@ body {
   filter: brightness(1.2);
 }
 
+
+/* Bridge to prevent mouse from falling into gap */
+.grupo-componente .custom-tooltip::before {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: 20px; /* Extends hover area downwards */
+  background: transparent;
+}
+
