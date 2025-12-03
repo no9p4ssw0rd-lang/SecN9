@@ -28,7 +28,6 @@ function Grupo({ user }) {
   const [alumnoInput, setAlumnoInput] = useState({ nombre: '', apellidoPaterno: '', apellidoMaterno: '' });
   const [asistencia, setAsistencia] = useState({});
   const [diasPorBimestre, setDiasPorBimestre] = useState({});
-  const [fechasColumnas, setFechasColumnas] = useState({}); // NUEVO: Estado para fechas
   const [bimestreAbierto, setBimestreAbierto] = useState({});
   const [bimestreActivo, setBimestreActivo] = useState(1); // NUEVO: Estado global
   const [asignaciones, setAsignaciones] = useState({});
@@ -279,32 +278,12 @@ function Grupo({ user }) {
     const siguienteEstadoIndex = (estados.indexOf(estadoActual) + 1) % estados.length;
     const nuevoEstado = estados[siguienteEstadoIndex];
 
-    // Obtener fecha de la columna o usar hoy
-    const keyColumna = `b${bimestre}-d${diaIndex}`;
-    let fechaParaGuardar = fechasColumnas[keyColumna];
-
-    // Si no hay fecha en la columna, usar HOY y actualizar la columna
-    if (!fechaParaGuardar) {
-      const hoy = new Date();
-      const y = hoy.getFullYear();
-      const m = String(hoy.getMonth() + 1).padStart(2, '0');
-      const d = String(hoy.getDate()).padStart(2, '0');
-      fechaParaGuardar = `${y}-${m}-${d}`; // ISO para el input
-
-      // Actualizar estado de la columna visualmente
-      setFechasColumnas(prev => ({ ...prev, [keyColumna]: fechaParaGuardar }));
-    }
-
-    // Formatear para guardar en el registro (dd/mm/yyyy)
-    const [y, m, d] = fechaParaGuardar.split('-');
-    const fechaFormateada = `${d}/${m}/${y}`;
-
     setAsistencia(prev => {
       const newState = { ...prev };
       if (nuevoEstado) {
         newState[key] = {
           estado: nuevoEstado,
-          fecha: fechaFormateada
+          fecha: new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
         };
       } else {
         delete newState[key];
@@ -315,26 +294,6 @@ function Grupo({ user }) {
 
   const agregarDias = (bimestre) => {
     setDiasPorBimestre(prev => ({ ...prev, [bimestre]: (prev[bimestre] || DIAS_INICIALES) + 5 }));
-  };
-
-  // 🌟 FUNCIÓN NUEVA: Manejar cambio de fecha en el encabezado
-  const handleFechaChange = (bimestre, diaIndex, nuevaFecha) => {
-    const keyColumna = `b${bimestre}-d${diaIndex}`;
-    setFechasColumnas(prev => ({ ...prev, [keyColumna]: nuevaFecha }));
-
-    // Actualizar la fecha de TODOS los registros existentes en esa columna
-    setAsistencia(prev => {
-      const newState = { ...prev };
-      Object.keys(newState).forEach(key => {
-        if (key.includes(`-b${bimestre}-d${diaIndex}`)) {
-          // Convertir YYYY-MM-DD a dd/mm/yyyy para guardar
-          const [y, m, d] = nuevaFecha.split('-');
-          const fechaFormateada = `${d}/${m}/${y}`;
-          newState[key] = { ...newState[key], fecha: fechaFormateada };
-        }
-      });
-      return newState;
-    });
   };
 
   const guardarAsistencia = async () => {
@@ -777,42 +736,6 @@ function Grupo({ user }) {
               </div>
 
               <div className="asistencia-grid">
-                {/* 🌟 HEADER DE FECHAS (Global) */}
-                <div className="asistencia-row header-fechas-row" style={{ display: 'flex', padding: '15px', borderBottom: '2px solid #b9972b', marginBottom: '10px' }}>
-                  <div className="alumno-nombre" style={{ visibility: 'hidden' }}>Espacio Nombre</div>
-                  <div className="asistencia-totales" style={{ visibility: 'hidden' }}>Espacio Totales</div>
-                  <div className="cuadritos-grid">
-                    {Array.from({ length: diasPorBimestre[bimestreActivo] || DIAS_INICIALES }).map((_, diaIndex) => {
-                      const keyColumna = `b${bimestreActivo}-d${diaIndex + 1}`;
-                      const fechaColumna = fechasColumnas[keyColumna] || '';
-                      // Formato corto para mostrar: dd/mm
-                      let fechaDisplay = diaIndex + 1;
-                      if (fechaColumna) {
-                        const [y, m, d] = fechaColumna.split('-');
-                        fechaDisplay = `${d}/${m}`;
-                      }
-
-                      return (
-                        <div key={diaIndex} className="fecha-header-cell">
-                          <input
-                            type="date"
-                            className="fecha-input-hidden"
-                            value={fechaColumna}
-                            onChange={(e) => handleFechaChange(bimestreActivo, diaIndex + 1, e.target.value)}
-                            id={`fecha-input-${bimestreActivo}-${diaIndex}`}
-                          />
-                          <label htmlFor={`fecha-input-${bimestreActivo}-${diaIndex}`} className="fecha-label" title={fechaColumna || "Sin fecha"}>
-                            {fechaDisplay}
-                          </label>
-                        </div>
-                      );
-                    })}
-                    <button className="btn-agregar-dias" onClick={() => agregarDias(bimestreActivo)} title="Agregar 5 días">
-                      +
-                    </button>
-                  </div>
-                </div>
-
                 <div className="asistencia-body">
                   {grupoSeleccionado?.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map(alumno => {
                     const totales = calcularTotales(alumno._id, bimestreActivo, asistencia, diasPorBimestre);
@@ -827,30 +750,26 @@ function Grupo({ user }) {
                               <span className="total-justificados" style={{ color: '#ffc107' }}>⚠️ {totales.justificados}</span>
                             </div>
                           </div>
-                        </div>
 
-                        <div className="cuadritos-grid">
-                          {/* 🌟 FILA DE FECHAS */}
-                          {Array.from({ length: diasPorBimestre[bimestreActivo] || DIAS_INICIALES }).map((_, diaIndex) => {
-                            const key = `${alumno._id}-b${bimestreActivo}-d${diaIndex + 1}`;
-                            const registro = asistencia[key];
-                            const keyColumna = `b${bimestreActivo}-d${diaIndex + 1}`;
-                            const fechaColumna = fechasColumnas[keyColumna] || '';
-
-                            return (
-                              <div
-                                key={diaIndex}
-                                className={`cuadrito estado-${registro?.estado.toLowerCase() || ''}`}
-                                title={fechaColumna ? `Fecha: ${fechaColumna}` : `Día ${diaIndex + 1}`}
-                                onClick={() => handleMarcarAsistencia(alumno._id, bimestreActivo, diaIndex + 1)}
-                              >
-                                {registro?.estado || ''}
-                              </div>
-                            );
-                          })}
-                          <button className="btn-agregar-dias" onClick={() => agregarDias(bimestreActivo)}>
-                            +5
-                          </button>
+                          <div className="cuadritos-grid">
+                            {Array.from({ length: diasPorBimestre[bimestreActivo] || DIAS_INICIALES }).map((_, diaIndex) => {
+                              const key = `${alumno._id}-b${bimestreActivo}-d${diaIndex + 1}`;
+                              const registro = asistencia[key];
+                              return (
+                                <div
+                                  key={diaIndex}
+                                  className={`cuadrito estado-${registro?.estado.toLowerCase() || ''}`}
+                                  title={registro?.fecha ? `Fecha: ${registro.fecha}` : `Día ${diaIndex + 1}`}
+                                  onClick={() => handleMarcarAsistencia(alumno._id, bimestreActivo, diaIndex + 1)}
+                                >
+                                  {registro?.estado || ''}
+                                </div>
+                              );
+                            })}
+                            <button className="btn-agregar-dias" onClick={() => agregarDias(bimestreActivo)}>
+                              +5
+                            </button>
+                          </div>
                         </div>
                       </React.Fragment>
                     )
@@ -893,7 +812,7 @@ function Grupo({ user }) {
           </div>
         )}
       </div>
-    </div >
+    </div>
   );
 }
 
