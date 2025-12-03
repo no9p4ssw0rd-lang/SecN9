@@ -29,6 +29,7 @@ function Grupo({ user }) {
   const [asistencia, setAsistencia] = useState({});
   const [diasPorBimestre, setDiasPorBimestre] = useState({});
   const [bimestreAbierto, setBimestreAbierto] = useState({});
+  const [bimestreActivo, setBimestreActivo] = useState(1); // NUEVO: Estado global
   const [asignaciones, setAsignaciones] = useState({});
   const [editingAlumno, setEditingAlumno] = useState(null);
   const [notificacion, setNotificacion] = useState({ visible: false, mensaje: '', tipo: '' });
@@ -272,7 +273,7 @@ function Grupo({ user }) {
 
   const handleMarcarAsistencia = (alumnoId, bimestre, diaIndex) => {
     const key = `${alumnoId}-b${bimestre}-d${diaIndex}`;
-    const estados = ['', 'P', 'F'];
+    const estados = ['', 'P', 'F', 'J']; // NUEVO: Incluye 'J'
     const estadoActual = asistencia[key]?.estado || '';
     const siguienteEstadoIndex = (estados.indexOf(estadoActual) + 1) % estados.length;
     const nuevoEstado = estados[siguienteEstadoIndex];
@@ -320,13 +321,16 @@ function Grupo({ user }) {
   const calcularTotales = useMemo(() => (alumnoId, bimestre, asistenciaData, diasData) => {
     let presentes = 0;
     let faltas = 0;
+    let justificados = 0; // NUEVO
     const diasDelBimestre = (diasData || diasPorBimestre)[bimestre] || DIAS_INICIALES;
     for (let i = 1; i <= diasDelBimestre; i++) {
       const key = `${alumnoId}-b${bimestre}-d${i}`;
-      if ((asistenciaData || asistencia)[key]?.estado === 'P') presentes++;
-      if ((asistenciaData || asistencia)[key]?.estado === 'F') faltas++;
+      const registro = (asistenciaData || asistencia)[key];
+      if (registro?.estado === 'P') presentes++;
+      if (registro?.estado === 'F') faltas++;
+      if (registro?.estado === 'J') justificados++; // NUEVO
     }
-    return { presentes, faltas };
+    return { presentes, faltas, justificados };
   }, [asistencia, diasPorBimestre]);
 
   const handleAddAsignatura = (profesorId, nuevaAsignatura) => {
@@ -717,52 +721,55 @@ function Grupo({ user }) {
           <div className="modal-backdrop">
             <div className="modal-content asistencia-modal-content">
               <h2>Toma de Asistencia: {grupoSeleccionado?.nombre} - {asignaturaActual}</h2>
+
+              {/* NUEVO: Selector de Trimestre Global */}
+              <div className="bimestre-selector" style={{ justifyContent: 'center', borderBottom: 'none', marginBottom: '1rem' }}>
+                {[1, 2, 3].map(bim => (
+                  <button
+                    key={bim}
+                    className={`btn ${bimestreActivo === bim ? 'btn-primary' : 'btn-cancel'}`}
+                    onClick={() => setBimestreActivo(bim)}
+                  >
+                    Trimestre {bim}
+                  </button>
+                ))}
+              </div>
+
               <div className="asistencia-grid">
                 <div className="asistencia-body">
                   {grupoSeleccionado?.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map(alumno => {
-                    const bimestreActual = bimestreAbierto[alumno._id];
-                    const totales = bimestreActual ? calcularTotales(alumno._id, bimestreActual, asistencia, diasPorBimestre) : null;
+                    const totales = calcularTotales(alumno._id, bimestreActivo, asistencia, diasPorBimestre);
                     return (
                       <React.Fragment key={alumno._id}>
-                        <div className="asistencia-row">
-                          <div className="alumno-nombre">{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</div>
-                          <div className="bimestres-container">
-                            {Array.from({ length: NUM_BIMESTRES }).map((_, bimIndex) => (
-                              <div key={bimIndex} className={`bimestre-header-btn ${bimestreAbierto[alumno._id] === (bimIndex + 1) ? 'activo' : ''}`} onClick={() => handleToggleBimestre(alumno._id, bimIndex + 1)}>
-                                Trim. {bimIndex + 1}
-                              </div>
-                            ))}
+                        <div className="asistencia-row" style={{ display: 'block', padding: '15px' }}> {/* Cambio de estilo para acomodar mejor */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                            <div className="alumno-nombre">{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</div>
+                            <div className="asistencia-totales" style={{ fontSize: '0.9rem' }}>
+                              <span className="total-presentes" style={{ marginRight: '10px' }}>✅ {totales.presentes}</span>
+                              <span className="total-faltas" style={{ marginRight: '10px' }}>❌ {totales.faltas}</span>
+                              <span className="total-justificados" style={{ color: '#ffc107' }}>⚠️ {totales.justificados}</span>
+                            </div>
                           </div>
-                        </div>
-                        <div className={`bimestre-desplegable ${bimestreAbierto[alumno._id] ? 'desplegado' : ''}`}>
-                          {bimestreActual && (
-                            <>
-                              <div className="asistencia-totales">
-                                <span>Totales del Trimestre:</span>
-                                <span className="total-presentes">✅ Asistencias: {totales.presentes}</span>
-                                <span className="total-faltas">❌ Faltas: {totales.faltas}</span>
-                              </div>
-                              <div className="cuadritos-grid">
-                                {Array.from({ length: diasPorBimestre[bimestreActual] || DIAS_INICIALES }).map((_, diaIndex) => {
-                                  const key = `${alumno._id}-b${bimestreActual}-d${diaIndex + 1}`;
-                                  const registro = asistencia[key];
-                                  return (
-                                    <div
-                                      key={diaIndex}
-                                      className={`cuadrito estado-${registro?.estado.toLowerCase() || ''}`}
-                                      title={registro?.fecha ? `Fecha: ${registro.fecha}` : `Día ${diaIndex + 1}`}
-                                      onClick={() => handleMarcarAsistencia(alumno._id, bimestreActual, diaIndex + 1)}
-                                    >
-                                      {registro?.estado || ''}
-                                    </div>
-                                  );
-                                })}
-                                <button className="btn-agregar-dias" onClick={() => agregarDias(bimestreActual)}>
-                                  +5
-                                </button>
-                              </div>
-                            </>
-                          )}
+
+                          <div className="cuadritos-grid">
+                            {Array.from({ length: diasPorBimestre[bimestreActivo] || DIAS_INICIALES }).map((_, diaIndex) => {
+                              const key = `${alumno._id}-b${bimestreActivo}-d${diaIndex + 1}`;
+                              const registro = asistencia[key];
+                              return (
+                                <div
+                                  key={diaIndex}
+                                  className={`cuadrito estado-${registro?.estado.toLowerCase() || ''}`}
+                                  title={registro?.fecha ? `Fecha: ${registro.fecha}` : `Día ${diaIndex + 1}`}
+                                  onClick={() => handleMarcarAsistencia(alumno._id, bimestreActivo, diaIndex + 1)}
+                                >
+                                  {registro?.estado || ''}
+                                </div>
+                              );
+                            })}
+                            <button className="btn-agregar-dias" onClick={() => agregarDias(bimestreActivo)}>
+                              +5
+                            </button>
+                          </div>
                         </div>
                       </React.Fragment>
                     )
