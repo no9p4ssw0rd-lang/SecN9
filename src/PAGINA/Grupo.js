@@ -326,9 +326,9 @@ function Grupo({ user }) {
     for (let i = 1; i <= diasDelBimestre; i++) {
       const key = `${alumnoId}-b${bimestre}-d${i}`;
       const registro = (asistenciaData || asistencia)[key];
-      if (registro?.estado === 'P') presentes++;
+      if (registro?.estado === 'P' || registro?.estado === 'J') presentes++; // P y J cuentan como asistencia
       if (registro?.estado === 'F') faltas++;
-      if (registro?.estado === 'J') justificados++; // NUEVO
+      if (registro?.estado === 'J') justificados++;
     }
     return { presentes, faltas, justificados };
   }, [asistencia, diasPorBimestre]);
