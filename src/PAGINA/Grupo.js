@@ -873,8 +873,8 @@ function Grupo({ user }) {
                   <div
                     className="custom-tooltip"
                     style={{
-                      top: hoveredCell.y - 15, // Más arriba (gap is fine now due to click-outside)
-                      left: hoveredCell.x - 20, // Más a la izquierda
+                      top: hoveredCell.y - 50, // Mucho más arriba (encima del nombre)
+                      left: hoveredCell.x - 20,
                       transform: 'translateX(-50%) translateY(-100%)',
                       zIndex: 3000
                     }}
