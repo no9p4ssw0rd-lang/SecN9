@@ -28,6 +28,7 @@ function Grupo({ user }) {
   const [alumnoInput, setAlumnoInput] = useState({ nombre: '', apellidoPaterno: '', apellidoMaterno: '' });
   const [asistencia, setAsistencia] = useState({});
   const [diasPorBimestre, setDiasPorBimestre] = useState({});
+  const [fechasColumnas, setFechasColumnas] = useState({}); // NUEVO: Estado para fechas
   const [bimestreAbierto, setBimestreAbierto] = useState({});
   const [bimestreActivo, setBimestreActivo] = useState(1); // NUEVO: Estado global
   const [asignaciones, setAsignaciones] = useState({});
