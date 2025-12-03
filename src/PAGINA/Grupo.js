@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
-import { FaTrash, FaPencilAlt } from 'react-icons/fa';
+import { FaTrash, FaPencilAlt, FaPlus, FaTimes } from 'react-icons/fa';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import './Grupo.css';
@@ -36,6 +36,7 @@ function Grupo({ user }) {
   const [alumnoParaEliminar, setAlumnoParaEliminar] = useState(null);
   const [archivoXLS, setArchivoXLS] = useState(null);
   const [nombreGrupoImport, setNombreGrupoImport] = useState('');
+  const [asignaturaActual, setAsignaturaActual] = useState(null); // Para saber qué asignatura se está evaluando
 
   // --- LÓGICA DE CARGA DE DATOS ---
   useEffect(() => {
@@ -71,7 +72,7 @@ function Grupo({ user }) {
     setNotificacion({ visible: true, mensaje, tipo });
   };
 
-  const abrirModal = async (tipo, data = null) => {
+  const abrirModal = async (tipo, data = null, asignatura = null) => {
     if (tipo === 'gestionarGrupo') {
       setGrupoSeleccionado(data);
       if (data) { setNuevoGrupo(structuredClone(data)); }
@@ -80,21 +81,31 @@ function Grupo({ user }) {
     } else if (tipo === 'asignar') {
       setGrupoSeleccionado(data);
       const asignacionesIniciales = {};
+      // Agrupar asignaturas por profesor
       data.profesoresAsignados.forEach(asig => {
         if (asig.profesor?._id) {
-          asignacionesIniciales[asig.profesor._id] = asig.asignatura;
+          if (!asignacionesIniciales[asig.profesor._id]) {
+            asignacionesIniciales[asig.profesor._id] = [];
+          }
+          asignacionesIniciales[asig.profesor._id].push(asig.asignatura);
         }
       });
       setAsignaciones(asignacionesIniciales);
       setModalVisible('asignar');
     } else if (tipo === 'asistencia') {
       setGrupoSeleccionado(data);
-      const miAsignacion = data.profesoresAsignados.find(asig => asig.profesor?._id === user.id);
-      if (!miAsignacion) {
-        return mostrarNotificacion("No tienes una asignatura asignada para este grupo.", "error");
+      setAsignaturaActual(asignatura); // Guardar la asignatura actual
+
+      // Validar que el usuario tenga asignada esa materia (doble check)
+      const misAsignaciones = data.profesoresAsignados.filter(asig => asig.profesor?._id === user.id);
+      const tieneAsignatura = misAsignaciones.some(a => a.asignatura === asignatura);
+
+      if (!tieneAsignatura) {
+        return mostrarNotificacion("No tienes asignada esta materia para este grupo.", "error");
       }
+
       try {
-        const res = await axios.get(`${API_URL}/asistencia?grupoId=${data._id}&asignatura=${miAsignacion.asignatura}`, getAxiosConfig());
+        const res = await axios.get(`${API_URL}/asistencia?grupoId=${data._id}&asignatura=${asignatura}`, getAxiosConfig());
         const asistenciaData = res.data;
         if (asistenciaData) {
           setAsistencia(asistenciaData.registros || {});
@@ -116,11 +127,11 @@ function Grupo({ user }) {
         mostrarNotificacion("Error al cargar datos de asistencia.", "error");
       }
     } else if (tipo === 'editarAlumno') {
-        setEditingAlumno(data);
-        setAlumnoInput({ nombre: data.nombre, apellidoPaterno: data.apellidoPaterno, apellidoMaterno: data.apellidoMaterno || '' });
-        setModalVisible('editarAlumno');
+      setEditingAlumno(data);
+      setAlumnoInput({ nombre: data.nombre, apellidoPaterno: data.apellidoPaterno, apellidoMaterno: data.apellidoMaterno || '' });
+      setModalVisible('editarAlumno');
     } else if (tipo === 'importar') {
-        setModalVisible('importar');
+      setModalVisible('importar');
     }
   };
 
@@ -134,6 +145,7 @@ function Grupo({ user }) {
     setEditingAlumno(null);
     setArchivoXLS(null);
     setNombreGrupoImport('');
+    setAsignaturaActual(null);
   };
 
   // --- FUNCIONES CRUD Y LÓGICA ---
@@ -165,7 +177,7 @@ function Grupo({ user }) {
   };
 
   const confirmarEliminacionAlumno = () => {
-    if(!alumnoParaEliminar) return;
+    if (!alumnoParaEliminar) return;
     setNuevoGrupo(prev => ({ ...prev, alumnos: prev.alumnos.filter(a => a._id !== alumnoParaEliminar._id) }));
     setAlumnoParaEliminar(null);
     mostrarNotificacion("Alumno eliminado de la lista.");
@@ -194,13 +206,26 @@ function Grupo({ user }) {
       mostrarNotificacion(error.response?.data?.error || 'Error al actualizar.', 'error');
     }
   };
-  
+
   const handleGuardarAsignacion = async () => {
     if (!grupoSeleccionado) return;
-    const asignacionesParaEnviar = Object.keys(asignaciones).map(profesorId => ({
-      profesor: profesorId,
-      asignatura: asignaciones[profesorId]
-    }));
+
+    // Aplanar el objeto de asignaciones a un array de objetos { profesor, asignatura }
+    const asignacionesParaEnviar = [];
+    Object.keys(asignaciones).forEach(profesorId => {
+      const materias = asignaciones[profesorId];
+      if (Array.isArray(materias)) {
+        materias.forEach(materia => {
+          if (materia) {
+            asignacionesParaEnviar.push({
+              profesor: profesorId,
+              asignatura: materia
+            });
+          }
+        });
+      }
+    });
+
     try {
       const response = await axios.put(`${API_URL}/grupos/${grupoSeleccionado._id}/asignar-profesores`, { asignaciones: asignacionesParaEnviar }, getAxiosConfig());
       setGrupos(grupos.map(g => g._id === grupoSeleccionado._id ? response.data : g));
@@ -228,14 +253,14 @@ function Grupo({ user }) {
 
   const exportarXLS = (grupo) => {
     if (!grupo || !grupo.alumnos || grupo.alumnos.length === 0) return mostrarNotificacion("Este grupo no tiene alumnos para exportar.", "error");
-    
+
     const alumnosOrdenados = [...grupo.alumnos].sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno));
 
-    const datosParaExportar = alumnosOrdenados.map((a, i) => ({ 
-        'N°': i + 1, 
-        'Nombre(s)': a.nombre, 
-        'Apellido Paterno': a.apellidoPaterno, 
-        'Apellido Materno': a.apellidoMaterno || ''
+    const datosParaExportar = alumnosOrdenados.map((a, i) => ({
+      'N°': i + 1,
+      'Nombre(s)': a.nombre,
+      'Apellido Paterno': a.apellidoPaterno,
+      'Apellido Materno': a.apellidoMaterno || ''
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(datosParaExportar);
@@ -269,26 +294,25 @@ function Grupo({ user }) {
   const agregarDias = (bimestre) => {
     setDiasPorBimestre(prev => ({ ...prev, [bimestre]: (prev[bimestre] || DIAS_INICIALES) + 5 }));
   };
-  
+
   const guardarAsistencia = async () => {
-    if (!grupoSeleccionado) return;
-    const miAsignacion = grupoSeleccionado.profesoresAsignados.find(asig => asig.profesor?._id === user.id);
-    if (!miAsignacion) return mostrarNotificacion("Error: no se encontró tu asignatura para este grupo.", 'error');
+    if (!grupoSeleccionado || !asignaturaActual) return;
+
     try {
-      await axios.put(`${API_URL}/asistencia`, { 
+      await axios.put(`${API_URL}/asistencia`, {
         grupoId: grupoSeleccionado._id,
-        asignatura: miAsignacion.asignatura,
-        registros: asistencia, 
-        diasPorBimestre 
+        asignatura: asignaturaActual,
+        registros: asistencia,
+        diasPorBimestre
       }, getAxiosConfig());
-      
+
       mostrarNotificacion("Asistencia guardada exitosamente.");
       cerrarModal();
     } catch (error) {
       mostrarNotificacion("Error al guardar la asistencia.", 'error');
     }
   };
-  
+
   const handleToggleBimestre = (alumnoId, bimIndex) => {
     setBimestreAbierto(prev => ({ [alumnoId]: prev[alumnoId] === bimIndex ? null : bimIndex }));
   };
@@ -298,198 +322,203 @@ function Grupo({ user }) {
     let faltas = 0;
     const diasDelBimestre = (diasData || diasPorBimestre)[bimestre] || DIAS_INICIALES;
     for (let i = 1; i <= diasDelBimestre; i++) {
-        const key = `${alumnoId}-b${bimestre}-d${i}`;
-        if ((asistenciaData || asistencia)[key]?.estado === 'P') presentes++;
-        if ((asistenciaData || asistencia)[key]?.estado === 'F') faltas++;
+      const key = `${alumnoId}-b${bimestre}-d${i}`;
+      if ((asistenciaData || asistencia)[key]?.estado === 'P') presentes++;
+      if ((asistenciaData || asistencia)[key]?.estado === 'F') faltas++;
     }
     return { presentes, faltas };
   }, [asistencia, diasPorBimestre]);
 
-  const handleAsignacionChange = (profesorId, asignatura) => {
+  const handleAddAsignatura = (profesorId, nuevaAsignatura) => {
+    if (!nuevaAsignatura) return;
     setAsignaciones(prev => {
-      const nuevas = { ...prev };
-      if (asignatura) { nuevas[profesorId] = asignatura; }
-      else { delete nuevas[profesorId]; }
-      return nuevas;
+      const current = prev[profesorId] || [];
+      if (current.includes(nuevaAsignatura)) return prev; // Evitar duplicados
+      return { ...prev, [profesorId]: [...current, nuevaAsignatura] };
     });
   };
-  
+
+  const handleRemoveAsignatura = (profesorId, asignaturaToRemove) => {
+    setAsignaciones(prev => {
+      const current = prev[profesorId] || [];
+      const updated = current.filter(a => a !== asignaturaToRemove);
+      if (updated.length === 0) {
+        const newState = { ...prev };
+        delete newState[profesorId];
+        return newState;
+      }
+      return { ...prev, [profesorId]: updated };
+    });
+  };
+
   const handleFileChange = (e) => {
     setArchivoXLS(e.target.files[0]);
   };
 
   const handleImportarAlumnos = () => {
     if (!nombreGrupoImport.trim()) {
-        return mostrarNotificacion('Por favor, ingresa un nombre para el grupo.', 'error');
+      return mostrarNotificacion('Por favor, ingresa un nombre para el grupo.', 'error');
     }
     if (!archivoXLS) {
-        return mostrarNotificacion('Por favor, selecciona un archivo XLS.', 'error');
+      return mostrarNotificacion('Por favor, selecciona un archivo XLS.', 'error');
     }
     const reader = new FileReader();
     reader.onload = async (e) => {
-        try {
-            const data = e.target.result;
-            const workbook = XLSX.read(data, { type: 'binary' });
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-            const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-            
-            const alumnosImportados = json.slice(1).map(row => ({
-                nombre: row[1] || '',
-                apellidoPaterno: row[2] || '',
-                apellidoMaterno: row[3] || '',
-            })).filter(a => a.nombre && a.apellidoPaterno);
+      try {
+        const data = e.target.result;
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-            if (alumnosImportados.length === 0) {
-                return mostrarNotificacion('No se encontraron alumnos válidos en el archivo. Asegúrate de que las columnas son: N°, Nombre(s), Apellido Paterno, Apellido Materno.', 'error');
-            }
-            const grupoParaGuardar = { nombre: nombreGrupoImport, alumnos: alumnosImportados };
-            
-            const response = await axios.post(`${API_URL}/grupos`, grupoParaGuardar, getAxiosConfig());
-            setGrupos(prev => [...prev, response.data]);
-            mostrarNotificacion(`Grupo "${nombreGrupoImport}" importado con ${alumnosImportados.length} alumnos.`);
-            cerrarModal();
-        } catch (error) {
-            console.error("Error al importar archivo:", error);
-            mostrarNotificacion('Hubo un error al procesar el archivo.', 'error');
+        const alumnosImportados = json.slice(1).map(row => ({
+          nombre: row[1] || '',
+          apellidoPaterno: row[2] || '',
+          apellidoMaterno: row[3] || '',
+        })).filter(a => a.nombre && a.apellidoPaterno);
+
+        if (alumnosImportados.length === 0) {
+          return mostrarNotificacion('No se encontraron alumnos válidos en el archivo. Asegúrate de que las columnas son: N°, Nombre(s), Apellido Paterno, Apellido Materno.', 'error');
         }
+        const grupoParaGuardar = { nombre: nombreGrupoImport, alumnos: alumnosImportados };
+
+        const response = await axios.post(`${API_URL}/grupos`, grupoParaGuardar, getAxiosConfig());
+        setGrupos(prev => [...prev, response.data]);
+        mostrarNotificacion(`Grupo "${nombreGrupoImport}" importado con ${alumnosImportados.length} alumnos.`);
+        cerrarModal();
+      } catch (error) {
+        console.error("Error al importar archivo:", error);
+        mostrarNotificacion('Hubo un error al procesar el archivo.', 'error');
+      }
     };
     reader.readAsBinaryString(archivoXLS);
   };
-    
+
   // ... código anterior (imports, estados, etc.)
 
-const generarPDF = async (grupo) => {
-    const miAsignacion = grupo.profesoresAsignados.find(
-      asig => asig.profesor?._id === user.id
-    );
-
-    if (!miAsignacion) {
-        console.error("No se encontró una asignación para el usuario actual en este grupo.", { userId: user.id, asignaciones: grupo.profesoresAsignados });
-        return mostrarNotificacion(
-            "No tienes una asignatura asignada para este grupo. No se puede generar el PDF.", 
-            "error"
-        );
+  const generarPDF = async (grupo, asignatura) => {
+    if (!asignatura) {
+      return mostrarNotificacion("No se especificó la asignatura para el PDF.", "error");
     }
 
     try {
-        const res = await axios.get(`${API_URL}/asistencia?grupoId=${grupo._id}&asignatura=${miAsignacion.asignatura}`, getAxiosConfig());
-        const asistenciaData = res.data?.registros || {};
-        const diasData = res.data?.diasPorBimestre || {};
+      const res = await axios.get(`${API_URL}/asistencia?grupoId=${grupo._id}&asignatura=${asignatura}`, getAxiosConfig());
+      const asistenciaData = res.data?.registros || {};
+      const diasData = res.data?.diasPorBimestre || {};
 
-        const doc = new jsPDF();
-        
-        // --- INICIO DE CAMBIOS PARA LOGO Y ESTILOS ---
-        const img = new Image();
-        img.src = logoImage;
-        await img.decode(); // Esperar a que la imagen se cargue
-        
-        const logoWidth = 25; // Ancho del logo en mm
-        const logoHeight = (img.height * logoWidth) / img.width; // Calcular altura para mantener proporción
-        const margin = 14;
-        const pageWidth = doc.internal.pageSize.width;
+      const doc = new jsPDF();
 
-        doc.addImage(logoImage, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+      // --- INICIO DE CAMBIOS PARA LOGO Y ESTILOS ---
+      const img = new Image();
+      img.src = logoImage;
+      await img.decode(); // Esperar a que la imagen se cargue
 
-        doc.setFontSize(12);
+      const logoWidth = 25; // Ancho del logo en mm
+      const logoHeight = (img.height * logoWidth) / img.width; // Calcular altura para mantener proporción
+      const margin = 14;
+      const pageWidth = doc.internal.pageSize.width;
 
-        // 1. Inicializar la posición Y
-        let yPos = margin + 5; 
+      doc.addImage(logoImage, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
 
-        // 2. Primera línea: Escuela
-        doc.text('Escuela Secundaria No. 9 "Amado Nervo"', margin, yPos);
+      doc.setFontSize(12);
 
-        // 3. Aumentar la posición Y para la siguiente línea (menos que 10 para evitar superposición con el logo)
-        yPos += 7; 
+      // 1. Inicializar la posición Y
+      let yPos = margin + 5;
 
-        // 4. Segunda línea: Reporte de Asistencia (ahora está en 'yPos')
-        doc.text(`Reporte de Asistencia - Grupo: ${grupo.nombre}`, margin, yPos);
+      // 2. Primera línea: Escuela
+      doc.text('Escuela Secundaria No. 9 "Amado Nervo"', margin, yPos);
 
-        // 5. Aumentar la posición Y para la siguiente línea
-        yPos += 7; // Usar 7mm entre líneas para mantenerlas juntas
+      // 3. Aumentar la posición Y para la siguiente línea (menos que 10 para evitar superposición con el logo)
+      yPos += 7;
 
-        // 6. Tercera línea: Asignatura (ahora está en 'yPos')
-        doc.text(`Asignatura: ${miAsignacion.asignatura}`, margin, yPos);
-        
-        // 7. AUMENTO CLAVE: Añadir un espacio adicional (e.g., 7mm) para que el texto NO toque la tabla.
-        yPos += 7; // Espacio entre el texto de "Asignatura" y el inicio de la tabla
-        
-        const head = [
-            [
-                { content: 'Nombre Completo', rowSpan: 2, styles: { fillColor: [212, 175, 55] } },
-                { content: 'Trimestre 1', colSpan: 2, styles: { fillColor: [212, 175, 55] } },
-                { content: 'Trimestre 2', colSpan: 2, styles: { fillColor: [212, 175, 55] } },
-                { content: 'Trimestre 3', colSpan: 2, styles: { fillColor: [212, 175, 55] } },
-            ],
-            [
-                { content: 'Asist.', styles: { fillColor: [40, 167, 69] } }, // Verde
-                { content: 'Faltas', styles: { fillColor: [220, 53, 69] } }, // Rojo
-                { content: 'Asist.', styles: { fillColor: [40, 167, 69] } },
-                { content: 'Faltas', styles: { fillColor: [220, 53, 69] } },
-                { content: 'Asist.', styles: { fillColor: [40, 167, 69] } },
-                { content: 'Faltas', styles: { fillColor: [220, 53, 69] } },
-            ]
+      // 4. Segunda línea: Reporte de Asistencia (ahora está en 'yPos')
+      doc.text(`Reporte de Asistencia - Grupo: ${grupo.nombre}`, margin, yPos);
+
+      // 5. Aumentar la posición Y para la siguiente línea
+      yPos += 7; // Usar 7mm entre líneas para mantenerlas juntas
+
+      // 6. Tercera línea: Asignatura (ahora está en 'yPos')
+      doc.text(`Asignatura: ${asignatura}`, margin, yPos);
+
+      // 7. AUMENTO CLAVE: Añadir un espacio adicional (e.g., 7mm) para que el texto NO toque la tabla.
+      yPos += 7; // Espacio entre el texto de "Asignatura" y el inicio de la tabla
+
+      const head = [
+        [
+          { content: 'Nombre Completo', rowSpan: 2, styles: { fillColor: [212, 175, 55] } },
+          { content: 'Trimestre 1', colSpan: 2, styles: { fillColor: [212, 175, 55] } },
+          { content: 'Trimestre 2', colSpan: 2, styles: { fillColor: [212, 175, 55] } },
+          { content: 'Trimestre 3', colSpan: 2, styles: { fillColor: [212, 175, 55] } },
+        ],
+        [
+          { content: 'Asist.', styles: { fillColor: [40, 167, 69] } }, // Verde
+          { content: 'Faltas', styles: { fillColor: [220, 53, 69] } }, // Rojo
+          { content: 'Asist.', styles: { fillColor: [40, 167, 69] } },
+          { content: 'Faltas', styles: { fillColor: [220, 53, 69] } },
+          { content: 'Asist.', styles: { fillColor: [40, 167, 69] } },
+          { content: 'Faltas', styles: { fillColor: [220, 53, 69] } },
+        ]
+      ];
+
+      const tableRows = [];
+      const alumnosOrdenados = [...grupo.alumnos].sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno));
+
+      alumnosOrdenados.forEach(alumno => {
+        const nombreCompleto = `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`;
+        const totalesBim1 = calcularTotales(alumno._id, 1, asistenciaData, diasData);
+        const totalesBim2 = calcularTotales(alumno._id, 2, asistenciaData, diasData);
+        const totalesBim3 = calcularTotales(alumno._id, 3, asistenciaData, diasData);
+
+        const alumnoData = [
+          nombreCompleto,
+          totalesBim1.presentes,
+          totalesBim1.faltas,
+          totalesBim2.presentes,
+          totalesBim2.faltas,
+          totalesBim3.presentes,
+          totalesBim3.faltas,
         ];
-        
-        const tableRows = [];
-        const alumnosOrdenados = [...grupo.alumnos].sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno));
+        tableRows.push(alumnoData);
+      });
 
-        alumnosOrdenados.forEach(alumno => {
-            const nombreCompleto = `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`;
-            const totalesBim1 = calcularTotales(alumno._id, 1, asistenciaData, diasData);
-            const totalesBim2 = calcularTotales(alumno._id, 2, asistenciaData, diasData);
-            const totalesBim3 = calcularTotales(alumno._id, 3, asistenciaData, diasData);
+      autoTable(doc, {
+        head: head,
+        body: tableRows,
+        // *** CORRECCIÓN CLAVE: Usar la posición Y calculada con el espacio extra. ***
+        startY: yPos,
+        headStyles: {
+          halign: 'center',
+          valign: 'middle',
+          textColor: [255, 255, 255], // Letra blanca para que resalte
+          lineWidth: 0.1,
+          lineColor: [255, 255, 255]
+        },
+        styles: {
+          halign: 'center'
+        },
+        columnStyles: {
+          0: { halign: 'left' }
+        }
+      });
+      // --- FIN DE CAMBIOS ---
 
-            const alumnoData = [
-                nombreCompleto,
-                totalesBim1.presentes,
-                totalesBim1.faltas,
-                totalesBim2.presentes,
-                totalesBim2.faltas,
-                totalesBim3.presentes,
-                totalesBim3.faltas,
-            ];
-            tableRows.push(alumnoData);
-        });
-
-        autoTable(doc, {
-            head: head,
-            body: tableRows,
-            // *** CORRECCIÓN CLAVE: Usar la posición Y calculada con el espacio extra. ***
-            startY: yPos,
-            headStyles: { 
-                halign: 'center',
-                valign: 'middle',
-                textColor: [255, 255, 255], // Letra blanca para que resalte
-                lineWidth: 0.1,
-                lineColor: [255, 255, 255]
-            },
-            styles: { 
-                halign: 'center' 
-            },
-            columnStyles: { 
-                0: { halign: 'left' } 
-            }
-        });
-        // --- FIN DE CAMBIOS ---
-
-        doc.save(`Asistencia_${grupo.nombre.replace(/ /g, '_')}.pdf`);
-        mostrarNotificacion("PDF generado exitosamente.");
+      doc.save(`Asistencia_${grupo.nombre.replace(/ /g, '_')}_${asignatura.replace(/ /g, '_')}.pdf`);
+      mostrarNotificacion("PDF generado exitosamente.");
 
     } catch (error) {
-        console.error("Error al generar PDF:", error);
-        mostrarNotificacion("Error al cargar los datos de asistencia para el PDF.", "error");
+      console.error("Error al generar PDF:", error);
+      mostrarNotificacion("Error al cargar los datos de asistencia para el PDF.", "error");
     }
-};
+  };
 
-// ... resto del componente (handleAsignacionChange, handleFileChange, etc.)
+  // ... resto del componente (handleAsignacionChange, handleFileChange, etc.)
 
   if (loading) return (
     <div className="grupo-componente" style={{ paddingTop: '100px', textAlign: 'center' }}>
-        <p className="loading-message">Cargando...</p>
+      <p className="loading-message">Cargando...</p>
     </div>
   );
-  
+
   if (error) return <div className="grupo-componente"><p className="error-message">{error}</p></div>;
   if (!user) return <div className="grupo-componente"><p className="error-message">No se puede mostrar la información.</p></div>;
 
@@ -498,7 +527,7 @@ const generarPDF = async (grupo) => {
       {notificacion.visible && <Notificacion mensaje={notificacion.mensaje} tipo={notificacion.tipo} onClose={() => setNotificacion({ visible: false })} />}
       <ConfirmacionModal isOpen={!!grupoParaEliminar} onClose={() => setGrupoParaEliminar(null)} onConfirm={confirmarEliminacionGrupo} mensaje={`¿Seguro que deseas eliminar el grupo "${grupoParaEliminar?.nombre}"?`} />
       <ConfirmacionModal isOpen={!!alumnoParaEliminar} onClose={() => setAlumnoParaEliminar(null)} onConfirm={confirmarEliminacionAlumno} mensaje={`¿Seguro que deseas eliminar al alumno "${alumnoParaEliminar?.nombre}" de la lista?`} />
-      
+
       <div className="page-container">
         {user.role === 'admin' && (
           <div className="admin-view">
@@ -527,13 +556,13 @@ const generarPDF = async (grupo) => {
                     <td data-label="Asignaciones">
                       {grupo.profesoresAsignados && grupo.profesoresAsignados.length > 0
                         ? <ul className="asignacion-lista">
-                            {grupo.profesoresAsignados.map((asig, index) => (
-                              <li key={index}>
-                                {asig.profesor?.nombre || 'Profesor Eliminado'}
-                                <span className="asignatura-text"> - {asig.asignatura}</span>
-                              </li>
-                            ))}
-                          </ul>
+                          {grupo.profesoresAsignados.map((asig, index) => (
+                            <li key={index}>
+                              {asig.profesor?.nombre || 'Profesor Eliminado'}
+                              <span className="asignatura-text"> - {asig.asignatura}</span>
+                            </li>
+                          ))}
+                        </ul>
                         : 'Sin asignar'}
                     </td>
                     <td className="acciones-cell">
@@ -561,20 +590,22 @@ const generarPDF = async (grupo) => {
                 </tr>
               </thead>
               <tbody>
-                {grupos.map(grupo => {
-                  const miAsignacion = grupo.profesoresAsignados.find(asig => asig.profesor?._id === user.id);
-                  const miAsignatura = miAsignacion ? miAsignacion.asignatura : 'N/A';
-                  return (
-                    <tr key={grupo._id}>
+                {grupos.flatMap(grupo => {
+                  // Filtrar todas las asignaciones para este profesor
+                  const misAsignaciones = grupo.profesoresAsignados.filter(asig => asig.profesor?._id === user.id);
+
+                  // Retornar una fila por cada asignatura asignada
+                  return misAsignaciones.map((asignacion, index) => (
+                    <tr key={`${grupo._id}-${index}`}>
                       <td data-label="Grupo">{grupo.nombre}</td>
                       <td data-label="Alumnos">{grupo.alumnos?.length || 0}</td>
-                      <td data-label="Mi Asignatura">{miAsignatura}</td>
+                      <td data-label="Mi Asignatura">{asignacion.asignatura}</td>
                       <td className="acciones-cell">
-                        <button className="btn btn-primary" onClick={() => abrirModal('asistencia', grupo)}>Tomar Asistencia</button>
-                        <button className="btn btn-export" onClick={() => generarPDF(grupo)}>PDF</button>
+                        <button className="btn btn-primary" onClick={() => abrirModal('asistencia', grupo, asignacion.asignatura)}>Tomar Asistencia</button>
+                        <button className="btn btn-export" onClick={() => generarPDF(grupo, asignacion.asignatura)}>PDF</button>
                       </td>
                     </tr>
-                  );
+                  ));
                 })}
               </tbody>
             </table>
@@ -584,7 +615,7 @@ const generarPDF = async (grupo) => {
           <div className="modal-backdrop">
             <div className="modal-content">
               <h2>{grupoSeleccionado ? 'Editar Grupo' : 'Crear Nuevo Grupo'}</h2>
-              <input type="text" placeholder="Nombre del Grupo (Ej: 1A)" value={nuevoGrupo.nombre} onChange={(e) => setNuevoGrupo({ ...nuevoGrupo, nombre: e.target.value })}/>
+              <input type="text" placeholder="Nombre del Grupo (Ej: 1A)" value={nuevoGrupo.nombre} onChange={(e) => setNuevoGrupo({ ...nuevoGrupo, nombre: e.target.value })} />
               <div className="alumno-form">
                 <h4 className="form-subtitle">Agregar Nuevo Alumno</h4>
                 <div className="alumno-form-inputs">
@@ -619,24 +650,24 @@ const generarPDF = async (grupo) => {
             </div>
           </div>
         )}
-        
+
         {modalVisible === 'editarAlumno' && (
-            <div className="modal-backdrop">
-                <div className="modal-content modal-sm">
-                    <h2>Editar Alumno</h2>
-                    <div className="alumno-form">
-                        <div className="alumno-form-inputs">
-                            <input type="text" placeholder="Nombre(s)" value={alumnoInput.nombre} onChange={(e) => setAlumnoInput({ ...alumnoInput, nombre: e.target.value })} />
-                            <input type="text" placeholder="Apellido Paterno" value={alumnoInput.apellidoPaterno} onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoPaterno: e.target.value })} />
-                            <input type="text" placeholder="Apellido Materno" value={alumnoInput.apellidoMaterno} onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoMaterno: e.target.value })} />
-                        </div>
-                    </div>
-                    <div className="modal-actions">
-                        <button className="btn btn-primary" onClick={handleUpdateAlumno}>Actualizar</button>
-                        <button className="btn btn-cancel" onClick={() => { setModalVisible('gestionarGrupo'); setEditingAlumno(null); }}>Volver</button>
-                    </div>
+          <div className="modal-backdrop">
+            <div className="modal-content modal-sm">
+              <h2>Editar Alumno</h2>
+              <div className="alumno-form">
+                <div className="alumno-form-inputs">
+                  <input type="text" placeholder="Nombre(s)" value={alumnoInput.nombre} onChange={(e) => setAlumnoInput({ ...alumnoInput, nombre: e.target.value })} />
+                  <input type="text" placeholder="Apellido Paterno" value={alumnoInput.apellidoPaterno} onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoPaterno: e.target.value })} />
+                  <input type="text" placeholder="Apellido Materno" value={alumnoInput.apellidoMaterno} onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoMaterno: e.target.value })} />
                 </div>
+              </div>
+              <div className="modal-actions">
+                <button className="btn btn-primary" onClick={handleUpdateAlumno}>Actualizar</button>
+                <button className="btn btn-cancel" onClick={() => { setModalVisible('gestionarGrupo'); setEditingAlumno(null); }}>Volver</button>
+              </div>
             </div>
+          </div>
         )}
 
         {modalVisible === 'asignar' && (
@@ -645,17 +676,33 @@ const generarPDF = async (grupo) => {
               <h2>Asignar Profesores a "{grupoSeleccionado?.nombre}"</h2>
               <div className="profesores-list">
                 {profesores.map(profesor => (
-                  <div key={profesor._id} className="asignacion-row">
-                    <div className="profesor-checkbox">
-                      <input type="checkbox" id={`prof-${profesor._id}`} checked={!!asignaciones[profesor._id]} onChange={(e) => { if (!e.target.checked) { handleAsignacionChange(profesor._id, null); } else { handleAsignacionChange(profesor._id, asignaciones[profesor._id] || profesor.asignaturas[0] || ''); }}}/>
-                      <label htmlFor={`prof-${profesor._id}`}>{profesor.nombre}</label>
+                  <div key={profesor._id} className="asignacion-row-container">
+                    <div className="profesor-header">
+                      <strong>{profesor.nombre}</strong>
                     </div>
-                    {!!asignaciones[profesor._id] && (
-                      <select className="asignatura-select" value={asignaciones[profesor._id] || ''} onChange={(e) => handleAsignacionChange(profesor._id, e.target.value)}>
-                        <option value="" disabled>Selecciona...</option>
-                        {profesor.asignaturas.map(asig => (<option key={asig} value={asig}>{asig}</option>))}
+                    <div className="asignaturas-asignadas">
+                      {asignaciones[profesor._id] && asignaciones[profesor._id].map((asig, idx) => (
+                        <div key={idx} className="asignatura-tag">
+                          {asig}
+                          <button className="btn-remove-tag" onClick={() => handleRemoveAsignatura(profesor._id, asig)}><FaTimes /></button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="add-asignatura-container">
+                      <select
+                        className="asignatura-select-add"
+                        onChange={(e) => {
+                          handleAddAsignatura(profesor._id, e.target.value);
+                          e.target.value = ""; // Reset select
+                        }}
+                        defaultValue=""
+                      >
+                        <option value="" disabled>Agregar asignatura...</option>
+                        {profesor.asignaturas.map(asig => (
+                          <option key={asig} value={asig}>{asig}</option>
+                        ))}
                       </select>
-                    )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -669,7 +716,7 @@ const generarPDF = async (grupo) => {
         {modalVisible === 'asistencia' && (
           <div className="modal-backdrop">
             <div className="modal-content asistencia-modal-content">
-              <h2>Toma de Asistencia: {grupoSeleccionado?.nombre}</h2>
+              <h2>Toma de Asistencia: {grupoSeleccionado?.nombre} - {asignaturaActual}</h2>
               <div className="asistencia-grid">
                 <div className="asistencia-body">
                   {grupoSeleccionado?.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map(alumno => {
@@ -734,8 +781,8 @@ const generarPDF = async (grupo) => {
             <div className="modal-content modal-sm">
               <h2>Importar Grupo desde XLS</h2>
               <div className="import-form">
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   placeholder="Nombre del nuevo grupo"
                   value={nombreGrupoImport}
                   onChange={(e) => setNombreGrupoImport(e.target.value)}
@@ -743,9 +790,9 @@ const generarPDF = async (grupo) => {
                 <label htmlFor="xls-file-input" className="file-input-label">
                   {archivoXLS ? archivoXLS.name : 'Seleccionar archivo .xls o .xlsx'}
                 </label>
-                <input 
+                <input
                   id="xls-file-input"
-                  type="file" 
+                  type="file"
                   accept=".xlsx, .xls"
                   onChange={handleFileChange}
                 />
