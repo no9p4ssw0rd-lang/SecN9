@@ -798,28 +798,72 @@ body {
   .grupo-componente .main-header {
     flex-direction: column;
 
-/* Estilo para el input de fecha mini encima de los cuadritos */
-.fecha-input-mini {
-  width: 100%;
-  max-width: 40px; /* Ajustar al ancho del cuadrito */
-  font-size: 8px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: #E9E9E9;
-  text-align: center;
-  margin-bottom: 2px;
-  cursor: pointer;
-}
 
-.fecha-input-mini::-webkit-calendar-picker-indicator {
-  display: none; /* Ocultar el icono del calendario para ahorrar espacio */
-}
+    /* Estilo para el input de fecha mini encima de los cuadritos */
+    .fecha-input-mini {
+      display: none;
+      /* Ocultar el viejo input si queda alguno */
+    }
 
-.fecha-input-mini:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
-}
+    /* NUEVOS ESTILOS PARA HEADER DE FECHAS */
+    .header-fechas-row .cuadritos-grid {
+      align-items: flex-end;
+      /* Alinear abajo */
+    }
+
+    .fecha-header-cell {
+      width: 24px;
+      /* Mismo ancho que .cuadrito */
+      height: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    .fecha-input-hidden {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    .fecha-label {
+      width: 100%;
+      height: 100%;
+      background-color: var(--dark-color-alt);
+      border: 1px solid #555;
+      border-radius: 4px;
+      color: #aaa;
+      font-size: 0.65rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .fecha-header-cell:hover .fecha-label {
+      border-color: var(--main-color);
+      color: var(--main-color);
+      background-color: rgba(185, 151, 43, 0.1);
+    }
+
+    /* Ajuste para que el header se alinee con las filas de abajo */
+    .header-fechas-row .alumno-nombre,
+    .header-fechas-row .asistencia-totales {
+      /* Mantener el espacio pero invisible */
+      opacity: 0;
+      pointer-events: none;
+    }
+
   }
 
   .grupo-componente .main-header h1 {
