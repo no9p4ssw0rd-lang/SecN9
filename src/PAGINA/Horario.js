@@ -230,7 +230,7 @@ function Horario({ user }) {
 
       // Calcular posición para mostrar la siguiente sección
       const alturaYaImpresa = (pageHeight - startY) + (pageHeight - 20) * (pageCount - 2);
-      doc.addImage(imgData, "PNG", 10, -alturaYaImpresa + 10 + startY, pdfWidth, pdfHeight);
+      doc.addImage(imgData, "PNG", 10, -alturaYaImpresa + 10, pdfWidth, pdfHeight);
 
       heightLeft -= (pageHeight - 20);
     }
