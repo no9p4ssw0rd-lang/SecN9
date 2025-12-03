@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
 import { FaTrash, FaPencilAlt, FaPlus, FaTimes, FaCheck } from 'react-icons/fa';
@@ -317,9 +317,17 @@ function Grupo({ user }) {
   // 🌟 ESTADO Y HANDLERS PARA TOOLTIP DE FECHA EDITABLE
   const [hoveredCell, setHoveredCell] = useState(null); // { alumnoId, bimestre, diaIndex, x, y }
   const [editingDate, setEditingDate] = useState(null); // { alumnoId, bimestre, diaIndex, fecha }
+  const closeTooltipTimer = useRef(null);
 
   const handleMouseEnterCell = (e, alumnoId, bimestre, diaIndex, fecha) => {
     if (!fecha) return; // Solo mostrar si hay fecha (celda con asistencia)
+
+    // Cancelar cualquier cierre pendiente si volvemos a entrar a una celda (o la misma)
+    if (closeTooltipTimer.current) {
+      clearTimeout(closeTooltipTimer.current);
+      closeTooltipTimer.current = null;
+    }
+
     const rect = e.target.getBoundingClientRect();
     setHoveredCell({
       alumnoId,
@@ -327,16 +335,32 @@ function Grupo({ user }) {
       diaIndex,
       fecha,
       x: rect.left + window.scrollX + (rect.width / 2),
-      y: rect.top + window.scrollY - 10 // Un poco arriba
+      y: rect.top + window.scrollY // Justo en el borde superior de la celda
     });
   };
 
   const handleMouseLeaveCell = () => {
-    // Pequeño delay para permitir mover el mouse al tooltip si fuera necesario (aunque aquí es hover sobre celda)
-    // Si estamos editando, NO ocultamos el tooltip
-    if (!editingDate) {
-      setHoveredCell(null);
+    // Pequeño delay para permitir mover el mouse al tooltip
+    closeTooltipTimer.current = setTimeout(() => {
+      if (!editingDate) {
+        setHoveredCell(null);
+      }
+    }, 300); // 300ms de gracia
+  };
+
+  const handleMouseEnterTooltip = () => {
+    if (closeTooltipTimer.current) {
+      clearTimeout(closeTooltipTimer.current);
+      closeTooltipTimer.current = null;
     }
+  };
+
+  const handleMouseLeaveTooltip = () => {
+    closeTooltipTimer.current = setTimeout(() => {
+      if (!editingDate) {
+        setHoveredCell(null);
+      }
+    }, 300);
   };
 
   const handleEditDateClick = () => {
@@ -850,11 +874,12 @@ function Grupo({ user }) {
                   <div
                     className="custom-tooltip"
                     style={{
-                      top: hoveredCell.y - 40, // Posición ajustada arriba
+                      top: hoveredCell.y - 35, // Posición ajustada más cerca (antes -40)
                       left: hoveredCell.x,
                       transform: 'translateX(-50%)'
                     }}
-                    onMouseEnter={() => { }} // Mantener abierto si el mouse entra al tooltip (opcional, por ahora simple)
+                    onMouseEnter={handleMouseEnterTooltip}
+                    onMouseLeave={handleMouseLeaveTooltip}
                   >
                     {editingDate && editingDate.alumnoId === hoveredCell.alumnoId && editingDate.diaIndex === hoveredCell.diaIndex ? (
                       <div className="edit-date-container">
