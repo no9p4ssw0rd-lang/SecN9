@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "./Home.css";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 // La URL de tu backend ahora se leerá desde las variables de entorno
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 
 function Home({ user }) {
- 
+
 
   const [profesores, setProfesores] = useState([]);
   const [selectedProfesor, setSelectedProfesor] = useState(null);
@@ -17,11 +17,11 @@ function Home({ user }) {
   const [alerta, setAlerta] = useState(null); // Nuevo estado para alertas
 
   const materias = [
-    "ESPAÑOL I","ESPAÑOL II","ESPAÑOL III","INGLES I","INGLES II", "INGLES III","ARTES I","ARTES II","ARTES III",
-    "MATEMATICAS I","MATEMATICAS II","MATEMATICAS III","BIOLOGIA I","FISICA II","QUIMICA III","GEOGRAFIA I",
-    ,"HISTORIA I", "HISTORIA II","HISTORIA III", "FORMACION CIVICA Y ETICA I" , "FORMACION CIVICA Y ETICA II", "FORMACION CIVICA Y ETICA III",
-    "TECNOLOGIA I","TECNOLOGIA II", " TECNOLOGIA III","EDUCACION FISICA I","EDUCACION FISICA II","EDUCACION FISICA III","INTEGRACION CURRICULAR I", "INTEGRACION CURRICULAR II", "INTEGRACION CURRICULAR III"
-    ,"TUTORIA I","TUTORIA II","TUTORIA III",
+    "ESPAÑOL I", "ESPAÑOL II", "ESPAÑOL III", "INGLES I", "INGLES II", "INGLES III", "ARTES I", "ARTES II", "ARTES III",
+    "MATEMATICAS I", "MATEMATICAS II", "MATEMATICAS III", "BIOLOGIA I", "FISICA II", "QUIMICA III", "GEOGRAFIA I",
+    , "HISTORIA I", "HISTORIA II", "HISTORIA III", "FORMACION CIVICA Y ETICA I", "FORMACION CIVICA Y ETICA II", "FORMACION CIVICA Y ETICA III",
+    "TECNOLOGIA I", "TECNOLOGIA II", " TECNOLOGIA III", "EDUCACION FISICA I", "EDUCACION FISICA II", "EDUCACION FISICA III", "INTEGRACION CURRICULAR I", "INTEGRACION CURRICULAR II", "INTEGRACION CURRICULAR III"
+    , "TUTORIA I", "TUTORIA II", "TUTORIA III",
   ];
 
   const mostrarAlerta = (mensaje, tipo = "success") => {
@@ -41,7 +41,7 @@ function Home({ user }) {
   const fetchProfesores = () => {
     const token = localStorage.getItem("token");
     if (!token) return console.error("⚠️ No hay token guardado.");
-    
+
     // Uso de API_URL para compatibilidad con Render/Vercel
     axios.get(`${API_URL}/auth/profesores`, { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => setProfesores(res.data || []))
@@ -71,7 +71,7 @@ function Home({ user }) {
       return foto; // Si es una URL completa (Cloudinary), la usa
     }
     // Si no hay foto, devuelve una imagen genérica. No usamos la ruta localhost antigua.
-    return `https://placehold.co/150x150/EFEFEF/AAAAAA&text=Sin+Foto`; 
+    return `https://placehold.co/150x150/EFEFEF/AAAAAA&text=Sin+Foto`;
   };
 
   const handleAsignaturasChange = (materia) => {
@@ -117,7 +117,7 @@ function Home({ user }) {
   const cancelDelete = () => setConfirmDeleteVisible(false); // Función explícita como en el código viejo
 
   const primerNombre = user?.nombre ? user.nombre.split(" ")[0] : "";
-  
+
   return (
     // Se elimina el div envolvente para usar el React Fragment (el nuevo código lo usaba)
     <>
@@ -142,7 +142,30 @@ function Home({ user }) {
           </div>
         </div>
       </section>
-      
+
+      {/* SECCIÓN DE NOVEDADES (NUEVO) */}
+      <section className="novedades section" id="novedades">
+        <h2 className="section-title">Últimas Actualizaciones</h2>
+        <div className="novedades-container container">
+          <div className="novedad-item">
+            <span className="novedad-icon">✨</span>
+            <p>Mejora en interfaz de alumnos</p>
+          </div>
+          <div className="novedad-item">
+            <span className="novedad-icon">⚠️</span>
+            <p>Nueva función de asistencia justificada</p>
+          </div>
+          <div className="novedad-item">
+            <span className="novedad-icon">🚀</span>
+            <p>Optimización de carga de página</p>
+          </div>
+          <div className="novedad-item">
+            <span className="novedad-icon">🎨</span>
+            <p>Diseño visual renovado</p>
+          </div>
+        </div>
+      </section>
+
       {/* --- */}
 
       {/* PROFESORES ADMIN (Estructura del código viejo) */}
@@ -181,13 +204,13 @@ function Home({ user }) {
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={closeModal}>&times;</button>
-            <img 
-              src={profileImgUrl(selectedProfesor.foto)} 
-              alt={selectedProfesor.nombre} 
-              className="profile-img-modal" 
+            <img
+              src={profileImgUrl(selectedProfesor.foto)}
+              alt={selectedProfesor.nombre}
+              className="profile-img-modal"
             />
             <h3>{selectedProfesor.nombre}</h3>
-            
+
             <div className="profesor-details">
               <p><b>Correo:</b> {selectedProfesor.email}</p>
               <p><b>Celular:</b> {selectedProfesor.celular}</p>
@@ -200,17 +223,17 @@ function Home({ user }) {
             <div className="checkbox-group">
               {materias.map((m) => (
                 <label key={m} className="checkbox-label">
-                  <input 
-                    type="checkbox" 
-                    value={m} 
-                    checked={asignaturasSelect.includes(m)} 
-                    onChange={() => handleAsignaturasChange(m)} 
+                  <input
+                    type="checkbox"
+                    value={m}
+                    checked={asignaturasSelect.includes(m)}
+                    onChange={() => handleAsignaturasChange(m)}
                   />
                   <span>{m}</span>
                 </label>
               ))}
             </div>
-            
+
             <div className="modal-actions">
               {/* Botones como en el código viejo, con la función explícita para eliminar */}
               <button className="btn-guardar" onClick={guardarAsignaturas}>Guardar asignaturas</button>
@@ -227,7 +250,7 @@ function Home({ user }) {
                 </div>
               </div>
             )}
-            
+
             {/* Fecha de registro con la clase del código viejo (si aplica) */}
             <p className="fecha-registro"><b>Fecha de registro:</b> {selectedProfesor.fechaRegistro ? new Date(selectedProfesor.fechaRegistro).toLocaleDateString() : 'N/A'}</p>
           </div>
