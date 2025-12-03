@@ -293,47 +293,80 @@
   opacity: 1;
 }
 
-.grupo-componente .profesor-checkbox {
-  display: flex;
-  align-items: center;
-  padding: 0.5rem;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-}
-.grupo-componente .profesor-checkbox label {
-  color: var(--text-color);
-}
-.grupo-componente .profesor-checkbox:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-.grupo-componente .profesor-checkbox input {
-  margin-right: 10px;
-}
-.grupo-componente .asignacion-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 5px;
+.grupo-componente .asignacion-row-container {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
   border-bottom: 1px solid #444;
 }
-.grupo-componente .asignatura-select {
-  padding: 8px;
+.grupo-componente .asignacion-row-container:last-child {
+  border-bottom: none;
+}
+
+.grupo-componente .profesor-header {
+  color: #fff;
+  font-size: 1.1rem;
+  margin-bottom: 0.8rem;
+}
+
+.grupo-componente .asignaturas-asignadas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 0.8rem;
+}
+
+.grupo-componente .asignatura-tag {
+  background-color: var(--main-color);
+  color: var(--dark-color);
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.grupo-componente .btn-remove-tag {
+  background: none;
+  border: none;
+  color: var(--dark-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 0.8rem;
+  opacity: 0.7;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.grupo-componente .btn-remove-tag:hover {
+  opacity: 1;
+  transform: scale(1.2);
+  color: #d32f2f; /* Rojo oscuro para indicar eliminación */
+}
+
+.grupo-componente .add-asignatura-container {
+  margin-top: 0.5rem;
+}
+
+.grupo-componente .asignatura-select-add {
+  width: 100%;
+  padding: 10px;
   background-color: var(--dark-color);
   color: var(--text-color);
   border: 1px solid #555;
   border-radius: 6px;
-  margin-left: 1rem;
+  cursor: pointer;
+  transition: border-color 0.3s;
 }
-.grupo-componente .asignacion-tag {
-  display: inline-block;
-  background-color: var(--dark-color-alt);
-  color: var(--main-color);
-  padding: 4px 8px;
-  border-radius: 4px;
-  margin: 2px;
-  font-size: 0.8rem;
-  font-weight: 500;
+
+.grupo-componente .asignatura-select-add:hover,
+.grupo-componente .asignatura-select-add:focus {
+  border-color: var(--main-color);
+  outline: none;
 }
 
 /* ======================================= */
