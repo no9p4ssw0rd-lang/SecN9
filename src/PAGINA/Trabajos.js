@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import logoImage from './Logoescuela.png';
 
 // La URL de la API se obtiene de las variables de entorno para Vercel/Render
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -1252,6 +1254,111 @@ const PanelCalificaciones = ({
         setNumTareas(prev => ({ ...prev, [criterioNombre]: (prev[criterioNombre] || 10) + 5 }));
     };
 
+    // 🌟 FUNCIÓN NUEVA: Generar Reporte PDF de la Asignatura
+    const generateSubjectReport = async () => {
+        const doc = new jsPDF();
+
+        // --- LOGO Y ENCABEZADO (Reutilizado de Calificaciones.js) ---
+        const img = new Image();
+        img.src = logoImage;
+        await img.decode();
+        const logoWidth = 25, margin = 14;
+        const logoHeight = (img.height * logoWidth) / img.width;
+        const pageWidth = doc.internal.pageSize.width;
+        doc.addImage(logoImage, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+
+        doc.setFontSize(12);
+        let yPos = margin + 5;
+        doc.text('Escuela Secundaria No. 9 "Amado Nervo"', margin, yPos);
+        yPos += 7;
+        doc.setFont(undefined, 'bold');
+        doc.text('Reporte de Calificaciones por Asignatura', margin, yPos);
+        doc.setFont(undefined, 'normal');
+        yPos += 7;
+        doc.text(`Grupo: ${grupo.nombre}`, margin, yPos);
+        yPos += 7;
+        doc.text(`Asignatura: ${asignatura}`, margin, yPos);
+        yPos += 5;
+
+        // --- TABLA ---
+        const tableHeaders = [['Nombre del Alumno', 'T1', 'T2', 'T3', 'Promedio Final']];
+
+        const tableBody = grupo.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map(alumno => {
+            const nombreCompleto = `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`;
+
+            // Calcular promedios
+            const p1 = calcularPromedioBimestre(alumno._id, 1);
+            const p2 = calcularPromedioBimestre(alumno._id, 2);
+            const p3 = calcularPromedioBimestre(alumno._id, 3);
+
+            // Calcular final
+            let suma = 0;
+            let count = 0;
+            if (p1 > 0) { suma += parseFloat(p1); count++; }
+            if (p2 > 0) { suma += parseFloat(p2); count++; }
+            if (p3 > 0) { suma += parseFloat(p3); count++; }
+            const final = count > 0 ? Math.round(suma / count) : 0;
+
+            return [
+                nombreCompleto,
+                p1 > 0 ? p1 : '-',
+                p2 > 0 ? p2 : '-',
+                p3 > 0 ? p3 : '-',
+                final > 0 ? final : '-'
+            ];
+        });
+
+        autoTable(doc, {
+            startY: yPos,
+            head: tableHeaders,
+            body: tableBody,
+            theme: 'grid',
+            styles: { halign: 'center', cellPadding: 2.5 },
+            headStyles: { fillColor: [185, 151, 43], textColor: 255 }, // Color dorado del tema
+            columnStyles: { 0: { halign: 'left' } }
+        });
+
+        doc.save(`Reporte_${grupo.nombre}_${asignatura.replace(/\s/g, '_')}.pdf`);
+    };
+
+    // 🌟 FUNCIÓN NUEVA: Limpiar Calificaciones
+    const handleLimpiarCalificaciones = async () => {
+        if (!window.confirm(`¿Estás SEGURO de que quieres eliminar TODAS las calificaciones de ${asignatura} para el grupo ${grupo.nombre}? Esta acción NO se puede deshacer.`)) {
+            return;
+        }
+
+        const token = localStorage.getItem('token');
+        const config = { headers: { Authorization: `Bearer ${token}` } };
+
+        try {
+            // Enviamos una petición para limpiar (o enviamos un objeto vacío/reset)
+            // Como no tenemos un endpoint específico de "limpiar", podemos guardar un objeto de calificaciones vacío
+            // PERO, para ser más seguros y efectivos, deberíamos tener un endpoint o lógica de borrado.
+            // Dado que el usuario mencionó que "retoma la misma calificación", significa que están en la BD.
+            // La mejor forma con la API actual es enviar calificaciones vacías para todos los alumnos/bimestres.
+
+            const calificacionesVacias = {}; // Objeto vacío
+            // Opcional: Resetear criterios también si se desea, pero el usuario dijo "calificaciones".
+            // Mantendremos los criterios, solo borramos notas.
+
+            const payload = {
+                grupoId: grupo._id,
+                asignatura,
+                criterios: criteriosPorBimestre, // Mantenemos criterios
+                calificaciones: calificacionesVacias // Borramos calificaciones
+            };
+
+            await axios.post(`${API_URL}/calificaciones`, payload, config);
+
+            setCalificaciones({}); // Limpiar estado local
+            setNotificacion({ mensaje: 'Se han eliminado todas las calificaciones de esta asignatura.', tipo: 'exito' });
+
+        } catch (error) {
+            console.error("Error al limpiar calificaciones:", error);
+            setNotificacion({ mensaje: 'Error al intentar limpiar las calificaciones.', tipo: 'error' });
+        }
+    };
+
 
     if (isLoadingData) return <div className="trabajos-container grupo-componente" style={{ textAlign: 'center', paddingTop: '10rem' }}><p style={{ color: '#E9E9E9' }}>Cargando datos del grupo...</p></div>;
 
@@ -1274,6 +1381,14 @@ const PanelCalificaciones = ({
                 <header className="main-header" style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 20px' }}>
                     <h2>Calificaciones: {grupo.nombre} - {asignatura}</h2>
                     <div>
+                        {/* Botones de Acción Nuevos */}
+                        <button className="btn" onClick={generateSubjectReport} style={{ marginRight: '10px', backgroundColor: '#2980b9', borderColor: '#2980b9', color: 'white' }}>
+                            📄 Reporte PDF
+                        </button>
+                        <button className="btn" onClick={handleLimpiarCalificaciones} style={{ marginRight: '10px', backgroundColor: '#c0392b', borderColor: '#c0392b', color: 'white' }}>
+                            🗑️ Limpiar Calificaciones
+                        </button>
+
                         {/* Botón para abrir el modal de criterios */}
                         <button className="btn" onClick={() => setModalCriterios(true)}>Criterios</button>
                         <button className="btn btn-cancel" onClick={onVolver} style={{ marginLeft: '10px' }}>Cerrar</button>
