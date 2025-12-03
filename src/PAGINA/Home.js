@@ -132,9 +132,9 @@ function Home({ user }) {
           <div className="home-data">
             <h1 className="home-title">
               {user ? (
-                <>Bienvenido <span className="user-name-gold">{primerNombre}</span> al sistema de <span>asistencia</span></>
+                <>Bienvenido <span className="user-name-gold">{primerNombre}</span> al sistema de <span>gestión académica</span></>
               ) : (
-                <>Bienvenido al sistema de <span>asistencia</span></>
+                <>Bienvenido al sistema de <span>gestión académica</span></>
               )}
             </h1>
             {/* Texto adicional del código viejo, si el usuario no está logueado */}
@@ -143,28 +143,30 @@ function Home({ user }) {
         </div>
       </section>
 
-      {/* SECCIÓN DE NOVEDADES (NUEVO) */}
-      <section className="novedades section" id="novedades">
-        <h2 className="section-title">Últimas Actualizaciones</h2>
-        <div className="novedades-container container">
-          <div className="novedad-item">
-            <span className="novedad-icon">✨</span>
-            <p>Mejora en interfaz de alumnos</p>
+      {/* SECCIÓN DE NOVEDADES (NUEVO) - Solo visible si NO hay usuario logueado */}
+      {!user && (
+        <section className="novedades section" id="novedades">
+          <h2 className="section-title">Últimas Actualizaciones</h2>
+          <div className="novedades-container container">
+            <div className="novedad-item">
+              <span className="novedad-icon">✨</span>
+              <p>Mejora en interfaz de alumnos</p>
+            </div>
+            <div className="novedad-item">
+              <span className="novedad-icon">⚠️</span>
+              <p>Nueva función de asistencia justificada</p>
+            </div>
+            <div className="novedad-item">
+              <span className="novedad-icon">🚀</span>
+              <p>Optimización de carga de página</p>
+            </div>
+            <div className="novedad-item">
+              <span className="novedad-icon">🎨</span>
+              <p>Diseño visual renovado</p>
+            </div>
           </div>
-          <div className="novedad-item">
-            <span className="novedad-icon">⚠️</span>
-            <p>Nueva función de asistencia justificada</p>
-          </div>
-          <div className="novedad-item">
-            <span className="novedad-icon">🚀</span>
-            <p>Optimización de carga de página</p>
-          </div>
-          <div className="novedad-item">
-            <span className="novedad-icon">🎨</span>
-            <p>Diseño visual renovado</p>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* --- */}
 
