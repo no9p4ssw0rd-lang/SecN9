@@ -777,6 +777,42 @@ function Grupo({ user }) {
               </div>
 
               <div className="asistencia-grid">
+                {/* 🌟 HEADER DE FECHAS (Global) */}
+                <div className="asistencia-row header-fechas-row" style={{ display: 'flex', padding: '15px', borderBottom: '2px solid #b9972b', marginBottom: '10px' }}>
+                  <div className="alumno-nombre" style={{ visibility: 'hidden' }}>Espacio Nombre</div>
+                  <div className="asistencia-totales" style={{ visibility: 'hidden' }}>Espacio Totales</div>
+                  <div className="cuadritos-grid">
+                    {Array.from({ length: diasPorBimestre[bimestreActivo] || DIAS_INICIALES }).map((_, diaIndex) => {
+                      const keyColumna = `b${bimestreActivo}-d${diaIndex + 1}`;
+                      const fechaColumna = fechasColumnas[keyColumna] || '';
+                      // Formato corto para mostrar: dd/mm
+                      let fechaDisplay = diaIndex + 1;
+                      if (fechaColumna) {
+                        const [y, m, d] = fechaColumna.split('-');
+                        fechaDisplay = `${d}/${m}`;
+                      }
+
+                      return (
+                        <div key={diaIndex} className="fecha-header-cell">
+                          <input
+                            type="date"
+                            className="fecha-input-hidden"
+                            value={fechaColumna}
+                            onChange={(e) => handleFechaChange(bimestreActivo, diaIndex + 1, e.target.value)}
+                            id={`fecha-input-${bimestreActivo}-${diaIndex}`}
+                          />
+                          <label htmlFor={`fecha-input-${bimestreActivo}-${diaIndex}`} className="fecha-label" title={fechaColumna || "Sin fecha"}>
+                            {fechaDisplay}
+                          </label>
+                        </div>
+                      );
+                    })}
+                    <button className="btn-agregar-dias" onClick={() => agregarDias(bimestreActivo)} title="Agregar 5 días">
+                      +
+                    </button>
+                  </div>
+                </div>
+
                 <div className="asistencia-body">
                   {grupoSeleccionado?.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map(alumno => {
                     const totales = calcularTotales(alumno._id, bimestreActivo, asistencia, diasPorBimestre);
@@ -802,22 +838,13 @@ function Grupo({ user }) {
                             const fechaColumna = fechasColumnas[keyColumna] || '';
 
                             return (
-                              <div key={diaIndex} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                {/* Input de fecha arriba de cada cuadrito */}
-                                <input
-                                  type="date"
-                                  className="fecha-input-mini"
-                                  value={fechaColumna}
-                                  onChange={(e) => handleFechaChange(bimestreActivo, diaIndex + 1, e.target.value)}
-                                  title="Establecer fecha para este día"
-                                />
-                                <div
-                                  className={`cuadrito estado-${registro?.estado.toLowerCase() || ''}`}
-                                  title={registro?.fecha ? `Fecha: ${registro.fecha}` : `Día ${diaIndex + 1}`}
-                                  onClick={() => handleMarcarAsistencia(alumno._id, bimestreActivo, diaIndex + 1)}
-                                >
-                                  {registro?.estado || ''}
-                                </div>
+                              <div
+                                key={diaIndex}
+                                className={`cuadrito estado-${registro?.estado.toLowerCase() || ''}`}
+                                title={fechaColumna ? `Fecha: ${fechaColumna}` : `Día ${diaIndex + 1}`}
+                                onClick={() => handleMarcarAsistencia(alumno._id, bimestreActivo, diaIndex + 1)}
+                              >
+                                {registro?.estado || ''}
                               </div>
                             );
                           })}
