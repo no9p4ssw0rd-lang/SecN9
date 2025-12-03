@@ -3,6 +3,7 @@ import axios from 'axios';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import logoImage from './Logoescuela.png';
+import ConfirmacionModal from './ConfirmacionModal';
 
 // La URL de la API se obtiene de las variables de entorno para Vercel/Render
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -1037,6 +1038,8 @@ const PanelCalificaciones = ({
     const [numTareas, setNumTareas] = useState({});
     // 🌟 ESTADO AGREGADO: Para controlar cuándo y qué tarea necesita un nombre.
     const [tareaPorNombrar, setTareaPorNombrar] = useState(null);
+    // 🌟 ESTADO AGREGADO: Para el modal de confirmación personalizado
+    const [confirmModal, setConfirmModal] = useState({ isOpen: false, message: '', onConfirm: null });
 
     // Obtener los criterios del bimestre activo
     const criteriosActivos = criteriosPorBimestre[bimestreActivo] || [];
@@ -1322,41 +1325,36 @@ const PanelCalificaciones = ({
     };
 
     // 🌟 FUNCIÓN NUEVA: Limpiar Calificaciones
-    const handleLimpiarCalificaciones = async () => {
-        if (!window.confirm(`¿Estás SEGURO de que quieres eliminar TODAS las calificaciones de ${asignatura} para el grupo ${grupo.nombre}? Esta acción NO se puede deshacer.`)) {
-            return;
-        }
+    const handleLimpiarCalificaciones = () => {
+        setConfirmModal({
+            isOpen: true,
+            message: `¿Estás SEGURO de que quieres eliminar TODAS las calificaciones de ${asignatura} para el grupo ${grupo.nombre}? Esta acción NO se puede deshacer.`,
+            onConfirm: async () => {
+                const token = localStorage.getItem('token');
+                const config = { headers: { Authorization: `Bearer ${token}` } };
 
-        const token = localStorage.getItem('token');
-        const config = { headers: { Authorization: `Bearer ${token}` } };
+                try {
+                    const calificacionesVacias = {};
+                    const payload = {
+                        grupoId: grupo._id,
+                        asignatura,
+                        criterios: criteriosPorBimestre,
+                        calificaciones: calificacionesVacias
+                    };
 
-        try {
-            // Enviamos una petición para limpiar (o enviamos un objeto vacío/reset)
-            // Como no tenemos un endpoint específico de "limpiar", podemos guardar un objeto de calificaciones vacío
-            // PERO, para ser más seguros y efectivos, deberíamos tener un endpoint o lógica de borrado.
-            // Dado que el usuario mencionó que "retoma la misma calificación", significa que están en la BD.
-            // La mejor forma con la API actual es enviar calificaciones vacías para todos los alumnos/bimestres.
+                    await axios.post(`${API_URL}/calificaciones`, payload, config);
 
-            const calificacionesVacias = {}; // Objeto vacío
-            // Opcional: Resetear criterios también si se desea, pero el usuario dijo "calificaciones".
-            // Mantendremos los criterios, solo borramos notas.
+                    setCalificaciones({});
+                    setNotificacion({ mensaje: 'Se han eliminado todas las calificaciones de esta asignatura.', tipo: 'exito' });
+                    setConfirmModal({ isOpen: false, message: '', onConfirm: null }); // Cerrar modal
 
-            const payload = {
-                grupoId: grupo._id,
-                asignatura,
-                criterios: criteriosPorBimestre, // Mantenemos criterios
-                calificaciones: calificacionesVacias // Borramos calificaciones
-            };
-
-            await axios.post(`${API_URL}/calificaciones`, payload, config);
-
-            setCalificaciones({}); // Limpiar estado local
-            setNotificacion({ mensaje: 'Se han eliminado todas las calificaciones de esta asignatura.', tipo: 'exito' });
-
-        } catch (error) {
-            console.error("Error al limpiar calificaciones:", error);
-            setNotificacion({ mensaje: 'Error al intentar limpiar las calificaciones.', tipo: 'error' });
-        }
+                } catch (error) {
+                    console.error("Error al limpiar calificaciones:", error);
+                    setNotificacion({ mensaje: 'Error al intentar limpiar las calificaciones.', tipo: 'error' });
+                    setConfirmModal({ isOpen: false, message: '', onConfirm: null }); // Cerrar modal en error también
+                }
+            }
+        });
     };
 
 
@@ -1376,6 +1374,15 @@ const PanelCalificaciones = ({
                     onClose={() => setTareaPorNombrar(null)}
                 />
             )}
+
+            {/* 🌟 Modal de Confirmación Personalizado */}
+            <ConfirmacionModal
+                isOpen={confirmModal.isOpen}
+                onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+                onConfirm={confirmModal.onConfirm}
+                mensaje={confirmModal.message}
+                confirmText="Sí, Eliminar Todo"
+            />
             {/* Contenido principal del panel de calificaciones */}
             <div className="asistencia-modal-content">
                 <header className="main-header" style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 20px' }}>

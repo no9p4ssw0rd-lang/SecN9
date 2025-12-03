@@ -1,7 +1,7 @@
 import React from 'react';
 import './Notificacion.css';
 
-function ConfirmacionModal({ isOpen, onClose, onConfirm, mensaje }) {
+function ConfirmacionModal({ isOpen, onClose, onConfirm, mensaje, confirmText = "Sí, Eliminar", cancelText = "Cancelar" }) {
   if (!isOpen) return null;
 
   return (
@@ -11,10 +11,10 @@ function ConfirmacionModal({ isOpen, onClose, onConfirm, mensaje }) {
         <p>{mensaje}</p>
         <div className="confirm-modal-actions">
           <button className="btn btn-danger" onClick={onConfirm}>
-            Sí, Eliminar
+            {confirmText}
           </button>
           <button className="btn btn-cancel" onClick={onClose}>
-            Cancelar
+            {cancelText}
           </button>
         </div>
       </div>
