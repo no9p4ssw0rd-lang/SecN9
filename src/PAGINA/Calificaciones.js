@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import './Calificaciones.css'; 
-import logoImage from './Logoescuela.png'; 
+import './Calificaciones.css';
+import logoImage from './Logoescuela.png';
 
 // --- CAMBIO: URL de la API desde variables de entorno para Vercel ---
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -33,7 +33,7 @@ function Calificaciones({ user }) {
   const [alumnos, setAlumnos] = useState([]);
   const [materias, setMaterias] = useState([]);
   const [calificaciones, setCalificaciones] = useState({});
-  
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modalPdf, setModalPdf] = useState({ visible: false, alumno: null });
@@ -98,9 +98,9 @@ function Calificaciones({ user }) {
         count++;
       }
     });
-    return count > 0 ? (suma / count) : 0;
+    return count > 0 ? Math.round(suma / count) : 0;
   };
-  
+
   const calcularPromedioFinal = (alumnoId) => {
     let sumaDePromedios = 0;
     let bimestresConCalificacion = 0;
@@ -111,13 +111,13 @@ function Calificaciones({ user }) {
         bimestresConCalificacion++;
       }
     }
-    return bimestresConCalificacion > 0 ? (sumaDePromedios / bimestresConCalificacion) : 0;
+    return bimestresConCalificacion > 0 ? Math.round(sumaDePromedios / bimestresConCalificacion) : 0;
   };
 
   const generatePdfIndividual = async (alumno, bimestresSeleccionados, outputType = 'save') => {
     const doc = new jsPDF();
     const nombreCompleto = `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`;
-    
+
     const img = new Image();
     img.src = logoImage;
     await img.decode();
@@ -130,30 +130,30 @@ function Calificaciones({ user }) {
 
     // --- AJUSTES DE POSICIÓN Y ESPACIADO ---
     let yPos = margin + 5;
-    
+
     // 1. Escuela Secundaria
     doc.text('Escuela Secundaria No. 9 "Amado Nervo"', margin, yPos);
-    
+
     // Incremento para la siguiente línea (e.g., 7mm)
-    yPos += 7; 
-    
+    yPos += 7;
+
     // 2. Boleta de Calificaciones
     doc.setFont(undefined, 'bold'); // Poner el título en negrita para resaltarlo
     doc.text('Boleta de Calificaciones', margin, yPos);
     doc.setFont(undefined, 'normal'); // Volver a normal
-    
+
     // Incremento
-    yPos += 7; 
+    yPos += 7;
 
     // 3. Alumno
     doc.text(`Alumno: ${nombreCompleto}`, margin, yPos);
-    
+
     // Incremento
-    yPos += 7; 
-    
+    yPos += 7;
+
     // 4. Grupo
     doc.text(`Grupo: ${selectedGrupo.nombre}`, margin, yPos);
-    
+
     // 5. Espacio de separación antes de la tabla
     yPos += 5; // Espacio extra de 5mm antes de la tabla
     // --- FIN AJUSTES DE POSICIÓN ---
@@ -192,58 +192,58 @@ function Calificaciones({ user }) {
       headStyles: { fillColor: [212, 175, 55], textColor: 255 },
       didDrawCell: (data) => {
         if (data.row.index === tableBody.length - 1) {
-            doc.setFont(undefined, 'bold');
+          doc.setFont(undefined, 'bold');
         }
       }
     });
-    
+
     if (outputType === 'save') {
-        doc.save(`Boleta_${nombreCompleto.replace(/\s/g, '_')}.pdf`);
-        setModalPdf({ visible: false, alumno: null });
+      doc.save(`Boleta_${nombreCompleto.replace(/\s/g, '_')}.pdf`);
+      setModalPdf({ visible: false, alumno: null });
     }
-    
+
     return doc.output('datauristring');
-};
-// ... resto del componente Calificaciones
-  
+  };
+  // ... resto del componente Calificaciones
+
   const generatePdfConsolidado = async () => {
     const doc = new jsPDF({ orientation: 'landscape' });
     doc.setFontSize(18);
     doc.text(`Reporte de Calificaciones del Grupo: ${selectedGrupo.nombre}`, 14, 20);
 
     const head = [
-        [{ content: 'Nombre del Alumno', rowSpan: 2 }],
-        ...materias.map(materia => [{ content: materia, colSpan: 3 }]),
-        [{ content: 'PROMEDIO TRIMESTRAL', colSpan: 3 }],
-        [{ content: 'FINAL', rowSpan: 2 }]
+      [{ content: 'Nombre del Alumno', rowSpan: 2 }],
+      ...materias.map(materia => [{ content: materia, colSpan: 3 }]),
+      [{ content: 'PROMEDIO TRIMESTRAL', colSpan: 3 }],
+      [{ content: 'FINAL', rowSpan: 2 }]
     ];
     const subhead = [...materias.flatMap(() => ['T1', 'T2', 'T3']), 'T1', 'T2', 'T3'];
     head.push(subhead);
 
     const body = alumnos.map(alumno => {
-        const row = [`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`];
-        materias.forEach(materia => {
-            [0, 1, 2].forEach(bim => {
-                const cal = calificaciones[alumno._id]?.[materia]?.[bim];
-                row.push(cal != null ? cal.toFixed(1) : '-');
-            });
-        });
+      const row = [`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`];
+      materias.forEach(materia => {
         [0, 1, 2].forEach(bim => {
-            const prom = calcularPromedioBimestre(alumno._id, bim);
-            row.push(prom > 0 ? prom.toFixed(1) : '-');
+          const cal = calificaciones[alumno._id]?.[materia]?.[bim];
+          row.push(cal != null ? cal.toFixed(1) : '-');
         });
-        const promFinal = calcularPromedioFinal(alumno._id);
-        row.push(promFinal > 0 ? promFinal.toFixed(2) : '-');
-        return row;
+      });
+      [0, 1, 2].forEach(bim => {
+        const prom = calcularPromedioBimestre(alumno._id, bim);
+        row.push(prom > 0 ? prom.toFixed(1) : '-');
+      });
+      const promFinal = calcularPromedioFinal(alumno._id);
+      row.push(promFinal > 0 ? promFinal.toFixed(2) : '-');
+      return row;
     });
 
     autoTable(doc, {
-        startY: 30, head: head, body: body, theme: 'grid',
-        headStyles: { fillColor: [41, 128, 185], textColor: 255, halign: 'center' },
-        styles: { fontSize: 8, halign: 'center' },
-        columnStyles: { 0: { halign: 'left', fontStyle: 'bold' } }
+      startY: 30, head: head, body: body, theme: 'grid',
+      headStyles: { fillColor: [41, 128, 185], textColor: 255, halign: 'center' },
+      styles: { fontSize: 8, halign: 'center' },
+      columnStyles: { 0: { halign: 'left', fontStyle: 'bold' } }
     });
-   
+
   };
 
   const handleSendPdf = async (platform, recipient, alumno) => {
@@ -251,51 +251,51 @@ function Calificaciones({ user }) {
     const nombreCompleto = `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`;
 
     if (platform === 'email') {
-        try {
-            const base64Pdf = pdfDataUri.split(',')[1];
+      try {
+        const base64Pdf = pdfDataUri.split(',')[1];
 
-            const payload = {
-                to: recipient,
-                subject: `Boleta de Calificaciones de ${nombreCompleto}`,
-                body: `Estimado/a, <br><br>Adjunto encontrará la boleta de calificaciones de <strong>${nombreCompleto}</strong>.<br><br>Saludos cordiales,<br>Administración Escolar`,
-                pdfData: base64Pdf 
-            };
-            
-            // --- CAMBIO: Usar API_URL ---
-            await axios.post(`${API_URL}/api/enviar-boleta`, payload, getAxiosConfig());
-            mostrarNotificacion(`Boleta enviada a ${recipient} exitosamente.`, 'exito');
-        
-        } catch (error) {
-            console.error("Error al enviar correo:", error);
-            mostrarNotificacion("Error al enviar el correo. Revisa el backend.", "error");
-        }
+        const payload = {
+          to: recipient,
+          subject: `Boleta de Calificaciones de ${nombreCompleto}`,
+          body: `Estimado/a, <br><br>Adjunto encontrará la boleta de calificaciones de <strong>${nombreCompleto}</strong>.<br><br>Saludos cordiales,<br>Administración Escolar`,
+          pdfData: base64Pdf
+        };
+
+        // --- CAMBIO: Usar API_URL ---
+        await axios.post(`${API_URL}/api/enviar-boleta`, payload, getAxiosConfig());
+        mostrarNotificacion(`Boleta enviada a ${recipient} exitosamente.`, 'exito');
+
+      } catch (error) {
+        console.error("Error al enviar correo:", error);
+        mostrarNotificacion("Error al enviar el correo. Revisa el backend.", "error");
+      }
 
     } else if (platform === 'whatsapp') {
-        const mensaje = `Hola, te comparto la boleta de calificaciones de ${nombreCompleto}. Por favor, descárgala y adjúntala en la conversación.`;
-        const url = `https://wa.me/${recipient}?text=${encodeURIComponent(mensaje)}`;
-        window.open(url, '_blank');
-        
-        const link = document.createElement('a');
-        link.href = pdfDataUri;
-        link.download = `Boleta_${nombreCompleto.replace(/\s/g, '_')}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+      const mensaje = `Hola, te comparto la boleta de calificaciones de ${nombreCompleto}. Por favor, descárgala y adjúntala en la conversación.`;
+      const url = `https://wa.me/${recipient}?text=${encodeURIComponent(mensaje)}`;
+      window.open(url, '_blank');
+
+      const link = document.createElement('a');
+      link.href = pdfDataUri;
+      link.download = `Boleta_${nombreCompleto.replace(/\s/g, '_')}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
     setModalShare({ visible: false, alumno: null });
   };
-  
+
   if (loading && !selectedGrupo) return <div className="calificaciones-container">Cargando grupos...</div>;
   if (error) return <div className="calificaciones-container error-message">{error}</div>;
 
   return (
     <div className="calificaciones-container section">
-      <Notificacion 
-        mensaje={notificacion.mensaje} 
+      <Notificacion
+        mensaje={notificacion.mensaje}
         tipo={notificacion.tipo}
         onClose={() => setNotificacion({ visible: false, mensaje: '', tipo: '' })}
       />
-      
+
       {!selectedGrupo ? (
         <>
           <h1 className="calificaciones-title">Seleccionar Grupo</h1>
@@ -313,50 +313,50 @@ function Calificaciones({ user }) {
       ) : (
         <>
           {modalPdf.visible && (
-             <div className="modal-overlay" onClick={() => setModalPdf({ visible: false, alumno: null })}>
-               <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                 <h3>Descargar Boleta de {`${modalPdf.alumno?.apellidoPaterno} ${modalPdf.alumno?.nombre}`}</h3>
-                 <p>Selecciona los trimestres que deseas incluir:</p>
-                 <form onSubmit={(e) => {
-                   e.preventDefault();
-                   const bimestresSeleccionados = [e.target.b1.checked, e.target.b2.checked, e.target.b3.checked];
-                   if (!bimestresSeleccionados.some(b => b)) {
-                     mostrarNotificacion("Debes seleccionar al menos un Trimestre.", "error");
-                     return;
-                   }
-                   generatePdfIndividual(modalPdf.alumno, bimestresSeleccionados, 'save');
-                 }}>
-                   <div className="checkbox-group">
-                     <label><input type="checkbox" name="b1" defaultChecked /> Trimestre 1</label>
-                     <label><input type="checkbox" name="b2" defaultChecked /> Trimestre 2</label>
-                     <label><input type="checkbox" name="b3" defaultChecked /> Trimestre 3</label>
-                   </div>
-                   <div className="modal-actions">
-                     <button type="submit" className="button">Descargar Boleta</button>
-                     <button type="button" className="button-secondary" onClick={() => setModalPdf({ visible: false, alumno: null })}>Cancelar</button>
-                   </div>
-                 </form>
-               </div>
-             </div>
+            <div className="modal-overlay" onClick={() => setModalPdf({ visible: false, alumno: null })}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <h3>Descargar Boleta de {`${modalPdf.alumno?.apellidoPaterno} ${modalPdf.alumno?.nombre}`}</h3>
+                <p>Selecciona los trimestres que deseas incluir:</p>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const bimestresSeleccionados = [e.target.b1.checked, e.target.b2.checked, e.target.b3.checked];
+                  if (!bimestresSeleccionados.some(b => b)) {
+                    mostrarNotificacion("Debes seleccionar al menos un Trimestre.", "error");
+                    return;
+                  }
+                  generatePdfIndividual(modalPdf.alumno, bimestresSeleccionados, 'save');
+                }}>
+                  <div className="checkbox-group">
+                    <label><input type="checkbox" name="b1" defaultChecked /> Trimestre 1</label>
+                    <label><input type="checkbox" name="b2" defaultChecked /> Trimestre 2</label>
+                    <label><input type="checkbox" name="b3" defaultChecked /> Trimestre 3</label>
+                  </div>
+                  <div className="modal-actions">
+                    <button type="submit" className="button">Descargar Boleta</button>
+                    <button type="button" className="button-secondary" onClick={() => setModalPdf({ visible: false, alumno: null })}>Cancelar</button>
+                  </div>
+                </form>
+              </div>
+            </div>
           )}
 
           {modalShare.visible && (
             <ModalShare
-                alumno={modalShare.alumno}
-                onClose={() => setModalShare({ visible: false, alumno: null })}
-                onSend={handleSendPdf}
+              alumno={modalShare.alumno}
+              onClose={() => setModalShare({ visible: false, alumno: null })}
+              onSend={handleSendPdf}
             />
           )}
-          
+
           <div className="header-controls">
             <button onClick={() => setSelectedGrupo(null)} className="back-button">&larr; Volver a Grupos</button>
-            
+
           </div>
 
           <div className="calificaciones-header">
             <h1 className="calificaciones-title">Calificaciones del Grupo {selectedGrupo.nombre}</h1>
           </div>
-          
+
           {loading ? <p>Cargando calificaciones...</p> : (
             <div className="table-wrapper">
               <table className="calificaciones-table">
@@ -423,64 +423,64 @@ function Calificaciones({ user }) {
 
 // --- Componente: Modal para Compartir ---
 function ModalShare({ alumno, onClose, onSend }) {
-    const [recipientEmail, setRecipientEmail] = useState('');
-    const [recipientPhone, setRecipientPhone] = useState('');
+  const [recipientEmail, setRecipientEmail] = useState('');
+  const [recipientPhone, setRecipientPhone] = useState('');
 
-    const handleEmailSubmit = (e) => {
-        e.preventDefault();
-        if (recipientEmail) {
-            onSend('email', recipientEmail, alumno);
-        }
-    };
+  const handleEmailSubmit = (e) => {
+    e.preventDefault();
+    if (recipientEmail) {
+      onSend('email', recipientEmail, alumno);
+    }
+  };
 
-    const handleWhatsAppSubmit = (e) => {
-        e.preventDefault();
-        if (recipientPhone) {
-            onSend('whatsapp', recipientPhone, alumno);
-        }
-    };
+  const handleWhatsAppSubmit = (e) => {
+    e.preventDefault();
+    if (recipientPhone) {
+      onSend('whatsapp', recipientPhone, alumno);
+    }
+  };
 
-    return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <h3>Enviar Boleta de {`${alumno.apellidoPaterno} ${alumno.nombre}`}</h3>
-                
-                <form onSubmit={handleEmailSubmit} className="share-form">
-                    <label htmlFor="email-input">Enviar por Correo Electrónico:</label>
-                    <div className="input-group">
-                        <input
-                            id="email-input"
-                            type="email"
-                            value={recipientEmail}
-                            onChange={(e) => setRecipientEmail(e.target.value)}
-                            placeholder="ejemplo@correo.com"
-                            required
-                        />
-                        <button type="submit" className="button">Enviar Email</button>
-                    </div>
-                </form>
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <h3>Enviar Boleta de {`${alumno.apellidoPaterno} ${alumno.nombre}`}</h3>
 
-                <form onSubmit={handleWhatsAppSubmit} className="share-form">
-                    <label htmlFor="phone-input">Enviar a WhatsApp:</label>
-                    <div className="input-group">
-                        <input
-                            id="phone-input"
-                            type="tel"
-                            value={recipientPhone}
-                            onChange={(e) => setRecipientPhone(e.target.value)}
-                            placeholder="521234567890 (cód. país + número)"
-                            required
-                        />
-                        <button type="submit" className="button whatsapp">Enviar WhatsApp</button>
-                    </div>
-                </form>
-                
-                <div className="modal-actions">
-                    <button type="button" className="button-secondary" onClick={onClose}>Cancelar</button>
-                </div>
-            </div>
+        <form onSubmit={handleEmailSubmit} className="share-form">
+          <label htmlFor="email-input">Enviar por Correo Electrónico:</label>
+          <div className="input-group">
+            <input
+              id="email-input"
+              type="email"
+              value={recipientEmail}
+              onChange={(e) => setRecipientEmail(e.target.value)}
+              placeholder="ejemplo@correo.com"
+              required
+            />
+            <button type="submit" className="button">Enviar Email</button>
+          </div>
+        </form>
+
+        <form onSubmit={handleWhatsAppSubmit} className="share-form">
+          <label htmlFor="phone-input">Enviar a WhatsApp:</label>
+          <div className="input-group">
+            <input
+              id="phone-input"
+              type="tel"
+              value={recipientPhone}
+              onChange={(e) => setRecipientPhone(e.target.value)}
+              placeholder="521234567890 (cód. país + número)"
+              required
+            />
+            <button type="submit" className="button whatsapp">Enviar WhatsApp</button>
+          </div>
+        </form>
+
+        <div className="modal-actions">
+          <button type="button" className="button-secondary" onClick={onClose}>Cancelar</button>
         </div>
-    );
+      </div>
+    </div>
+  );
 }
 
 export default Calificaciones;

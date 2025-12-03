@@ -1233,7 +1233,7 @@ const PanelCalificaciones = ({
             return acc + (promCriterio * (criterio.porcentaje / 100));
         }, 0);
 
-        return promedioPonderado.toFixed(2);
+        return Math.round(promedioPonderado);
     };
 
     const formatFechaTooltip = (fechaISO) => {
