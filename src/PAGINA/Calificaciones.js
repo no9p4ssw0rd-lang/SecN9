@@ -2,8 +2,32 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import './Calificaciones.css';
 import logoImage from './Logoescuela.png';
+
+// --- Sortable Header Component ---
+function SortableHeader({ id, children }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+    cursor: isDragging ? 'grabbing' : 'grab',
+    touchAction: 'none',
+    backgroundColor: isDragging ? '#444' : undefined,
+    zIndex: isDragging ? 2 : undefined,
+    position: 'relative'
+  };
+
+  return (
+    <th ref={setNodeRef} style={style} {...attributes} {...listeners} colSpan="3">
+      {children}
+    </th>
+  );
+}
 
 // --- CAMBIO: URL de la API desde variables de entorno para Vercel ---
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -40,6 +64,36 @@ function Calificaciones({ user }) {
   const [modalShare, setModalShare] = useState({ visible: false, alumno: null });
   const [notificacion, setNotificacion] = useState({ visible: false, mensaje: '', tipo: '' });
 
+  // --- DnD Sensors ---
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
+  );
+
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+    if (active.id !== over.id) {
+      const oldIndex = materias.indexOf(active.id);
+      const newIndex = materias.indexOf(over.id);
+      const newOrder = arrayMove(materias, oldIndex, newIndex);
+
+      setMaterias(newOrder);
+
+      // Save new order to backend
+      if (selectedGrupo) {
+        try {
+          await axios.put(`${API_URL}/grupos/${selectedGrupo._id}`, {
+            ordenMaterias: newOrder
+          }, getAxiosConfig());
+          // Optional: show hidden success or just save silently
+        } catch (err) {
+          console.error("Error al guardar el orden de materias:", err);
+          mostrarNotificacion("Error al guardar el orden de las materias.", "error");
+        }
+      }
+    }
+  };
+
   const mostrarNotificacion = (mensaje, tipo = 'exito') => {
     setNotificacion({ visible: true, mensaje, tipo });
   };
@@ -72,6 +126,22 @@ function Calificaciones({ user }) {
     setAlumnos(alumnosOrdenados);
 
     const materiasAsignadas = [...new Set(grupo.profesoresAsignados.map(asig => asig.asignatura))];
+
+    // Si hay un orden guardado, ordenar las materias
+    if (grupo.ordenMaterias && grupo.ordenMaterias.length > 0) {
+      materiasAsignadas.sort((a, b) => {
+        const indexA = grupo.ordenMaterias.indexOf(a);
+        const indexB = grupo.ordenMaterias.indexOf(b);
+        // If both found, sort by index
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        // If only A found, A comes first? No, A comes first if indexA < indexB.
+        // If A not found, put it at the end.
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+        return 0;
+      });
+    }
+
     setMaterias(materiasAsignadas);
 
     try {
@@ -363,7 +433,22 @@ function Calificaciones({ user }) {
                 <thead>
                   <tr>
                     <th rowSpan="2">Nombre del Alumno</th>
-                    {materias.map(materia => <th key={materia} colSpan="3">{materia}</th>)}
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleDragEnd}
+                    >
+                      <SortableContext
+                        items={materias}
+                        strategy={horizontalListSortingStrategy}
+                      >
+                        {materias.map(materia => (
+                          <SortableHeader key={materia} id={materia}>
+                            {materia}
+                          </SortableHeader>
+                        ))}
+                      </SortableContext>
+                    </DndContext>
                     <th colSpan="3" className="promedio-header">PROMEDIO TRIMESTRAL</th>
                     <th rowSpan="2" className="promedio-header-final">FINAL</th>
                     <th rowSpan="2">Acciones</th>

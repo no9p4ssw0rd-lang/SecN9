@@ -32,7 +32,7 @@ const AsignacionSchema = new mongoose.Schema({
     required: [true, "La asignatura es obligatoria en la asignación"],
     trim: true,
   }
-}, {_id: false});
+}, { _id: false });
 
 
 // Define el esquema principal del Grupo.
@@ -52,12 +52,16 @@ const GrupoSchema = new mongoose.Schema(
       type: [AsignacionSchema], // Un array de documentos de Asignacion
       default: [],
     },
+    ordenMaterias: {
+      type: [String], // Array de nombres de materias en orden
+      default: [],
+    },
 
     // --- IMPORTANTE ---
     // Los campos 'criterios' y 'calificaciones' han sido eliminados de este modelo.
     // Ahora residen en el nuevo modelo 'Calificacion' para permitir que cada
     // profesor tenga su propio registro de calificaciones por materia.
-    
+
   },
   {
     timestamps: true, // Agrega createdAt y updatedAt automáticamente
