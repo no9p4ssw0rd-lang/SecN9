@@ -248,14 +248,20 @@
   background-color: #e9ecef;
 }
 
-/* Ancho para las sub-columnas (T1, T2, T3) tanto de materias como de promedios */
+/* Ancho para las sub-columnas (T1, T2, T3) por defecto */
 .calificaciones-table thead tr:nth-child(2) th,
 .calificaciones-table tbody td {
   width: 50px;
   min-width: 50px;
   max-width: 50px;
-  /* Forzar tamaño exacto */
   overflow: hidden;
+}
+
+/* EXCEPCIÓN: Sub-columnas de Promedio Trimestral deben coincidir con su celda de 60px */
+.calificaciones-table thead tr:nth-child(2) th.promedio-header {
+  width: 60px !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
 }
 
 /* Excepciones para columnas específicas */
