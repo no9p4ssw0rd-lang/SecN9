@@ -325,6 +325,8 @@
   max-width: 240px;
   background-color: #f8f9fa !important;
   /* Solid opaque background */
+  color: black !important;
+  /* Texto negro solicitado */
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
 }
 
