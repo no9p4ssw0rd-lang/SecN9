@@ -299,8 +299,9 @@
 }
 
 .promedio-final-cell {
-  background-color: rgba(212, 175, 55, 0.2) !important;
-  /* Gold tint */
+  background-color: #f9e79f !important;
+  /* Solid light gold - NO TRANSPARENCY */
+  opacity: 1 !important;
 }
 
 /* Normal Sub-column sizing */
@@ -313,7 +314,7 @@
   white-space: nowrap;
 }
 
-/* First Column (Name) Sticky Left */
+/* Ensure Name Column is opaque */
 .calificaciones-table td:first-child,
 .calificaciones-table th:first-child {
   position: sticky;
@@ -322,7 +323,8 @@
   width: 240px;
   min-width: 240px;
   max-width: 240px;
-  background-color: var(--off-white-bg);
+  background-color: #f8f9fa !important;
+  /* Solid opaque background */
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
 }
 

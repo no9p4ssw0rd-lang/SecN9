@@ -21,7 +21,7 @@ function SortableHeader({ id, children }) {
     color: isDragging ? 'white' : undefined,
     zIndex: isDragging ? 100 : undefined,
     position: 'relative',
-    // minWidth eliminado para permitir que la tabla se ajuste mejor
+    minWidth: '150px', // Restaurado para evitar que se colapse (match 3 sub-columns of 50px)
     border: isDragging ? '2px dashed #f1c40f' : '1px solid #dfe6e9', // Borde dorado al arrastrar
     opacity: isDragging ? 0.9 : 1
   };
