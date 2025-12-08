@@ -162,7 +162,9 @@
   border-collapse: separate;
   /* Required for sticky to play nice with borders sometimes, but collapse is usually preferred. Let's stick to collapse but test. */
   border-spacing: 0;
-  table-layout: auto;
+  table-layout: fixed;
+  /* Crucial for sticky widths to hold */
+  min-width: 1200px;
 }
 
 /* Sticky Right for Final and Actions */
@@ -298,24 +300,29 @@
   background-color: rgba(192, 57, 43, 0.1);
 }
 
-.promedio-header-final {
+.promedio-header-final,
+.promedio-final-cell {
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+  box-sizing: border-box;
+  white-space: nowrap;
   background-color: var(--gold-accent) !important;
   color: var(--text-color-dark) !important;
-  width: 100px;
-  min-width: 100px;
-  white-space: nowrap;
-  box-sizing: border-box;
+  flex-shrink: 0;
+  /* Just in case flex is involved in parents */
 }
 
-/* promedio-cell moved up */
 
-.promedio-final-cell {
-  font-weight: bold;
-  background-color: rgba(212, 175, 55, 0.2);
-  font-size: 1.1em;
-  width: 100px;
-  min-width: 100px;
+/* Estilos para la columna de acciones */
+.actions-header,
+.actions-cell {
+  width: 150px !important;
+  min-width: 150px !important;
+  max-width: 150px !important;
   box-sizing: border-box;
+  flex-shrink: 0;
+  /* Just in case flex is involved in parents */
 }
 
 
