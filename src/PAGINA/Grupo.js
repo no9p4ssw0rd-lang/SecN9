@@ -650,12 +650,14 @@ function Grupo({ user }) {
                     <td data-label="Asignaciones">
                       {grupo.profesoresAsignados && grupo.profesoresAsignados.length > 0
                         ? <ul className="asignacion-lista">
-                          {grupo.profesoresAsignados.map((asig, index) => (
-                            <li key={index}>
-                              {asig.profesor?.nombre || 'Profesor Eliminado'}
-                              <span className="asignatura-text"> - {asig.asignatura}</span>
-                            </li>
-                          ))}
+                          {[...grupo.profesoresAsignados]
+                            .sort((a, b) => a.asignatura.localeCompare(b.asignatura)) /* Ordenar por materia */
+                            .map((asig, index) => (
+                              <li key={index}>
+                                {asig.profesor?.nombre || 'Profesor Eliminado'}
+                                <span className="asignatura-text"> - {asig.asignatura}</span>
+                              </li>
+                            ))}
                         </ul>
                         : 'Sin asignar'}
                     </td>
