@@ -324,10 +324,10 @@
   position: sticky;
   left: 0;
   z-index: 40 !important;
-  width: 200px;
-  /* Reduced from 240 */
-  min-width: 200px;
-  max-width: 200px;
+  width: 340px;
+  /* Increased from 200px to show full names */
+  min-width: 340px;
+  max-width: 340px;
   background-color: #2c3e50;
   color: white;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
@@ -338,15 +338,19 @@
   position: sticky;
   left: 0;
   z-index: 10;
-  width: 200px;
-  /* Reduced from 240 */
-  min-width: 200px;
-  max-width: 200px;
+  width: 340px;
+  /* Increased from 200px to show full names */
+  min-width: 340px;
+  max-width: 340px;
   background-color: #f8f9fa !important;
+  /* Solid opaque background */
   color: black !important;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
   text-align: left !important;
   padding-left: 10px !important;
+  white-space: normal;
+  /* Allow slight wrapping if absolutely necessary, though 340px is wide */
+  line-height: 1.2;
 }
 
 /* EXCEPCIÓN: Sub-columnas de Promedio Trimestral (Header T1/T2/T3) */
