@@ -112,21 +112,27 @@ function Calificaciones({ user }) {
     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
   });
 
+  const fetchGrupos = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(`${API_URL}/grupos?populate=alumnos,profesoresAsignados`, getAxiosConfig());
+      setGrupos(res.data);
+    } catch (err) {
+      console.error("Error al cargar grupos:", err);
+      setError("No se pudieron cargar los grupos. Intenta de nuevo más tarde.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchGrupos = async () => {
-      try {
-        // --- CAMBIO: Usar API_URL ---
-        const res = await axios.get(`${API_URL}/grupos?populate=alumnos,profesoresAsignados`, getAxiosConfig());
-        setGrupos(res.data);
-      } catch (err) {
-        console.error("Error al cargar grupos:", err);
-        setError("No se pudieron cargar los grupos. Intenta de nuevo más tarde.");
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchGrupos();
   }, []);
+
+  const handleBackToGrupos = () => {
+    setSelectedGrupo(null);
+    fetchGrupos(); // Refrescar lista para asegurar orden actualizado
+  };
 
   const handleSelectGrupo = async (grupo) => {
     setLoading(true);
@@ -429,7 +435,7 @@ function Calificaciones({ user }) {
           )}
 
           <div className="header-controls">
-            <button onClick={() => setSelectedGrupo(null)} className="back-button">&larr; Volver a Grupos</button>
+            <button onClick={handleBackToGrupos} className="back-button">&larr; Volver a Grupos</button>
           </div>
 
           <div className="calificaciones-header">
@@ -480,7 +486,7 @@ function Calificaciones({ user }) {
                             {[0, 1, 2].map(bimestreIndex => {
                               const cal = calificaciones[alumno._id]?.[materia]?.[bimestreIndex];
                               return (
-                                <td key={bimestreIndex} className={typeof cal === 'number' ? (cal < 6 ? 'reprobado' : 'aprobado') : ''}>
+                                <td key={`${materia}-b${bimestreIndex}`} className={typeof cal === 'number' ? (cal < 6 ? 'reprobado' : 'aprobado') : ''}>
                                   {cal != null ? cal.toFixed(1) : '-'}
                                 </td>
                               )
@@ -495,7 +501,7 @@ function Calificaciones({ user }) {
                             </td>
                           )
                         })}
-                        <td className={`promedio-final-cell ${promFinal > 0 && promFinal < 6 ? 'reprobado' : 'aprobado'}`}>
+                        <td className={`promedio-final-cell ${promFinal > 0 && promFinal < 6 ? 'reprobado' : 'aprobado'}`} style={{ minWidth: '60px' }}>
                           <strong>{promFinal > 0 ? promFinal.toFixed(2) : '-'}</strong>
                         </td>
                         <td className="actions-cell">
