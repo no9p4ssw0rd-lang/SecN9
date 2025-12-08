@@ -268,11 +268,15 @@
 
 
 /* Estilos para la columna de acciones */
-.calificaciones-table thead tr:first-child th:last-child {
+.actions-header, .actions-cell {
   width: 150px;
   min-width: 150px;
-  white-space: nowrap;
   box-sizing: border-box;
+  text-align: center;
+}
+
+.actions-header {
+  white-space: nowrap;
 }
 
 .actions-cell {

@@ -466,7 +466,7 @@ function Calificaciones({ user }) {
                     </DndContext>
                     <th colSpan="3" className="promedio-header">PROMEDIO TRIMESTRAL</th>
                     <th rowSpan="2" className="promedio-header-final">FINAL</th>
-                    <th rowSpan="2">Acciones</th>
+                    <th rowSpan="2" className="actions-header">Acciones</th>
                   </tr>
                   <tr>
                     {materias.flatMap(materia => [<th key={`${materia}-b1`}>T1</th>, <th key={`${materia}-b2`}>T2</th>, <th key={`${materia}-b3`}>T3</th>])}
