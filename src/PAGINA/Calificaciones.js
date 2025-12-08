@@ -429,8 +429,7 @@ function Calificaciones({ user }) {
           )}
 
           <div className="header-controls">
-            <button onClick={() => setSelectedGrupo(null)} className="back-button">&larr; Volver a Grupos</button>
-
+            {/* Botón de volver eliminado a petición del usuario */}
           </div>
 
           <div className="calificaciones-header">
