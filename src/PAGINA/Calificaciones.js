@@ -21,7 +21,7 @@ function SortableHeader({ id, children }) {
     color: isDragging ? 'white' : undefined,
     zIndex: isDragging ? 100 : undefined,
     position: 'relative',
-    minWidth: '200px', // Asegurar que no se colapse al arrastrar
+    minWidth: '120px', // Reducido para que quepan más materias
     border: isDragging ? '2px dashed #f1c40f' : '1px solid #dfe6e9', // Borde dorado al arrastrar
     opacity: isDragging ? 0.9 : 1
   };
@@ -429,7 +429,7 @@ function Calificaciones({ user }) {
           )}
 
           <div className="header-controls">
-            {/* Botón de volver eliminado a petición del usuario */}
+            <button onClick={() => setSelectedGrupo(null)} className="back-button">&larr; Volver a Grupos</button>
           </div>
 
           <div className="calificaciones-header">
