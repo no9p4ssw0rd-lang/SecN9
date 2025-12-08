@@ -159,11 +159,38 @@
 
 .calificaciones-table {
   width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-  /* Forzar estructura rígida */
-  min-width: 1200px;
-  /* Asegurar suficiente espacio total */
+  border-collapse: separate;
+  /* Required for sticky to play nice with borders sometimes, but collapse is usually preferred. Let's stick to collapse but test. */
+  border-spacing: 0;
+  table-layout: auto;
+}
+
+/* Sticky Right for Final and Actions */
+.promedio-header-final,
+.promedio-final-cell {
+  position: sticky !important;
+  right: 150px;
+  /* Width of Actions column */
+  z-index: 5 !important;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+  /* Separator shadow */
+  border-left: 2px solid #ccc !important;
+  /* Visual separation */
+}
+
+.actions-header,
+.actions-cell {
+  position: sticky !important;
+  right: 0;
+  z-index: 5 !important;
+  background-color: white;
+  /* Ensure non-transparent */
+}
+
+/* Fix header z-index to be on top of body sticky */
+.calificaciones-table thead th.promedio-header-final,
+.calificaciones-table thead th.actions-header {
+  z-index: 10 !important;
 }
 
 .calificaciones-table th,
@@ -252,14 +279,15 @@
 .promedio-header {
   background-color: #c0392b !important;
   width: 60px !important;
-  /* Ligeramente más ancho para resaltar */
   min-width: 60px !important;
+  max-width: 60px !important;
+  padding: 5px 0 !important;
 }
 
-/* Sobreescribir ancho general para celdas de promedio */
 .promedio-cell {
   width: 60px !important;
   min-width: 60px !important;
+  max-width: 60px !important;
   font-weight: bold;
   background-color: rgba(192, 57, 43, 0.1);
 }
@@ -303,6 +331,9 @@
   justify-content: center;
   align-items: center;
   gap: 8px;
+  background-color: white;
+  /* Important for sticky overlapping */
+  border-left: 1px solid #eee;
 }
 
 .actions-cell button {
