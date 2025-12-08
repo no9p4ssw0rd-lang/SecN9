@@ -246,9 +246,11 @@
 .promedio-header-final {
   background-color: var(--gold-accent) !important;
   color: var(--text-color-dark) !important;
-  width: 80px;
+  width: 1px;
+  /* Trick to shrinkwrap */
   min-width: 80px;
   white-space: nowrap;
+  padding: 0 10px;
 }
 
 .promedio-cell {
