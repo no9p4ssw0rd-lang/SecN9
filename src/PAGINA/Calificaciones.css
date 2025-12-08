@@ -232,12 +232,17 @@
 }
 
 /* Header Row 2: T1, T2, T3 sub-headers */
+/* Header Row 2: T1, T2, T3 sub-headers */
 .calificaciones-table thead tr:nth-child(2) th:nth-last-child(1) {
   /* T3 */
   position: sticky !important;
   right: 200px;
   z-index: 30;
   width: 50px !important;
+  background-color: #c0392b !important;
+  /* Explicit Red */
+  color: white !important;
+  opacity: 1 !important;
 }
 
 .calificaciones-table thead tr:nth-child(2) th:nth-last-child(2) {
@@ -246,6 +251,10 @@
   right: 250px;
   z-index: 30;
   width: 50px !important;
+  background-color: #c0392b !important;
+  /* Explicit Red */
+  color: white !important;
+  opacity: 1 !important;
 }
 
 .calificaciones-table thead tr:nth-child(2) th:nth-last-child(3) {
@@ -256,6 +265,10 @@
   width: 50px !important;
   border-left: 2px solid #aaa !important;
   box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+  background-color: #c0392b !important;
+  /* Explicit Red */
+  color: white !important;
+  opacity: 1 !important;
 }
 
 /* Body Cells: Promedio T1, T2, T3 */
