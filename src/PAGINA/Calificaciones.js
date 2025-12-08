@@ -21,7 +21,7 @@ function SortableHeader({ id, children }) {
     color: isDragging ? 'white' : undefined,
     zIndex: isDragging ? 100 : undefined,
     position: 'relative',
-    minWidth: '120px', // Reducido para que quepan más materias
+    // minWidth eliminado para permitir que la tabla se ajuste mejor
     border: isDragging ? '2px dashed #f1c40f' : '1px solid #dfe6e9', // Borde dorado al arrastrar
     opacity: isDragging ? 0.9 : 1
   };
@@ -501,7 +501,7 @@ function Calificaciones({ user }) {
                             </td>
                           )
                         })}
-                        <td className={`promedio-final-cell ${promFinal > 0 && promFinal < 6 ? 'reprobado' : 'aprobado'}`} style={{ minWidth: '60px' }}>
+                        <td className={`promedio-final-cell ${promFinal > 0 && promFinal < 6 ? 'reprobado' : 'aprobado'}`}>
                           <strong>{promFinal > 0 ? promFinal.toFixed(2) : '-'}</strong>
                         </td>
                         <td className="actions-cell">

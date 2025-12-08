@@ -221,8 +221,11 @@
   background-color: #e9ecef;
 }
 
+/* Ancho para las sub-columnas (T1, T2, T3) tanto de materias como de promedios */
 .calificaciones-table thead tr:nth-child(2) th {
-  width: 80px;
+  width: 50px;
+  /* Reducido para ahorrar espacio */
+  min-width: 40px;
   vertical-align: middle;
 }
 
@@ -243,7 +246,8 @@
 .promedio-header-final {
   background-color: var(--gold-accent) !important;
   color: var(--text-color-dark) !important;
-  min-width: 60px;
+  width: 80px;
+  min-width: 80px;
   white-space: nowrap;
 }
 
@@ -254,8 +258,10 @@
 
 .promedio-final-cell {
   font-weight: bold;
-  background-color: rgba(212, 175, 55, 0.15);
+  background-color: rgba(212, 175, 55, 0.2);
   font-size: 1.1em;
+  width: 80px;
+  min-width: 80px;
 }
 
 
