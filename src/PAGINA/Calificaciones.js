@@ -17,14 +17,20 @@ function SortableHeader({ id, children }) {
     transition,
     cursor: isDragging ? 'grabbing' : 'grab',
     touchAction: 'none',
-    backgroundColor: isDragging ? '#444' : undefined,
-    zIndex: isDragging ? 2 : undefined,
-    position: 'relative'
+    backgroundColor: isDragging ? '#2c3e50' : undefined, // Color oscuro al arrastrar
+    color: isDragging ? 'white' : undefined,
+    zIndex: isDragging ? 100 : undefined,
+    position: 'relative',
+    minWidth: '200px', // Asegurar que no se colapse al arrastrar
+    border: isDragging ? '2px dashed #f1c40f' : '1px solid #dfe6e9', // Borde dorado al arrastrar
+    opacity: isDragging ? 0.9 : 1
   };
 
   return (
     <th ref={setNodeRef} style={style} {...attributes} {...listeners} colSpan="3">
-      {children}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+        <span style={{ fontSize: '1.2em', opacity: 0.5 }}>⋮⋮</span> {children}
+      </div>
     </th>
   );
 }
@@ -82,10 +88,14 @@ function Calificaciones({ user }) {
       // Save new order to backend
       if (selectedGrupo) {
         try {
+          // IMPORTANTE: Enviar también los alumnos actuales para evitar error en el backend
           await axios.put(`${API_URL}/grupos/${selectedGrupo._id}`, {
+            nombre: selectedGrupo.nombre, // Mantener nombre
+            alumnos: selectedGrupo.alumnos, // Mantener alumnos
             ordenMaterias: newOrder
           }, getAxiosConfig());
-          // Optional: show hidden success or just save silently
+
+          mostrarNotificacion("Orden guardado correctamente.");
         } catch (err) {
           console.error("Error al guardar el orden de materias:", err);
           mostrarNotificacion("Error al guardar el orden de las materias.", "error");
