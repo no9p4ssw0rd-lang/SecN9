@@ -133,7 +133,8 @@
 .calificaciones-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
+  table-layout: auto; /* Allow columns to expand */
+  min-width: 1000px; /* Ensure table has enough space */
 }
 
 .calificaciones-table th, .calificaciones-table td {

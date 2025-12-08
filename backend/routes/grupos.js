@@ -84,16 +84,19 @@ router.put("/:id", authMiddleware, isAdmin, async (req, res) => {
             return res.status(404).json({ error: "Grupo no encontrado." });
         }
 
-        const alumnosProcesados = alumnos.map(alumno => {
-            if (alumno._id && String(alumno._id).startsWith('new-')) {
-                const { _id, ...restoDelAlumno } = alumno;
-                return restoDelAlumno;
-            }
-            return alumno;
-        });
+        if (alumnos) {
+            const alumnosProcesados = alumnos.map(alumno => {
+                if (alumno._id && String(alumno._id).startsWith('new-')) {
+                    const { _id, ...restoDelAlumno } = alumno;
+                    return restoDelAlumno;
+                }
+                return alumno;
+            });
+            grupo.alumnos = alumnosProcesados;
+        }
 
         grupo.nombre = nombre || grupo.nombre;
-        grupo.alumnos = alumnosProcesados || grupo.alumnos;
+        // grupo.alumnos assigned above if present
         if (req.body.ordenMaterias) {
             grupo.ordenMaterias = req.body.ordenMaterias;
         }

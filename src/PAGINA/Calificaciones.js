@@ -29,7 +29,8 @@ function SortableHeader({ id, children }) {
   return (
     <th ref={setNodeRef} style={style} {...attributes} {...listeners} colSpan="3">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-        <span style={{ fontSize: '1.2em', opacity: 0.5 }}>⋮⋮</span> {children}
+        <span style={{ fontSize: '1.2em', opacity: 0.5, cursor: 'grab' }}>⋮⋮</span>
+        <span style={{ whiteSpace: 'nowrap' }}>{children}</span>
       </div>
     </th>
   );
@@ -88,10 +89,9 @@ function Calificaciones({ user }) {
       // Save new order to backend
       if (selectedGrupo) {
         try {
-          // IMPORTANTE: Enviar también los alumnos actuales para evitar error en el backend
+          // Enviar solo el orden de materias.
+          // El backend ya fue corregido para no requerir 'alumnos'.
           await axios.put(`${API_URL}/grupos/${selectedGrupo._id}`, {
-            nombre: selectedGrupo.nombre, // Mantener nombre
-            alumnos: selectedGrupo.alumnos, // Mantener alumnos
             ordenMaterias: newOrder
           }, getAxiosConfig());
 
