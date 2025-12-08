@@ -160,10 +160,10 @@
 .calificaciones-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: auto;
-  /* Allow columns to expand */
-  min-width: 1000px;
-  /* Ensure table has enough space */
+  table-layout: fixed;
+  /* Forzar estructura rígida */
+  min-width: 1200px;
+  /* Asegurar suficiente espacio total */
 }
 
 .calificaciones-table th,
@@ -222,11 +222,21 @@
 }
 
 /* Ancho para las sub-columnas (T1, T2, T3) tanto de materias como de promedios */
-.calificaciones-table thead tr:nth-child(2) th {
+.calificaciones-table thead tr:nth-child(2) th,
+.calificaciones-table tbody td {
   width: 50px;
-  /* Reducido para ahorrar espacio */
-  min-width: 40px;
-  vertical-align: middle;
+  min-width: 50px;
+  max-width: 50px;
+  /* Forzar tamaño exacto */
+  overflow: hidden;
+}
+
+/* Excepciones para columnas específicas */
+.calificaciones-table td:first-child,
+.calificaciones-table th:first-child {
+  width: 240px;
+  min-width: 240px;
+  max-width: 240px;
 }
 
 .aprobado {
@@ -241,6 +251,17 @@
 
 .promedio-header {
   background-color: #c0392b !important;
+  width: 60px !important;
+  /* Ligeramente más ancho para resaltar */
+  min-width: 60px !important;
+}
+
+/* Sobreescribir ancho general para celdas de promedio */
+.promedio-cell {
+  width: 60px !important;
+  min-width: 60px !important;
+  font-weight: bold;
+  background-color: rgba(192, 57, 43, 0.1);
 }
 
 .promedio-header-final {
@@ -252,10 +273,7 @@
   box-sizing: border-box;
 }
 
-.promedio-cell {
-  font-weight: bold;
-  background-color: rgba(192, 57, 43, 0.1);
-}
+/* promedio-cell moved up */
 
 .promedio-final-cell {
   font-weight: bold;
@@ -268,7 +286,8 @@
 
 
 /* Estilos para la columna de acciones */
-.actions-header, .actions-cell {
+.actions-header,
+.actions-cell {
   width: 150px;
   min-width: 150px;
   box-sizing: border-box;
