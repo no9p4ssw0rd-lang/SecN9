@@ -95,6 +95,8 @@ function Home({ user }) {
     axios.delete(`${API_URL}/api/materias/${materiaToDelete._id}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(() => {
         mostrarAlerta("Materia eliminada y desasignada.", "success");
+        // FIX: Eliminar la materia de la selección local inmediatamente
+        setAsignaturasSelect((prev) => prev.filter((m) => m !== materiaToDelete.nombre));
         fetchMaterias();
         setMateriaToDelete(null);
       })
@@ -114,7 +116,7 @@ function Home({ user }) {
     if (!materiaToEdit || !editMateriaName.trim()) return;
     const token = localStorage.getItem("token");
     axios.put(`${API_URL}/api/materias/${materiaToEdit._id}`, { nombre: editMateriaName.toUpperCase() }, { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => {
+      .then(() => {
         mostrarAlerta("Materia actualizada correctamente.", "success");
         fetchMaterias();
         setMateriaToEdit(null);
@@ -334,7 +336,8 @@ function Home({ user }) {
                         type="text"
                         value={editMateriaName}
                         onChange={(e) => setEditMateriaName(e.target.value)}
-                        style={{ flex: 1, padding: '2px' }}
+                        className="edit-materia-input"
+                        style={{ flex: 1 }}
                       />
                       <button onClick={saveEditMateria} style={{ cursor: 'pointer', color: 'green' }}>💾</button>
                       <button onClick={() => setMateriaToEdit(null)} style={{ cursor: 'pointer', color: 'red' }}>❌</button>
@@ -352,15 +355,15 @@ function Home({ user }) {
                       </label>
                       <div className="materia-actions" style={{ display: 'flex', gap: '5px' }}>
                         <button
+                          className="btn-edit-materia"
                           onClick={() => openEditMateria(m)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem' }}
                           title="Editar nombre"
                         >
                           ✏️
                         </button>
                         <button
+                          className="btn-delete-materia-icon"
                           onClick={() => requestDeleteMateria(m)}
-                          style={{ background: 'none', border: 'none', color: '#dc3545', cursor: 'pointer', fontSize: '0.9rem' }}
                           title="Eliminar Materia"
                         >
                           🗑️

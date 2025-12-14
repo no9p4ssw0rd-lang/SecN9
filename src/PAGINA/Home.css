@@ -600,10 +600,74 @@ button {
     font-size: 1.5rem;
 }
 
-.novedad-item p {
-    margin: 0;
+
+/* --- Gestión de Materias (Botones e Inputs) --- */
+.manage-materias-container input {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px 12px !important; /* Forzar padding */
     font-size: 0.95rem;
-    color: var(--text-color);
-    text-align: left;
-    font-weight: 500;
+    outline: none;
+    transition: border-color 0.3s;
+    background-color: #f9f9f9;
+}
+
+.manage-materias-container input:focus {
+    border-color: var(--primary-color);
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+.btn-add-materia {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.btn-add-materia:hover {
+    transform: scale(1.05);
+    background-color: #218838 !important; /* Darker green */
+}
+
+/* Acciones de Materia (Editar/Eliminar) */
+.materia-actions button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%; /* Circulares */
+    transition: all 0.2s ease;
+}
+
+.btn-edit-materia {
+    color: var(--primary-color);
+}
+
+.btn-edit-materia:hover {
+    background-color: rgba(74, 144, 226, 0.1) !important;
+    transform: scale(1.1);
+}
+
+.btn-delete-materia-icon {
+    color: var(--danger-color);
+}
+
+.btn-delete-materia-icon:hover {
+    background-color: rgba(231, 76, 60, 0.1) !important;
+    transform: scale(1.1);
+}
+
+/* Input de edición inline */
+.edit-materia-input {
+    border: 1px solid var(--primary-color);
+    border-radius: 4px;
+    padding: 4px 8px;
+    background-color: #fff;
 }
