@@ -2,13 +2,13 @@ import React, { useEffect, useContext } from "react";
 import { Routes, Route, useNavigate, useLocation, Navigate } from "react-router-dom";
 
 // Componentes y Contexto (Asegúrate de que AuthContext.js y PrivateRoute.js estén en la carpeta PAGINA/)
-import { AuthProvider, AuthContext } from "./PAGINA/AuthContext"; 
-import PrivateRoute from "./PAGINA/PrivateRoute"; 
+import { AuthProvider, AuthContext } from "./PAGINA/AuthContext";
+import PrivateRoute from "./PAGINA/PrivateRoute";
 
 // Componentes de Páginas
-import Home from "./PAGINA/Home"; 
+import Home from "./PAGINA/Home";
 import Login from "./PAGINA/Login";
-import RegisterProfesor from "./PAGINA/RegisterP    rofesor";
+import RegisterProfesor from "./PAGINA/RegisterProfesor";
 import Perfil from "./PAGINA/Perfil";
 import EditarPerfil from "./PAGINA/EditarPerfil";
 import Password from "./PAGINA/Password"; // Usado para restablecer contraseña
@@ -18,8 +18,8 @@ import Trabajos from "./PAGINA/Trabajos";
 import Calificaciones from "./PAGINA/Calificaciones";
 
 // Estilos y logo (Asegúrate de que Home.css esté en PAGINA/ y logo.png en src/)
-import "./PAGINA/Home.css"; 
-import logo from "./logo.png"; 
+import "./PAGINA/Home.css";
+import logo from "./logo.png";
 
 /**
  * Componente principal de la aplicación.
@@ -125,16 +125,16 @@ function App() {
                             <li className="nav-profile">
                                 <img
                                     // Usamos getProfileImageUrl de AuthContext que debe manejar la URL de Cloudinary/servidor
-                                    src={getProfileImageUrl(user.foto)} 
+                                    src={getProfileImageUrl(user.foto)}
                                     alt="Perfil"
                                     className="profile-img-small"
                                     onClick={() => navigate("/perfil")}
                                     style={{ cursor: "pointer" }}
                                 />
                             </li>
-                      
+
                             <li>
-                                
+
                             </li>
                         </>
                     )}
@@ -171,16 +171,16 @@ function App() {
                     {/* Rutas Protegidas (Requieren autenticación) */}
                     <Route path="/perfil" element={<PrivateRoute><Perfil user={user} logout={logout} getProfileImageUrl={getProfileImageUrl} /></PrivateRoute>} />
                     <Route path="/editar-perfil" element={<PrivateRoute><EditarPerfil user={user} /></PrivateRoute>} />
-                    
+
                     {/* Rutas con Rol Específico (Usan el componente PrivateRoute con requiredRole) */}
-                    
+
                     {/* Ruta para Admin y Profesor */}
                     <Route path="/horario" element={<PrivateRoute requiredRole={["admin", "profesor"]}><Horario user={user} /></PrivateRoute>} />
                     <Route path="/grupo" element={<PrivateRoute requiredRole={["admin", "profesor"]}><Grupo user={user} /></PrivateRoute>} />
 
                     {/* Rutas solo para profesores */}
                     <Route path="/trabajos" element={<PrivateRoute requiredRole="profesor"><Trabajos user={user} /></PrivateRoute>} />
-                    
+
                     {/* Rutas solo para admin */}
                     <Route path="/register-profesor" element={<PrivateRoute requiredRole="admin"><RegisterProfesor user={user} /></PrivateRoute>} />
                     <Route path="/calificaciones" element={<PrivateRoute requiredRole="admin"><Calificaciones user={user} /></PrivateRoute>} />
