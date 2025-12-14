@@ -259,9 +259,8 @@ function Home({ user }) {
             </div>
 
             <p className="asignaturas-title"><b>Asignaturas:</b></p>
-<<<<<<< HEAD
 
-  {/* NUEVO: Gestión de Materias (Agregar) */ }
+            {/* NUEVO: Gestión de Materias (Agregar) */}
             <div className="manage-materias-container" style={{ marginBottom: '10px', display: 'flex', gap: '5px' }}>
               <input
                 type="text"
@@ -302,45 +301,31 @@ function Home({ user }) {
               )) : (
                 <p style={{ fontStyle: 'italic', color: '#666' }}>No hay materias registradas.</p>
               )}
-=======
-            <div className="checkbox-group">
-        {materias.map((m) => (
-          <label key={m} className="checkbox-label">
-            <input
-              type="checkbox"
-              value={m}
-              checked={asignaturasSelect.includes(m)}
-              onChange={() => handleAsignaturasChange(m)}
-            />
-            <span>{m}</span>
-          </label>
-        ))}
->>>>>>> 1515380fee8c1c4c33dee499e0b34940fb30e4e8
-      </div>
+            </div>
 
-      <div className="modal-actions">
-        {/* Botones como en el código viejo, con la función explícita para eliminar */}
-        <button className="btn-guardar" onClick={guardarAsignaturas}>Guardar asignaturas</button>
-        {!confirmDeleteVisible && <button className="btn-eliminar" onClick={handleDeleteClick}>Eliminar profesor</button>}
-      </div>
+            <div className="modal-actions">
+              {/* Botones como en el código viejo, con la función explícita para eliminar */}
+              <button className="btn-guardar" onClick={guardarAsignaturas}>Guardar asignaturas</button>
+              {!confirmDeleteVisible && <button className="btn-eliminar" onClick={handleDeleteClick}>Eliminar profesor</button>}
+            </div>
 
-      {/* Confirmación de eliminación (con la estructura del código viejo) */}
-      {confirmDeleteVisible && (
-        <div className="mini-alert">
-          <p>¿Seguro que deseas eliminar a {selectedProfesor.nombre}?</p>
-          <div className="mini-alert-buttons">
-            <button className="mini-alert-yes" onClick={confirmDelete}>Sí, Eliminar</button>
-            <button className="mini-alert-no" onClick={cancelDelete}>No</button>
+            {/* Confirmación de eliminación (con la estructura del código viejo) */}
+            {confirmDeleteVisible && (
+              <div className="mini-alert">
+                <p>¿Seguro que deseas eliminar a {selectedProfesor.nombre}?</p>
+                <div className="mini-alert-buttons">
+                  <button className="mini-alert-yes" onClick={confirmDelete}>Sí, Eliminar</button>
+                  <button className="mini-alert-no" onClick={cancelDelete}>No</button>
+                </div>
+              </div>
+            )}
+
+            {/* Fecha de registro con la clase del código viejo (si aplica) */}
+            <p className="fecha-registro"><b>Fecha de registro:</b> {selectedProfesor.fechaRegistro ? new Date(selectedProfesor.fechaRegistro).toLocaleDateString() : 'N/A'}</p>
           </div>
-        </div>
-      )}
-
-      {/* Fecha de registro con la clase del código viejo (si aplica) */}
-      <p className="fecha-registro"><b>Fecha de registro:</b> {selectedProfesor.fechaRegistro ? new Date(selectedProfesor.fechaRegistro).toLocaleDateString() : 'N/A'}</p>
-    </div>
         </div >
       )
-}
+      }
     </>
   );
 }
