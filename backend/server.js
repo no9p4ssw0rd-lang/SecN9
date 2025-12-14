@@ -14,6 +14,7 @@ import { asistenciaRouter } from "./routes/asistencia.js";
 import { calificacionesRouter } from "./routes/calificaciones.js";
 // <-- AÑADIDO: Importar la nueva ruta para enviar correos -->
 import { emailRouter } from "./routes/emailSender.js";
+import { materiasRouter } from "./routes/materias.js";
 
 // --- CONFIGURACIÓN INICIAL ---
 dotenv.config();
@@ -44,6 +45,7 @@ app.use("/asistencia", asistenciaRouter);
 app.use("/calificaciones", calificacionesRouter);
 // <-- AÑADIDO: Usar la nueva ruta para el envío de boletas -->
 app.use("/api", emailRouter);
+app.use("/api/materias", materiasRouter);
 
 // ----------------- MANEJO DE ERRORES -----------------
 // Middleware para rutas no encontradas (404 Fallback)
