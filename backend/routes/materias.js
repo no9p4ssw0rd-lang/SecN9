@@ -1,5 +1,6 @@
 import express from "express";
 import Materia from "../models/Materia.js";
+import User from "../models/User.js"; // Importar modelo User para actualizaciones en cascada
 import { authMiddleware, isAdmin } from "../middlewares/authMiddleware.js";
 
 const materiasRouter = express.Router();
@@ -47,13 +48,63 @@ materiasRouter.post("/", authMiddleware, isAdmin, async (req, res) => {
     }
 });
 
-// DELETE materia (admin only)
+// PUT update materia (admin only) - CASCADING UPDATE
+materiasRouter.put("/:id", authMiddleware, isAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { nombre } = req.body; // Nuevo nombre
+
+        if (!nombre) return res.status(400).json({ error: "Nombre es requerido" });
+
+        const materia = await Materia.findById(id);
+        if (!materia) return res.status(404).json({ error: "Materia no encontrada" });
+
+        const oldName = materia.nombre;
+
+        // Actualizar el nombre en la colección de Materias
+        materia.nombre = nombre;
+        await materia.save();
+
+        // Actualizar el nombre en todos los usuarios (profesores) que tengan esta materia asignada
+        // Buscamos usuarios que tengan el nombre antiguo en su array 'asignaturas'
+        // y actualizamos ese elemento específico usando el operador posicional $
+        await User.updateMany(
+            { asignaturas: oldName },
+            { $set: { "asignaturas.$": nombre } }
+        );
+
+        res.json({ msg: "Materia actualizada correctamente y sincronizada con profesores", materia });
+    } catch (error) {
+        console.error("Error al actualizar materia:", error);
+        if (error.code === 11000) {
+            return res.status(400).json({ error: "Ya existe una materia con ese nombre" });
+        }
+        res.status(500).json({ error: "Error al actualizar materia" });
+    }
+});
+
+// DELETE materia (admin only) - CASCADING DELETE
 materiasRouter.delete("/:id", authMiddleware, isAdmin, async (req, res) => {
     try {
         const { id } = req.params;
+
+        const materia = await Materia.findById(id);
+        if (!materia) return res.status(404).json({ error: "Materia no encontrada" });
+
+        const materiaName = materia.nombre;
+
+        // Eliminamos la materia de la colección principal
         await Materia.findByIdAndDelete(id);
-        res.json({ msg: "Materia eliminada" });
+
+        // Eliminamos la materia de los arrays 'asignaturas' de todos los profesores
+        await User.updateMany(
+            { asignaturas: materiaName },
+            { $pull: { asignaturas: materiaName } }
+        );
+
+        res.json({ msg: "Materia eliminada y desasignada de todos los profesores" });
     } catch (error) {
+        console.error("Error al eliminar materia:", error);
         res.status(500).json({ error: "Error al eliminar materia" });
     }
 });

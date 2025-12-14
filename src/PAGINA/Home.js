@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "./Home.css";
 import { useNavigate } from "react-router-dom";
+import ConfirmacionModal from "./ConfirmacionModal";
+
 // La URL de tu backend ahora se leerá desde las variables de entorno
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
@@ -56,11 +58,15 @@ function Home({ user }) {
   const [materiasDb, setMateriasDb] = useState([]);
   const [nuevaMateria, setNuevaMateria] = useState("");
 
+  // Estados para Edición/Eliminación de Materias
+  const [materiaToDelete, setMateriaToDelete] = useState(null); // Materia a eliminar
+  const [materiaToEdit, setMateriaToEdit] = useState(null); // Materia a editar (objeto)
+  const [editMateriaName, setEditMateriaName] = useState(""); // Nombre nuevo para edición
+
   const fetchMaterias = () => {
     const token = localStorage.getItem("token");
     axios.get(`${API_URL}/api/materias`, { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => {
-        // Mapeamos solo el nombre para compatibilidad con el código existente, pero idealmente usaríamos el objeto completo
         setMateriasDb(res.data || []);
       })
       .catch((err) => console.error("Error al cargar materias:", err));
@@ -76,6 +82,45 @@ function Home({ user }) {
         fetchMaterias();
       })
       .catch((err) => mostrarAlerta(err.response?.data?.error || "Error al agregar materia.", "error"));
+  };
+
+  // --- Lógica de Eliminación (con Modal) ---
+  const requestDeleteMateria = (materia) => {
+    setMateriaToDelete(materia);
+  };
+
+  const confirmDeleteMateria = () => {
+    if (!materiaToDelete) return;
+    const token = localStorage.getItem("token");
+    axios.delete(`${API_URL}/api/materias/${materiaToDelete._id}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(() => {
+        mostrarAlerta("Materia eliminada y desasignada.", "success");
+        fetchMaterias();
+        setMateriaToDelete(null);
+      })
+      .catch((err) => {
+        mostrarAlerta("Error al eliminar materia.", "error");
+        setMateriaToDelete(null);
+      });
+  };
+
+  // --- Lógica de Edición ---
+  const openEditMateria = (materia) => {
+    setMateriaToEdit(materia);
+    setEditMateriaName(materia.nombre);
+  };
+
+  const saveEditMateria = () => {
+    if (!materiaToEdit || !editMateriaName.trim()) return;
+    const token = localStorage.getItem("token");
+    axios.put(`${API_URL}/api/materias/${materiaToEdit._id}`, { nombre: editMateriaName.toUpperCase() }, { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => {
+        mostrarAlerta("Materia actualizada correctamente.", "success");
+        fetchMaterias();
+        setMateriaToEdit(null);
+        setEditMateriaName("");
+      })
+      .catch((err) => mostrarAlerta(err.response?.data?.error || "Error al actualizar materia.", "error"));
   };
 
   const handleDeleteMateria = (id) => {
@@ -273,6 +318,7 @@ function Home({ user }) {
                 className="btn-add-materia"
                 onClick={handleAddMateria}
                 style={{ padding: '5px 10px', background: '#28a745', color: 'white', border: 'none', cursor: 'pointer' }}
+                title="Agregar Materia"
               >
                 +
               </button>
@@ -281,27 +327,62 @@ function Home({ user }) {
             <div className="checkbox-group" style={{ maxHeight: '200px', overflowY: 'auto' }}>
               {materiasDb.length > 0 ? materiasDb.map((m) => (
                 <div key={m._id} className="checkbox-item" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginRight: '10px' }}>
-                  <label className="checkbox-label" style={{ flex: 1 }}>
-                    <input
-                      type="checkbox"
-                      value={m.nombre}
-                      checked={asignaturasSelect.includes(m.nombre)}
-                      onChange={() => handleAsignaturasChange(m.nombre)}
-                    />
-                    <span>{m.nombre}</span>
-                  </label>
-                  <button
-                    onClick={() => handleDeleteMateria(m._id)}
-                    style={{ background: 'none', border: 'none', color: '#dc3545', cursor: 'pointer', fontSize: '0.8rem' }}
-                    title="Eliminar Materia"
-                  >
-                    🗑️
-                  </button>
+                  {/* Si se está editando ESTA materia, mostrar input */}
+                  {materiaToEdit && materiaToEdit._id === m._id ? (
+                    <div style={{ display: 'flex', flex: 1, gap: '5px' }}>
+                      <input
+                        type="text"
+                        value={editMateriaName}
+                        onChange={(e) => setEditMateriaName(e.target.value)}
+                        style={{ flex: 1, padding: '2px' }}
+                      />
+                      <button onClick={saveEditMateria} style={{ cursor: 'pointer', color: 'green' }}>💾</button>
+                      <button onClick={() => setMateriaToEdit(null)} style={{ cursor: 'pointer', color: 'red' }}>❌</button>
+                    </div>
+                  ) : (
+                    <>
+                      <label className="checkbox-label" style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                        <input
+                          type="checkbox"
+                          value={m.nombre}
+                          checked={asignaturasSelect.includes(m.nombre)}
+                          onChange={() => handleAsignaturasChange(m.nombre)}
+                        />
+                        <span style={{ marginLeft: '5px' }}>{m.nombre}</span>
+                      </label>
+                      <div className="materia-actions" style={{ display: 'flex', gap: '5px' }}>
+                        <button
+                          onClick={() => openEditMateria(m)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem' }}
+                          title="Editar nombre"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => requestDeleteMateria(m)}
+                          style={{ background: 'none', border: 'none', color: '#dc3545', cursor: 'pointer', fontSize: '0.9rem' }}
+                          title="Eliminar Materia"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               )) : (
                 <p style={{ fontStyle: 'italic', color: '#666' }}>No hay materias registradas.</p>
               )}
             </div>
+
+            {/* Modal de confirmación para eliminar materia */}
+            <ConfirmacionModal
+              isOpen={!!materiaToDelete}
+              onClose={() => setMateriaToDelete(null)}
+              onConfirm={confirmDeleteMateria}
+              mensaje={`¿Estás seguro de que deseas eliminar la materia "${materiaToDelete?.nombre}"? Esta acción la eliminará también de todos los profesores asignados.`}
+              confirmText="Sí, Eliminar"
+              cancelText="Cancelar"
+            />
 
             <div className="modal-actions">
               {/* Botones como en el código viejo, con la función explícita para eliminar */}
