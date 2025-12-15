@@ -10,7 +10,8 @@ import ConfirmacionModal from './ConfirmacionModal';
 import logoImage from './Logoescuela.png'; // Asegúrate que esta ruta sea correcta
 
 // --- URL de la API desde variables de entorno para Vercel ---
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+// CORRECCIÓN: Eliminado '/api' para coincidir con Home.js y la estructura del backend
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 // --- CONSTANTES DE CONFIGURACIÓN ---
 const NUM_BIMESTRES = 3;
@@ -20,6 +21,7 @@ function Grupo({ user }) {
   // --- ESTADOS ---
   const [grupos, setGrupos] = useState([]);
   const [profesores, setProfesores] = useState([]);
+  const [materiasDb, setMateriasDb] = useState([]); // NUEVO: Estado para materias globales
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modalVisible, setModalVisible] = useState(null);
@@ -48,12 +50,14 @@ function Grupo({ user }) {
       const axiosConfig = { headers: { Authorization: `Bearer ${token}` } };
       try {
         if (user.role === 'admin') {
-          const [gruposRes, profesoresRes] = await Promise.all([
+          const [gruposRes, profesoresRes, materiasRes] = await Promise.all([
             axios.get(`${API_URL}/grupos`, axiosConfig),
-            axios.get(`${API_URL}/profesores`, axiosConfig)
+            axios.get(`${API_URL}/profesores`, axiosConfig),
+            axios.get(`${API_URL}/api/materias`, axiosConfig) // NUEVO: Fetch materias
           ]);
           setGrupos(gruposRes.data);
           setProfesores(profesoresRes.data);
+          setMateriasDb(materiasRes.data || []); // Guardar materias
         } else if (user.role === 'profesor') {
           const gruposRes = await axios.get(`${API_URL}/grupos/mis-grupos`, axiosConfig);
           setGrupos(gruposRes.data);
@@ -794,9 +798,17 @@ function Grupo({ user }) {
                         defaultValue=""
                       >
                         <option value="" disabled>Agregar asignatura...</option>
-                        {profesor.asignaturas.map(asig => (
-                          <option key={asig} value={asig}>{asig}</option>
-                        ))}
+                        {/* Usamos materiasDb para mostrar TODAS las materias disponibles, no solo las del profesor */}
+                        {materiasDb && materiasDb.length > 0 ? (
+                          materiasDb.map(m => (
+                            <option key={m._id} value={m.nombre}>{m.nombre}</option>
+                          ))
+                        ) : (
+                          // Fallback por si acaso falla la carga o no hay materias
+                          profesor.asignaturas.map(asig => (
+                            <option key={asig} value={asig}>{asig}</option>
+                          ))
+                        )}
                       </select>
                     </div>
                   </div>
