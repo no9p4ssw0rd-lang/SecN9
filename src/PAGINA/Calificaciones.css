@@ -224,29 +224,33 @@
 /* 3. PROMEDIO TRIMESTRAL BLOCK (Width: 3*50 = 150px, Right: 200px) */
 
 /* Header Row 1: "PROMEDIO TRIMESTRAL" (Colspan 3) */
+/* Header Row 1: "PROMEDIO TRIMESTRAL" (Colspan 3) */
 .calificaciones-table thead tr:first-child th.promedio-header {
   position: sticky !important;
   right: 200px;
-  z-index: 60 !important;
-  /* Boosted */
-  border-left: 2px solid #aaa !important;
-  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+  width: 153px !important;
+  /* 50*3 + borders? No, simply 150px border-box. Let's start with 150. */
   width: 150px !important;
   min-width: 150px !important;
   max-width: 150px !important;
+  z-index: 60 !important;
+  border-left: 1px solid #aaa !important;
+  /* Reduced border width to avoid overflow issues */
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
 }
 
+/* Header Row 2: T1, T2, T3 sub-headers */
 /* Header Row 2: T1, T2, T3 sub-headers */
 .calificaciones-table thead tr:nth-child(2) th:nth-last-child(1) {
   /* T3 */
   position: sticky !important;
   right: 200px;
   z-index: 60;
-  /* Boosted */
   width: 50px !important;
+  min-width: 50px !important;
+  max-width: 50px !important;
   background-color: #c0392b !important;
   color: white !important;
-  opacity: 1 !important;
 }
 
 .calificaciones-table thead tr:nth-child(2) th:nth-last-child(2) {
@@ -254,11 +258,11 @@
   position: sticky !important;
   right: 250px;
   z-index: 60;
-  /* Boosted */
   width: 50px !important;
+  min-width: 50px !important;
+  max-width: 50px !important;
   background-color: #c0392b !important;
   color: white !important;
-  opacity: 1 !important;
 }
 
 .calificaciones-table thead tr:nth-child(2) th:nth-last-child(3) {
@@ -266,23 +270,26 @@
   position: sticky !important;
   right: 300px;
   z-index: 60;
-  /* Boosted */
   width: 50px !important;
-  border-left: 2px solid #aaa !important;
+  min-width: 50px !important;
+  max-width: 50px !important;
+  border-left: 1px solid #aaa !important;
+  /* Match border width */
   box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
   background-color: #c0392b !important;
   color: white !important;
-  opacity: 1 !important;
 }
 
+/* Body Cells: Promedio T1, T2, T3 */
 /* Body Cells: Promedio T1, T2, T3 */
 .calificaciones-table tbody td:nth-last-child(3) {
   /* Prom T3 */
   position: sticky !important;
   right: 200px;
   z-index: 50;
-  /* Boosted */
   width: 50px !important;
+  min-width: 50px !important;
+  max-width: 50px !important;
   background-color: #f9ebea;
 }
 
@@ -291,8 +298,9 @@
   position: sticky !important;
   right: 250px;
   z-index: 50;
-  /* Boosted */
   width: 50px !important;
+  min-width: 50px !important;
+  max-width: 50px !important;
   background-color: #f9ebea;
 }
 
@@ -301,10 +309,11 @@
   position: sticky !important;
   right: 300px;
   z-index: 50;
-  /* Boosted */
   width: 50px !important;
+  min-width: 50px !important;
+  max-width: 50px !important;
   background-color: #f9ebea;
-  border-left: 2px solid #aaa !important;
+  border-left: 1px solid #aaa !important;
   box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
 }
 
