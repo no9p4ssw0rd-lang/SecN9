@@ -655,7 +655,8 @@ function Grupo({ user }) {
                       {grupo.profesoresAsignados && grupo.profesoresAsignados.length > 0
                         ? <ul className="asignacion-lista">
                           {[...grupo.profesoresAsignados]
-                            .sort((a, b) => a.asignatura.localeCompare(b.asignatura)) /* Ordenar por materia */
+                            .filter(asig => materiasDb.length === 0 || materiasDb.some(m => m.nombre === asig.asignatura)) // Filtrar si hay DB
+                            .sort((a, b) => a.asignatura.localeCompare(b.asignatura))
                             .map((asig, index) => (
                               <li key={index}>
                                 {asig.profesor?.nombre || 'Profesor Eliminado'}
@@ -781,12 +782,14 @@ function Grupo({ user }) {
                       <strong>{profesor.nombre}</strong>
                     </div>
                     <div className="asignaturas-asignadas">
-                      {asignaciones[profesor._id] && asignaciones[profesor._id].map((asig, idx) => (
-                        <div key={idx} className="asignatura-tag">
-                          {asig}
-                          <button className="btn-remove-tag" onClick={() => handleRemoveAsignatura(profesor._id, asig)}><FaTimes /></button>
-                        </div>
-                      ))}
+                      {asignaciones[profesor._id] && asignaciones[profesor._id]
+                        .filter(asig => materiasDb.length === 0 || materiasDb.some(m => m.nombre === asig)) // Filtrar visibles
+                        .map((asig, idx) => (
+                          <div key={idx} className="asignatura-tag">
+                            {asig}
+                            <button className="btn-remove-tag" onClick={() => handleRemoveAsignatura(profesor._id, asig)}><FaTimes /></button>
+                          </div>
+                        ))}
                     </div>
                     <div className="add-asignatura-container">
                       <select
@@ -800,9 +803,11 @@ function Grupo({ user }) {
                         <option value="" disabled>Agregar asignatura...</option>
                         {/* REVERTIDO: Solo mostrar las materias asignadas al perfil del profesor seleccionado */}
                         {profesor.asignaturas && profesor.asignaturas.length > 0 ? (
-                          profesor.asignaturas.map(asig => (
-                            <option key={asig} value={asig}>{asig}</option>
-                          ))
+                          profesor.asignaturas
+                            .filter(asig => materiasDb.length === 0 || materiasDb.some(m => m.nombre === asig)) // Filtrar
+                            .map(asig => (
+                              <option key={asig} value={asig}>{asig}</option>
+                            ))
                         ) : (
                           <option disabled>Este profesor no tiene materias asignadas</option>
                         )}
