@@ -21,8 +21,11 @@ function SortableHeader({ id, children, disabled }) {
     color: isDragging ? 'white' : undefined,
     zIndex: isDragging ? 100 : undefined,
     position: 'relative',
-    minWidth: '105px', // Ajustado a 105px (3 * 35px) para ahorrar espacio
-    border: isDragging ? '2px dashed #f1c40f' : '1px solid #dfe6e9', // Borde dorado al arrastrar
+    // Removed fixed minWidth to allow CSS to control it better, or use auto. 
+    // The CSS defines 35px for sub-columns (grades), but this is a main column.
+    // Let's set it to 'auto' or match the table style unless dragging.
+    minWidth: isDragging ? '105px' : 'auto',
+    border: isDragging ? '2px dashed #f1c40f' : (disabled ? undefined : '1px solid #dfe6e9'),
     opacity: isDragging ? 0.9 : 1
   };
 
