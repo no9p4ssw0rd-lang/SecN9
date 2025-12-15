@@ -69,7 +69,6 @@ function Calificaciones({ user }) {
   const [error, setError] = useState(null);
   const [modalPdf, setModalPdf] = useState({ visible: false, alumno: null });
   const [modalShare, setModalShare] = useState({ visible: false, alumno: null });
-
   const [notificacion, setNotificacion] = useState({ visible: false, mensaje: '', tipo: '' });
   const [isEditing, setIsEditing] = useState(false); // Estado para controlar el modo edición
 
@@ -180,14 +179,27 @@ function Calificaciones({ user }) {
     }
   };
 
+  // Helper para "suelo" de calificación en 5
+  // Si es null o 0 (sin calificar), se queda igual.
+  // Si está entre 0.1 y 4.9, sube a 5.
+  const clampGrade = (grade) => {
+    if (typeof grade !== 'number') return null;
+    if (grade > 0 && grade < 5) return 5;
+    return grade;
+  };
+
   const calcularPromedioBimestre = (alumnoId, bimestreIndex) => {
     const alumnoCal = calificaciones[alumnoId];
     if (!alumnoCal) return 0;
     let suma = 0;
     let count = 0;
     materias.forEach(materia => {
-      if (alumnoCal[materia] && typeof alumnoCal[materia][bimestreIndex] === 'number') {
-        suma += alumnoCal[materia][bimestreIndex];
+      // Usamos clampGrade antes de sumar
+      const rawCal = alumnoCal[materia] && alumnoCal[materia][bimestreIndex];
+      const cal = clampGrade(rawCal);
+
+      if (typeof cal === 'number' && cal > 0) {
+        suma += cal;
         count++;
       }
     });
@@ -198,9 +210,10 @@ function Calificaciones({ user }) {
     let sumaDePromedios = 0;
     let bimestresConCalificacion = 0;
     for (let i = 0; i < 3; i++) {
+      // calcularPromedioBimestre ya devuelve un valor redondeado (y clamp implicitamente si sus inputs lo son, pero aseguramos)
       const promedioBim = calcularPromedioBimestre(alumnoId, i);
       if (promedioBim > 0) {
-        sumaDePromedios += promedioBim;
+        sumaDePromedios += (promedioBim < 5 ? 5 : promedioBim);
         bimestresConCalificacion++;
       }
     }
@@ -297,7 +310,6 @@ function Calificaciones({ user }) {
 
     return doc.output('datauristring');
   };
-  // ... resto del componente Calificaciones
 
   const generatePdfConsolidado = async () => {
     const doc = new jsPDF({ orientation: 'landscape' });
@@ -498,7 +510,8 @@ function Calificaciones({ user }) {
                         {materias.map(materia => (
                           <React.Fragment key={`${alumno._id}-${materia}`}>
                             {[0, 1, 2].map(bimestreIndex => {
-                              const cal = calificaciones[alumno._id]?.[materia]?.[bimestreIndex];
+                              const rawCal = calificaciones[alumno._id]?.[materia]?.[bimestreIndex];
+                              const cal = clampGrade(rawCal);
                               return (
                                 <td key={`${materia}-b${bimestreIndex}`} className={typeof cal === 'number' ? (cal < 6 ? 'reprobado' : 'aprobado') : ''}>
                                   {cal != null ? cal.toFixed(1) : '-'}
