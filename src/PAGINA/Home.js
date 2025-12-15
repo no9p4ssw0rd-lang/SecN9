@@ -98,6 +98,7 @@ function Home({ user }) {
         // FIX: Eliminar la materia de la selección local inmediatamente
         setAsignaturasSelect((prev) => prev.filter((m) => m !== materiaToDelete.nombre));
         fetchMaterias();
+        fetchProfesores(); // FIX: Refrescar profesores para reflejar la eliminación
         setMateriaToDelete(null);
       })
       .catch((err) => {
@@ -119,6 +120,7 @@ function Home({ user }) {
       .then(() => {
         mostrarAlerta("Materia actualizada correctamente.", "success");
         fetchMaterias();
+        fetchProfesores(); // FIX: Refrescar profesores para reflejar el cambio de nombre
         setMateriaToEdit(null);
         setEditMateriaName("");
       })

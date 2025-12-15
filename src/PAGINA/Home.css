@@ -373,6 +373,10 @@ button {
     margin-bottom: 2rem;
     padding-right: 10px;
     /* Espacio para scrollbar */
+    max-height: 400px;
+    /* Aumentado para ver más materias */
+    overflow-y: auto;
+    /* Scroll vertical */
 }
 
 .checkbox-label {
