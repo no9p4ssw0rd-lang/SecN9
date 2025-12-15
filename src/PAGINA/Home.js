@@ -18,13 +18,7 @@ function Home({ user }) {
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
   const [alerta, setAlerta] = useState(null); // Nuevo estado para alertas
 
-  const materias = [
-    "ESPAÑOL I", "ESPAÑOL II", "ESPAÑOL III", "INGLES I", "INGLES II", "INGLES III", "ARTES I", "ARTES II", "ARTES III",
-    "MATEMATICAS I", "MATEMATICAS II", "MATEMATICAS III", "BIOLOGIA I", "FISICA II", "QUIMICA III", "GEOGRAFIA I",
-    , "HISTORIA I", "HISTORIA II", "HISTORIA III", "FORMACION CIVICA Y ETICA I", "FORMACION CIVICA Y ETICA II", "FORMACION CIVICA Y ETICA III",
-    "TECNOLOGIA I", "TECNOLOGIA II", " TECNOLOGIA III", "EDUCACION FISICA I", "EDUCACION FISICA II", "EDUCACION FISICA III", "INTEGRACION CURRICULAR I", "INTEGRACION CURRICULAR II", "INTEGRACION CURRICULAR III"
-    , "TUTORIA I", "TUTORIA II", "TUTORIA III",
-  ];
+
 
   const mostrarAlerta = (mensaje, tipo = "success") => {
     setAlerta({ mensaje, tipo });
