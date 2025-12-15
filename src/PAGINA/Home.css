@@ -362,16 +362,17 @@ button {
 /* SOLUCIÓN AL PROBLEMA DE DESBORDAMIENTO EN ASIGNATURAS */
 /* Se cambia de 'grid' a 'flex' con 'flex-wrap' para que fluyan correctamente */
 /* ----------------------------------------------------------------- */
+
+/* SOLUCIÓN AL PROBLEMA DE DESBORDAMIENTO EN ASIGNATURAS */
+/* Se cambia a display block para lista vertical y scroll más limpio */
 .checkbox-group {
     display: flex;
-    /* CAMBIADO */
-    flex-wrap: wrap;
-    /* AGREGADO para que pasen a la siguiente línea */
-    justify-content: flex-start;
-    gap: 10px 15px;
-    /* Espaciado entre items */
-    text-align: left;
+    flex-direction: column;
+    /* Lista vertical */
+    gap: 10px;
     margin-bottom: 2rem;
+    padding-right: 10px;
+    /* Espacio para scrollbar */
 }
 
 .checkbox-label {
@@ -380,8 +381,12 @@ button {
     gap: 8px;
     font-size: 0.9rem;
     color: var(--text-color-dark);
-    white-space: nowrap;
-    /* Evita que el nombre de la asignatura se rompa */
+    white-space: normal;
+    /* Permitir salto de línea si el nombre es muy largo */
+    overflow-wrap: break-word;
+    /* Romper palabras largas si es necesario */
+    flex: 1;
+    /* Ocupar el espacio disponible */
 }
 
 .modal-actions {
@@ -605,7 +610,8 @@ button {
 .manage-materias-container input {
     border: 1px solid var(--border-color);
     border-radius: 6px;
-    padding: 8px 12px !important; /* Forzar padding */
+    padding: 8px 12px !important;
+    /* Forzar padding */
     font-size: 0.95rem;
     outline: none;
     transition: border-color 0.3s;
@@ -632,7 +638,8 @@ button {
 
 .btn-add-materia:hover {
     transform: scale(1.05);
-    background-color: #218838 !important; /* Darker green */
+    background-color: #218838 !important;
+    /* Darker green */
 }
 
 /* Acciones de Materia (Editar/Eliminar) */
@@ -642,7 +649,8 @@ button {
     justify-content: center;
     width: 30px;
     height: 30px;
-    border-radius: 50%; /* Circulares */
+    border-radius: 50%;
+    /* Circulares */
     transition: all 0.2s ease;
 }
 

@@ -798,16 +798,13 @@ function Grupo({ user }) {
                         defaultValue=""
                       >
                         <option value="" disabled>Agregar asignatura...</option>
-                        {/* Usamos materiasDb para mostrar TODAS las materias disponibles, no solo las del profesor */}
-                        {materiasDb && materiasDb.length > 0 ? (
-                          materiasDb.map(m => (
-                            <option key={m._id} value={m.nombre}>{m.nombre}</option>
-                          ))
-                        ) : (
-                          // Fallback por si acaso falla la carga o no hay materias
+                        {/* REVERTIDO: Solo mostrar las materias asignadas al perfil del profesor seleccionado */}
+                        {profesor.asignaturas && profesor.asignaturas.length > 0 ? (
                           profesor.asignaturas.map(asig => (
                             <option key={asig} value={asig}>{asig}</option>
                           ))
+                        ) : (
+                          <option disabled>Este profesor no tiene materias asignadas</option>
                         )}
                       </select>
                     </div>
