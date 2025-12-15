@@ -131,20 +131,20 @@ const CriterioCell = React.memo(({
         `Tarea ${tareaIndex + 1}: ${fechaFormatted}`;
 
     return (
-        type = "number"
-            min = "5" max = "10" step = "0.1"
-    className = "cuadrito-calificacion"
-    placeholder = {`${tareaIndex + 1}`
-}
-            value = { tareaData.nota ?? '' }
-            title = { tooltipText }
-            onChange = { handleChange }
-            onBlur = {() => {
-    // Validación al perder foco: Si es número válido y < 5, ajustar a 5
-    if (typeof tareaData.nota === 'number' && tareaData.nota < 5) {
-        handleCalificacionChange(alumnoId, bimestreActivo, criterioNombre, tareaIndex, 5);
-    }
-}}
+        <input
+            type="number"
+            min="5" max="10" step="0.1"
+            className="cuadrito-calificacion"
+            placeholder={`${tareaIndex + 1}`}
+            value={tareaData.nota ?? ''}
+            title={tooltipText}
+            onChange={handleChange}
+            onBlur={() => {
+                // Validación al perder foco: Si es número válido y < 5, ajustar a 5
+                if (typeof tareaData.nota === 'number' && tareaData.nota < 5) {
+                    handleCalificacionChange(alumnoId, bimestreActivo, criterioNombre, tareaIndex, 5);
+                }
+            }}
         />
     );
 });
