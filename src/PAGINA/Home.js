@@ -151,162 +151,222 @@ function Home({ user }) {
   // ... (otros handlers)
 
   // --- JSX del Modal ---
-  {/* MODAL PROFESOR (Estructura del código viejo) */ }
-  {
-    modalVisible && selectedProfesor && (
-      <div className="modal-overlay" onClick={closeModal}>
-        <div className={`modal-content ${showSubjects ? 'expanded' : ''}`} onClick={(e) => e.stopPropagation()}>
-          <button className="modal-close" onClick={closeModal}>&times;</button>
-          <div className="modal-body-grid">
+  const primerNombre = user?.nombre ? user.nombre.split(" ")[0] : "";
 
-            {/* Columna Izquierda: Perfil */}
-            <div className="modal-left-column">
-              <img
-                src={profileImgUrl(selectedProfesor.foto)}
-                alt={selectedProfesor.nombre}
-                className="profile-img-modal"
-              />
-              <h3>{selectedProfesor.nombre}</h3>
+  return (
+    <>
+      {alerta && <div className={`alerta-fixed ${alerta.tipo}`}>{alerta.mensaje}</div>}
 
-              <div className="profesor-details" style={{ width: '100%', textAlign: 'left' }}>
-                <p><b>Correo:</b> {selectedProfesor.email}</p>
-                <p><b>Celular:</b> {selectedProfesor.celular}</p>
-                <p><b>Registro:</b> {selectedProfesor.fechaRegistro ? new Date(selectedProfesor.fechaRegistro).toLocaleDateString() : 'N/A'}</p>
-              </div>
-
-              <div style={{ width: '100%', marginTop: '1rem', textAlign: 'left' }}>
-                <h4>Asignaturas Actuales:</h4>
-                {asignaturasSelect.length > 0 ? (
-                  <ul style={{ listStyleType: 'disc', paddingLeft: '20px', fontSize: '0.9rem', marginBottom: '1rem' }}>
-                    {asignaturasSelect.map(a => <li key={a}>{a}</li>)}
-                  </ul>
-                ) : (
-                  <p style={{ fontSize: '0.9rem', color: '#777', marginBottom: '1rem' }}>Ninguna asignatura asignada.</p>
-                )}
-              </div>
-
-              {/* Botón para expandir si NO está expandido */}
-              {!showSubjects && (
-                <button className="btn-open-gestion" onClick={() => setShowSubjects(true)}>
-                  Gestión de Materias
-                </button>
+      <section className="home section" id="home">
+        <div className="home-container container grid">
+          <div className="home-data">
+            <h1 className="home-title">
+              {user ? (
+                <>Bienvenido <span className="user-name-gold">{primerNombre}</span> al sistema de <span>gestión académica</span></>
+              ) : (
+                <>Bienvenido al sistema de <span>gestión académica</span></>
               )}
-            </div>
+            </h1>
+            {!user && <p>Por favor inicia sesión para acceder a todas las funciones.</p>}
+          </div>
+        </div>
+      </section>
 
-            {/* Columna Derecha: Gestión (Solo visible si showSubjects es true por CSS) */}
-            <div className="modal-right-column">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <p className="asignaturas-title"><b>CATÁLOGO DE MATERIAS</b></p>
-                <button onClick={() => setShowSubjects(false)} style={{ background: 'none', border: '1px solid #ccc', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer' }}>
-                  Cerrar Gestión
-                </button>
-              </div>
+      {!user && (
+        <section className="novedades section" id="novedades">
+          <h2 className="section-title">Últimas Actualizaciones</h2>
+          <div className="novedades-container container">
+            <div className="novedad-item"><span className="novedad-icon">📅</span><p>Edición de Asistencia: Fechas y Justificaciones</p></div>
+            <div className="novedad-item"><span className="novedad-icon">📊</span><p>Gestión de Calificaciones: Redondeo y PDF</p></div>
+            <div className="novedad-item"><span className="novedad-icon">🗑️</span><p>Limpieza de Datos: Reinicio seguro</p></div>
+            <div className="novedad-item"><span className="novedad-icon">🎨</span><p>Interfaz Mejorada: Tooltips y Modales</p></div>
+          </div>
+        </section>
+      )}
 
-              <p style={{ marginBottom: '10px', fontSize: '0.9rem', color: '#555' }}>Selecciona las materias del catálogo:</p>
+      {user?.role === "admin" && (
+        <section className="profesores section" id="profesores">
+          <h2 className="section-title">Perfiles de Profesores</h2>
+          <div className="profesores-table-container">
+            <table className="profesores-table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Asignaturas</th>
+                  <th>Fecha de Registro</th>
+                  <th>Perfil</th>
+                </tr>
+              </thead>
+              <tbody>
+                {profesores.length > 0 ? profesores.map((prof) => (
+                  <tr key={prof._id}>
+                    <td>{prof.nombre}</td>
+                    <td>{prof.asignaturas?.join(", ") || "No asignada"}</td>
+                    <td>{prof.fechaRegistro ? new Date(prof.fechaRegistro).toLocaleDateString() : 'N/A'}</td>
+                    <td><button className="btn-ver-perfil" onClick={() => openModal(prof)}>Ver perfil</button></td>
+                  </tr>
+                )) : <tr><td colSpan="4">Cargando profesores...</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
-              {/* Gestión de Materias (Agregar) */}
-              <div className="manage-materias-container">
-                <input
-                  type="text"
-                  placeholder="Nueva Materia..."
-                  value={nuevaMateria}
-                  onChange={(e) => setNuevaMateria(e.target.value)}
+      {/* MODAL PROFESOR */}
+      {modalVisible && selectedProfesor && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className={`modal-content ${showSubjects ? 'expanded' : ''}`} onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={closeModal}>&times;</button>
+            <div className="modal-body-grid">
+
+              {/* Columna Izquierda: Perfil */}
+              <div className="modal-left-column">
+                <img
+                  src={profileImgUrl(selectedProfesor.foto)}
+                  alt={selectedProfesor.nombre}
+                  className="profile-img-modal"
                 />
-                <button className="btn-add-materia" onClick={handleAddMateria} title="Agregar Materia">+</button>
-              </div>
+                <h3>{selectedProfesor.nombre}</h3>
 
-              {/* GRID de Materias (Horizontal) */}
-              <div className="subject-grid">
-                {materiasDb.length > 0 ? materiasDb.map((m) => (
-                  <div key={m._id} className="checkbox-item">
-                    {materiaToEdit && materiaToEdit._id === m._id ? (
-                      <div style={{ display: 'flex', flex: 1, gap: '5px' }}>
-                        <input
-                          type="text"
-                          value={editMateriaName}
-                          onChange={(e) => setEditMateriaName(e.target.value)}
-                          className="edit-materia-input"
-                          style={{ width: '100%' }}
-                        />
-                        <button onClick={saveEditMateria} style={{ cursor: 'pointer', color: 'green' }}>💾</button>
-                        <button onClick={() => setMateriaToEdit(null)} style={{ cursor: 'pointer', color: 'red' }}>❌</button>
-                      </div>
-                    ) : (
-                      <>
-                        <label className="checkbox-label" style={{ flex: 1, display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                          <input
-                            type="checkbox"
-                            value={m.nombre}
-                            checked={asignaturasSelect.includes(m.nombre)}
-                            onChange={() => handleAsignaturasChange(m.nombre)}
-                            style={{ transform: 'scale(1.2)', marginRight: '10px' }}
-                          />
-                          <span style={{ fontSize: '0.9rem', wordBreak: 'break-word' }}>{m.nombre}</span>
-                        </label>
-                        <div className="materia-actions" style={{ display: 'flex', gap: '5px' }}>
-                          <button
-                            className="btn-edit-materia"
-                            onClick={() => openEditMateria(m)}
-                            title="Editar"
-                            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-                          >
-                            ✏️
-                          </button>
-                          <button
-                            className="btn-delete-materia-icon"
-                            onClick={() => requestDeleteMateria(m)}
-                            title="Eliminar"
-                            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )) : (
-                  <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: '#666' }}>
-                    <p>No hay materias registradas.</p>
-                  </div>
+                <div className="profesor-details" style={{ width: '100%', textAlign: 'left' }}>
+                  <p><b>Correo:</b> {selectedProfesor.email}</p>
+                  <p><b>Celular:</b> {selectedProfesor.celular}</p>
+                  {/* <p><b>Edad:</b> {selectedProfesor.edad}</p> */}
+                  {/* <p><b>Sexo:</b> {selectedProfesor.sexo}</p> */}
+                  <p><b>Registro:</b> {selectedProfesor.fechaRegistro ? new Date(selectedProfesor.fechaRegistro).toLocaleDateString() : 'N/A'}</p>
+                </div>
+
+                <div style={{ width: '100%', marginTop: '1rem', textAlign: 'left' }}>
+                  <h4>Asignaturas Actuales:</h4>
+                  {asignaturasSelect.length > 0 ? (
+                    <ul style={{ listStyleType: 'disc', paddingLeft: '20px', fontSize: '0.9rem', marginBottom: '1rem' }}>
+                      {asignaturasSelect.map(a => <li key={a}>{a}</li>)}
+                    </ul>
+                  ) : (
+                    <p style={{ fontSize: '0.9rem', color: '#777', marginBottom: '1rem' }}>Ninguna asignatura asignada.</p>
+                  )}
+                </div>
+
+                {/* Botón para expandir si NO está expandido */}
+                {!showSubjects && (
+                  <button className="btn-open-gestion" onClick={() => setShowSubjects(true)}>
+                    Gestión de Materias
+                  </button>
                 )}
               </div>
-            </div>
-          </div>
 
+              {/* Columna Derecha: Gestión (Solo visible si showSubjects es true por CSS) */}
+              <div className="modal-right-column">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <p className="asignaturas-title"><b>CATÁLOGO DE MATERIAS</b></p>
+                  <button onClick={() => setShowSubjects(false)} style={{ background: 'none', border: '1px solid #ccc', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer' }}>
+                    Cerrar Gestión
+                  </button>
+                </div>
 
-          {/* Modal de confirmación para eliminar materia */}
-          <ConfirmacionModal
-            isOpen={!!materiaToDelete}
-            onClose={() => setMateriaToDelete(null)}
-            onConfirm={confirmDeleteMateria}
-            mensaje={`¿Estás seguro de que deseas eliminar la materia "${materiaToDelete?.nombre}"? Esta acción la eliminará también de todos los profesores asignados.`}
-            confirmText="Sí, Eliminar"
-            cancelText="Cancelar"
-          />
+                <p style={{ marginBottom: '10px', fontSize: '0.9rem', color: '#555' }}>Selecciona las materias del catálogo:</p>
 
-          <div className="modal-actions">
-            {/* Botones como en el código viejo, con la función explícita para eliminar */}
-            <button className="btn-guardar" onClick={guardarAsignaturas}>Guardar asignaturas</button>
-            {!confirmDeleteVisible && <button className="btn-eliminar" onClick={handleDeleteClick}>Eliminar profesor</button>}
-          </div>
+                {/* Gestión de Materias (Agregar) */}
+                <div className="manage-materias-container">
+                  <input
+                    type="text"
+                    placeholder="Nueva Materia..."
+                    value={nuevaMateria}
+                    onChange={(e) => setNuevaMateria(e.target.value)}
+                  />
+                  <button className="btn-add-materia" onClick={handleAddMateria} title="Agregar Materia">+</button>
+                </div>
 
-          {/* Confirmación de eliminación (con la estructura del código viejo) */}
-          {confirmDeleteVisible && (
-            <div className="mini-alert">
-              <p>¿Seguro que deseas eliminar a {selectedProfesor.nombre}?</p>
-              <div className="mini-alert-buttons">
-                <button className="mini-alert-yes" onClick={confirmDelete}>Sí, Eliminar</button>
-                <button className="mini-alert-no" onClick={cancelDelete}>No</button>
+                {/* GRID de Materias (Horizontal) */}
+                <div className="subject-grid">
+                  {materiasDb.length > 0 ? materiasDb.map((m) => (
+                    <div key={m._id} className="checkbox-item">
+                      {materiaToEdit && materiaToEdit._id === m._id ? (
+                        <div style={{ display: 'flex', flex: 1, gap: '5px' }}>
+                          <input
+                            type="text"
+                            value={editMateriaName}
+                            onChange={(e) => setEditMateriaName(e.target.value)}
+                            className="edit-materia-input"
+                            style={{ width: '100%' }}
+                          />
+                          <button onClick={saveEditMateria} style={{ cursor: 'pointer', color: 'green' }}>💾</button>
+                          <button onClick={() => setMateriaToEdit(null)} style={{ cursor: 'pointer', color: 'red' }}>❌</button>
+                        </div>
+                      ) : (
+                        <>
+                          <label className="checkbox-label" style={{ flex: 1, display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                            <input
+                              type="checkbox"
+                              value={m.nombre}
+                              checked={asignaturasSelect.includes(m.nombre)}
+                              onChange={() => handleAsignaturasChange(m.nombre)}
+                              style={{ transform: 'scale(1.2)', marginRight: '10px' }}
+                            />
+                            <span style={{ fontSize: '0.9rem', wordBreak: 'break-word' }}>{m.nombre}</span>
+                          </label>
+                          <div className="materia-actions" style={{ display: 'flex', gap: '5px' }}>
+                            <button
+                              className="btn-edit-materia"
+                              onClick={() => openEditMateria(m)}
+                              title="Editar"
+                              style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                            >
+                              ✏️
+                            </button>
+                            <button
+                              className="btn-delete-materia-icon"
+                              onClick={() => requestDeleteMateria(m)}
+                              title="Eliminar"
+                              style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )) : (
+                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: '#666' }}>
+                      <p>No hay materias registradas.</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          )}
 
-          {/* Fecha de registro con la clase del código viejo (si aplica) */}
-          <p className="fecha-registro"><b>Fecha de registro:</b> {selectedProfesor.fechaRegistro ? new Date(selectedProfesor.fechaRegistro).toLocaleDateString() : 'N/A'}</p>
+            {/* Modal de confirmación para eliminar materia */}
+            <ConfirmacionModal
+              isOpen={!!materiaToDelete}
+              onClose={() => setMateriaToDelete(null)}
+              onConfirm={confirmDeleteMateria}
+              mensaje={`¿Estás seguro de que deseas eliminar la materia "${materiaToDelete?.nombre}"? Esta acción la eliminará también de todos los profesores asignados.`}
+              confirmText="Sí, Eliminar"
+              cancelText="Cancelar"
+            />
+
+            <div className="modal-actions">
+              <button className="btn-guardar" onClick={guardarAsignaturas}>Guardar asignaturas</button>
+              {!confirmDeleteVisible && <button className="btn-eliminar" onClick={handleDeleteClick}>Eliminar profesor</button>}
+            </div>
+
+            {confirmDeleteVisible && (
+              <div className="mini-alert">
+                <p>¿Seguro que deseas eliminar a {selectedProfesor.nombre}?</p>
+                <div className="mini-alert-buttons">
+                  <button className="mini-alert-yes" onClick={confirmDelete}>Sí, Eliminar</button>
+                  <button className="mini-alert-no" onClick={cancelDelete}>No</button>
+                </div>
+              </div>
+            )}
+
+            {/* Added extra padding for the bottom info */}
+            <div style={{ marginTop: '1rem' }}>
+              <p className="fecha-registro"><b>Fecha de registro:</b> {selectedProfesor.fechaRegistro ? new Date(selectedProfesor.fechaRegistro).toLocaleDateString() : 'N/A'}</p>
+            </div>
+          </div>
         </div>
-      </div>
-    )
-  }
+      )}
     </>
   );
 }
