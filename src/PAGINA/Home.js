@@ -140,6 +140,7 @@ function Home({ user }) {
   // --- Dentro del componente Home ---
   const [showSubjects, setShowSubjects] = useState(false); // Estado para expandir modal
 
+
   const openModal = (profesor) => {
     setSelectedProfesor(profesor);
     setAsignaturasSelect(profesor.asignaturas || []);
