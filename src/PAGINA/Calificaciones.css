@@ -432,23 +432,6 @@
   font-weight: 500;
 }
 
-.promedio-header {
-  background-color: #c0392b !important;
-  width: 60px !important;
-  min-width: 60px !important;
-  max-width: 60px !important;
-  padding: 5px 0 !important;
-}
-
-.promedio-cell {
-  width: 60px !important;
-  min-width: 60px !important;
-  max-width: 60px !important;
-  font-weight: bold;
-  background-color: rgba(192, 57, 43, 0.1);
-}
-
-
 /* Estilos para la columna de acciones */
 .actions-cell {
   display: flex;
