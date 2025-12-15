@@ -292,91 +292,110 @@ function Home({ user }) {
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={closeModal}>&times;</button>
-            <img
-              src={profileImgUrl(selectedProfesor.foto)}
-              alt={selectedProfesor.nombre}
-              className="profile-img-modal"
-            />
-            <h3>{selectedProfesor.nombre}</h3>
+            <div className="modal-body-grid">
+              {/* Columna Izquierda: Perfil + Resumen */}
+              <div className="modal-left-column">
+                <img
+                  src={profileImgUrl(selectedProfesor.foto)}
+                  alt={selectedProfesor.nombre}
+                  className="profile-img-modal"
+                />
+                <h3>{selectedProfesor.nombre}</h3>
 
-            <div className="profesor-details">
-              <p><b>Correo:</b> {selectedProfesor.email}</p>
-              <p><b>Celular:</b> {selectedProfesor.celular}</p>
-              {/* Campos del código viejo que no estaban en el nuevo, los incluyo */}
-              <p><b>Edad:</b> {selectedProfesor.edad}</p>
-              <p><b>Sexo:</b> {selectedProfesor.sexo}</p>
-            </div>
+                <div className="profesor-details" style={{ width: '100%', textAlign: 'left' }}>
+                  <p><b>Correo:</b> {selectedProfesor.email}</p>
+                  <p><b>Celular:</b> {selectedProfesor.celular}</p>
+                  <p><b>Edad:</b> {selectedProfesor.edad}</p>
+                  <p><b>Sexo:</b> {selectedProfesor.sexo}</p>
+                  <p className="fecha-registro" style={{ marginTop: '1rem', fontSize: '0.8rem' }}><b>Registro:</b> {selectedProfesor.fechaRegistro ? new Date(selectedProfesor.fechaRegistro).toLocaleDateString() : 'N/A'}</p>
+                </div>
 
-            <p className="asignaturas-title"><b>Asignaturas:</b></p>
-
-            {/* NUEVO: Gestión de Materias (Agregar) */}
-            <div className="manage-materias-container" style={{ marginBottom: '10px', display: 'flex', gap: '5px' }}>
-              <input
-                type="text"
-                placeholder="Nueva Materia"
-                value={nuevaMateria}
-                onChange={(e) => setNuevaMateria(e.target.value)}
-                style={{ flex: 1, padding: '5px' }}
-              />
-              <button
-                className="btn-add-materia"
-                onClick={handleAddMateria}
-                style={{ padding: '5px 10px', background: '#28a745', color: 'white', border: 'none', cursor: 'pointer' }}
-                title="Agregar Materia"
-              >
-                +
-              </button>
-            </div>
-
-            <div className="checkbox-group" style={{ maxHeight: '200px', overflowY: 'auto' }}>
-              {materiasDb.length > 0 ? materiasDb.map((m) => (
-                <div key={m._id} className="checkbox-item" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginRight: '10px' }}>
-                  {/* Si se está editando ESTA materia, mostrar input */}
-                  {materiaToEdit && materiaToEdit._id === m._id ? (
-                    <div style={{ display: 'flex', flex: 1, gap: '5px' }}>
-                      <input
-                        type="text"
-                        value={editMateriaName}
-                        onChange={(e) => setEditMateriaName(e.target.value)}
-                        className="edit-materia-input"
-                        style={{ flex: 1 }}
-                      />
-                      <button onClick={saveEditMateria} style={{ cursor: 'pointer', color: 'green' }}>💾</button>
-                      <button onClick={() => setMateriaToEdit(null)} style={{ cursor: 'pointer', color: 'red' }}>❌</button>
-                    </div>
+                <div style={{ width: '100%', marginTop: '1rem', textAlign: 'left' }}>
+                  <h4>Asignaturas Seleccionadas:</h4>
+                  {asignaturasSelect.length > 0 ? (
+                    <ul style={{ listStyleType: 'disc', paddingLeft: '20px', fontSize: '0.9rem' }}>
+                      {asignaturasSelect.map(a => <li key={a}>{a}</li>)}
+                    </ul>
                   ) : (
-                    <>
-                      <label className="checkbox-label" style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-                        <input
-                          type="checkbox"
-                          value={m.nombre}
-                          checked={asignaturasSelect.includes(m.nombre)}
-                          onChange={() => handleAsignaturasChange(m.nombre)}
-                        />
-                        <span style={{ marginLeft: '5px' }}>{m.nombre}</span>
-                      </label>
-                      <div className="materia-actions" style={{ display: 'flex', gap: '5px' }}>
-                        <button
-                          className="btn-edit-materia"
-                          onClick={() => openEditMateria(m)}
-                          title="Editar nombre"
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          className="btn-delete-materia-icon"
-                          onClick={() => requestDeleteMateria(m)}
-                          title="Eliminar Materia"
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    </>
+                    <p style={{ fontSize: '0.9rem', color: '#777' }}>Ninguna seleccionada</p>
                   )}
                 </div>
-              )) : (
-                <p style={{ fontStyle: 'italic', color: '#666' }}>No hay materias registradas.</p>
-              )}
+              </div>
+
+              {/* Columna Derecha: Gestión de Asignaturas */}
+              <div className="modal-right-column">
+                <p className="asignaturas-title"><b>Gestión de Asignaturas:</b></p>
+
+                {/* NUEVO: Gestión de Materias (Agregar) */}
+                <div className="manage-materias-container" style={{ marginBottom: '10px', display: 'flex', gap: '5px' }}>
+                  <input
+                    type="text"
+                    placeholder="Nueva Materia"
+                    value={nuevaMateria}
+                    onChange={(e) => setNuevaMateria(e.target.value)}
+                    style={{ flex: 1, padding: '5px' }}
+                  />
+                  <button
+                    className="btn-add-materia"
+                    onClick={handleAddMateria}
+                    style={{ padding: '5px 10px', background: '#28a745', color: 'white', border: 'none', cursor: 'pointer' }}
+                    title="Agregar Materia"
+                  >
+                    +
+                  </button>
+                </div>
+
+                <div className="checkbox-group" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                  {materiasDb.length > 0 ? materiasDb.map((m) => (
+                    <div key={m._id} className="checkbox-item" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginRight: '10px' }}>
+                      {/* Si se está editando ESTA materia, mostrar input */}
+                      {materiaToEdit && materiaToEdit._id === m._id ? (
+                        <div style={{ display: 'flex', flex: 1, gap: '5px' }}>
+                          <input
+                            type="text"
+                            value={editMateriaName}
+                            onChange={(e) => setEditMateriaName(e.target.value)}
+                            className="edit-materia-input"
+                            style={{ flex: 1 }}
+                          />
+                          <button onClick={saveEditMateria} style={{ cursor: 'pointer', color: 'green' }}>💾</button>
+                          <button onClick={() => setMateriaToEdit(null)} style={{ cursor: 'pointer', color: 'red' }}>❌</button>
+                        </div>
+                      ) : (
+                        <>
+                          <label className="checkbox-label" style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                            <input
+                              type="checkbox"
+                              value={m.nombre}
+                              checked={asignaturasSelect.includes(m.nombre)}
+                              onChange={() => handleAsignaturasChange(m.nombre)}
+                            />
+                            <span style={{ marginLeft: '5px' }}>{m.nombre}</span>
+                          </label>
+                          <div className="materia-actions" style={{ display: 'flex', gap: '5px' }}>
+                            <button
+                              className="btn-edit-materia"
+                              onClick={() => openEditMateria(m)}
+                              title="Editar nombre"
+                            >
+                              ✏️
+                            </button>
+                            <button
+                              className="btn-delete-materia-icon"
+                              onClick={() => requestDeleteMateria(m)}
+                              title="Eliminar Materia"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )) : (
+                    <p style={{ fontStyle: 'italic', color: '#666' }}>No hay materias registradas.</p>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Modal de confirmación para eliminar materia */}
