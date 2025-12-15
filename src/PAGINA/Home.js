@@ -149,7 +149,61 @@ function Home({ user }) {
     setConfirmDeleteVisible(false);
   };
 
-  // ... (otros handlers)
+
+  const closeModal = () => {
+    setModalVisible(false);
+    setSelectedProfesor(null);
+    setConfirmDeleteVisible(false);
+    setAsignaturasSelect([]);
+  };
+
+  // Lógica de Cloudinary/Imagen por URL completa o placeholder
+  const profileImgUrl = (foto) => {
+    if (foto && foto.startsWith("http")) {
+      return foto;
+    }
+    return `https://placehold.co/150x150/EFEFEF/AAAAAA&text=Sin+Foto`;
+  };
+
+  const handleAsignaturasChange = (materia) => {
+    setAsignaturasSelect((prev) =>
+      prev.includes(materia) ? prev.filter((m) => m !== materia) : [...prev, materia]
+    );
+  };
+
+  const guardarAsignaturas = () => {
+    if (!selectedProfesor) return;
+    const token = localStorage.getItem("token");
+    axios.put(`${API_URL}/auth/profesores/${selectedProfesor._id}/asignaturas`, { asignaturas: asignaturasSelect }, { headers: { Authorization: `Bearer ${token}` } })
+      .then(() => {
+        mostrarAlerta("Asignaturas actualizadas.", "success");
+        fetchProfesores();
+        closeModal();
+      })
+      .catch((err) => {
+        console.error("Error al guardar asignaturas:", err);
+        mostrarAlerta("Error al guardar las asignaturas.", "error");
+      });
+  };
+
+  const handleDeleteClick = () => setConfirmDeleteVisible(true);
+
+  const confirmDelete = () => {
+    if (!selectedProfesor) return;
+    const token = localStorage.getItem("token");
+    axios.delete(`${API_URL}/auth/profesores/${selectedProfesor._id}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(() => {
+        mostrarAlerta("Profesor eliminado correctamente.", "success");
+        fetchProfesores();
+        closeModal();
+      })
+      .catch((err) => {
+        console.error("Error al eliminar profesor:", err);
+        mostrarAlerta("Error al eliminar el profesor.", "error");
+      });
+  };
+
+  const cancelDelete = () => setConfirmDeleteVisible(false);
 
   // --- JSX del Modal ---
   const primerNombre = user?.nombre ? user.nombre.split(" ")[0] : "";
