@@ -1230,15 +1230,34 @@ const PanelCalificaciones = ({
 
     const calcularPromedioBimestre = (alumnoId, bimestre) => {
         const criteriosDelBimestre = criteriosPorBimestre[bimestre] || [];
-
         if (criteriosDelBimestre.length === 0) return 0;
 
-        const promedioPonderado = criteriosDelBimestre.reduce((acc, criterio) => {
-            const promCriterio = calcularPromedioCriterio(alumnoId, bimestre, criterio.nombre);
-            return acc + (promCriterio * (criterio.porcentaje / 100));
-        }, 0);
+        let sumaPonderada = 0;
+        let pesoTotalAplicable = 0;
 
-        return Math.round(promedioPonderado);
+        criteriosDelBimestre.forEach(criterio => {
+            // Verificar si este criterio tiene calificaciones válidas
+            const tareas = calificaciones[alumnoId]?.[bimestre]?.[criterio.nombre] || {};
+            const tieneNotas = Object.values(tareas).some(entrada => entrada && typeof entrada.nota === 'number');
+
+            if (tieneNotas) {
+                const promCriterio = calcularPromedioCriterio(alumnoId, bimestre, criterio.nombre);
+                sumaPonderada += promCriterio * (criterio.porcentaje / 100);
+                pesoTotalAplicable += (criterio.porcentaje / 100);
+            }
+        });
+
+        // Si no hay ningún criterio con notas, retornamos 0 (o podría ser '-' visualmente, pero aquí necesitamos número)
+        if (pesoTotalAplicable === 0) return 0;
+
+        // Regla de tres simple: Si sumaPonderada es a pesoTotalAplicable, X es a 1 (100%)
+        // Ejemplo: Si Examen vale 50% y tiene 10. Tareas vale 50% y no tiene nada.
+        // sumaPonderada = 10 * 0.5 = 5. pesoTotalAplicable = 0.5.
+        // Resultado = 5 / 0.5 = 10. Correcto.
+        const promedioFinal = sumaPonderada / pesoTotalAplicable;
+
+        return Math.round(promedioFinal); // Redondeo estándar (o usar Math.floor/ceil según preferencia)
+        // return Math.round(promedioFinal * 10) / 10; // Para 1 decimal si se prefiere
     };
 
     const formatFechaTooltip = (fechaISO) => {
