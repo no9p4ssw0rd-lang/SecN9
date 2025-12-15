@@ -293,28 +293,32 @@ button {
     backdrop-filter: blur(4px);
 }
 
+/* --- Rediseño Modal Expandible --- */
 .modal-content {
     background-color: var(--white-color);
     padding: 1.5rem;
-    /* Menos padding para aprovechar espacio */
     border-radius: 8px;
-    /* Bordes menos redondeados para look "full screen" */
-    width: 98vw;
-    /* Ancho casi total */
-    height: 95vh;
-    /* Altura casi total */
-    max-width: none;
-    /* Sin límite de ancho */
-    max-height: none;
-    /* Sin límite de altura */
-    /* overflow-y: hidden;  El scroll lo manejan las columnas internas */
+    /* Inicio: Compacto */
+    width: 450px;
+    max-width: 95%;
+    max-height: 90vh;
+    overflow-y: auto;
     display: flex;
-    /* Flex para manejar header/body/footer */
     flex-direction: column;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
     position: relative;
     text-align: center;
     color: var(--text-color-dark);
+    transition: width 0.3s ease, height 0.3s ease;
+    /* Animación suave */
+}
+
+/* Estado Expandido */
+.modal-content.expanded {
+    width: 98vw;
+    height: 95vh;
+    max-width: none;
+    max-height: none;
 }
 
 .modal-close {
@@ -329,44 +333,51 @@ button {
     z-index: 10;
 }
 
-/* --- Rediseño Modal 2 Columnas (Full Height) --- */
+/* Grid del cuerpo del modal */
 .modal-body-grid {
+    display: flex;
+    /* Por defecto columna/flex simple */
+    flex-direction: column;
+    height: 100%;
+    margin-top: 1rem;
+    overflow: hidden;
+}
+
+/* Layout cuando está expandido */
+.modal-content.expanded .modal-body-grid {
     display: grid;
     grid-template-columns: 350px 1fr;
-    /* Izquierda fija, derecha ocupa el resto */
     gap: 2rem;
-    text-align: left;
-    margin-top: 1rem;
-    flex: 1;
-    /* Ocupa el espacio restante del modal */
-    overflow: hidden;
-    /* Evita scroll en el grid principal */
-    height: 100%;
-    /* Asegurar altura completa */
-    min-height: 0;
-    /* CRÍTICO para que el scroll anidado funcione */
 }
 
 .modal-left-column {
     display: flex;
     flex-direction: column;
     align-items: center;
+    overflow-y: auto;
+    width: 100%;
+    /* Full width en modo compacto */
+}
+
+.modal-content.expanded .modal-left-column {
     border-right: 2px solid #ddd;
     padding-right: 1.5rem;
-    overflow-y: auto;
-    /* Scroll independiente */
     height: 100%;
 }
 
 .modal-right-column {
-    display: flex;
+    display: none;
+    /* Oculto por defecto */
     flex-direction: column;
     overflow-y: hidden;
-    /* Contenedor fijo */
     height: 100%;
     padding-right: 10px;
     min-height: 0;
-    /* CRÍTICO */
+}
+
+.modal-content.expanded .modal-right-column {
+    display: flex;
+    /* Visible al expandir */
 }
 
 .manage-materias-container {
@@ -391,48 +402,69 @@ button {
     font-size: 1.2rem;
 }
 
-.checkbox-group {
+/* Grid de Materias (Horizontal) */
+.subject-grid {
     flex: 1;
-    /* Ocupar todo el espacio vertical restante */
     overflow-y: auto;
-    /* Scroll para la lista de materias */
-    border: 1px solid #ccc;
+    border: 1px solid #eee;
     padding: 15px;
     border-radius: 8px;
-    background: #fff;
-    display: flex;
-    flex-direction: column;
+    background: #f9f9f9;
+
+    /* Configuración GRID */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    /* Responsivo horizontal */
     gap: 10px;
+    align-content: start;
 }
 
 .checkbox-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 5px 0;
-    border-bottom: 1px solid #eee;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.checkbox-item:last-child {
-    border-bottom: none;
+.checkbox-item:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Botón grande para abrir gestión */
+.btn-open-gestion {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    margin-top: 2rem;
+    width: 100%;
+    max-width: 300px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+}
+
+.btn-open-gestion:hover {
+    transform: translateY(-2px);
+    background-color: #357abd;
 }
 
 /* Ajustes responsivos para móvil */
 @media screen and (max-width: 768px) {
-    .modal-body-grid {
+    .modal-content.expanded .modal-body-grid {
         grid-template-columns: 1fr;
-        /* Una columna en móvil */
     }
 
-    .modal-left-column {
+    .modal-content.expanded .modal-left-column {
         border-right: none;
-        border-bottom: 1px solid var(--border-color);
+        border-bottom: 2px solid #ddd;
+        height: auto;
         padding-bottom: 1rem;
-        padding-right: 0;
-    }
-
-    .modal-content {
-        width: 95%;
+        margin-bottom: 1rem;
     }
 }
 
