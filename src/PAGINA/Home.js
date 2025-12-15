@@ -345,7 +345,7 @@ function Home({ user }) {
                   </button>
                 </div>
 
-                <div className="checkbox-group" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                <div className="checkbox-group">
                   {materiasDb.length > 0 ? materiasDb.map((m) => (
                     <div key={m._id} className="checkbox-item" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginRight: '10px' }}>
                       {/* Si se está editando ESTA materia, mostrar input */}
