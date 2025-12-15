@@ -1,6 +1,7 @@
 import express from "express";
 import Materia from "../models/Materia.js";
-import User from "../models/User.js"; // Importar modelo User para actualizaciones en cascada
+import User from "../models/User.js";
+import Grupo from "../models/Grupo.js"; // Importar modelo Grupo para actualizaciones en cascada
 import { authMiddleware, isAdmin } from "../middlewares/authMiddleware.js";
 
 const materiasRouter = express.Router();
@@ -66,11 +67,20 @@ materiasRouter.put("/:id", authMiddleware, isAdmin, async (req, res) => {
         await materia.save();
 
         // Actualizar el nombre en todos los usuarios (profesores) que tengan esta materia asignada
-        // Buscamos usuarios que tengan el nombre antiguo en su array 'asignaturas'
-        // y actualizamos ese elemento específico usando el operador posicional $
         await User.updateMany(
             { asignaturas: oldName },
             { $set: { "asignaturas.$": nombre } }
+        );
+
+        // Actualizar el nombre en GRUPOS (profesoresAsignados)
+        await Grupo.updateMany(
+            { "profesoresAsignados.asignatura": oldName },
+            { $set: { "profesoresAsignados.$.asignatura": nombre } }
+        );
+        // Actualizar el nombre en GRUPOS (ordenMaterias)
+        await Grupo.updateMany(
+            { ordenMaterias: oldName },
+            { $set: { "ordenMaterias.$": nombre } }
         );
 
         res.json({ msg: "Materia actualizada correctamente y sincronizada con profesores", materia });
@@ -100,6 +110,17 @@ materiasRouter.delete("/:id", authMiddleware, isAdmin, async (req, res) => {
         await User.updateMany(
             { asignaturas: materiaName },
             { $pull: { asignaturas: materiaName } }
+        );
+
+        // Eliminamos la materia de las asignaciones de todos los GRUPOS y del ordenMaterias
+        await Grupo.updateMany(
+            { "profesoresAsignados.asignatura": materiaName },
+            { $pull: { profesoresAsignados: { asignatura: materiaName } } }
+        );
+        // También quitamos del ordenMaterias si existe
+        await Grupo.updateMany(
+            { ordenMaterias: materiaName },
+            { $pull: { ordenMaterias: materiaName } }
         );
 
         res.json({ msg: "Materia eliminada y desasignada de todos los profesores" });
