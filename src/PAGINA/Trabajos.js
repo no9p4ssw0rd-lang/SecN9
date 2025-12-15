@@ -1257,13 +1257,12 @@ const PanelCalificaciones = ({
         if (pesoTotalAplicable === 0) return 0;
 
         // Regla de tres simple: Si sumaPonderada es a pesoTotalAplicable, X es a 1 (100%)
-        // Ejemplo: Si Examen vale 50% y tiene 10. Tareas vale 50% y no tiene nada.
-        // sumaPonderada = 10 * 0.5 = 5. pesoTotalAplicable = 0.5.
-        // Resultado = 5 / 0.5 = 10. Correcto.
         const promedioFinal = sumaPonderada / pesoTotalAplicable;
 
-        return Math.round(promedioFinal); // Redondeo estándar (o usar Math.floor/ceil según preferencia)
-        // return Math.round(promedioFinal * 10) / 10; // Para 1 decimal si se prefiere
+        // "La calificación mínima sea 5, no menos"
+        // Si hay promedio (es decir, hubo calificaciones), el mínimo es 5.
+        const promedioRedondeado = Math.round(promedioFinal); // Redondeo estándar
+        return Math.max(5, promedioRedondeado);
     };
 
     const formatFechaTooltip = (fechaISO) => {
