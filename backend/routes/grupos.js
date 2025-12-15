@@ -164,7 +164,7 @@ router.get("/mis-grupos", authMiddleware, async (req, res) => {
 router.get("/:grupoId/calificaciones-admin", authMiddleware, isAdmin, async (req, res) => {
     try {
         const grupoId = req.params.grupoId;
-        const grupo = await Grupo.findById(grupoId).select('alumnos profesoresAsignados'); // Necesitamos profesoresAsignados para las materias
+        const grupo = await Grupo.findById(grupoId).select('alumnos profesoresAsignados ordenMaterias'); // Necesitamos profesoresAsignados para las materias
         if (!grupo) {
             return res.status(404).json({ msg: "Grupo no encontrado" });
         }
@@ -176,7 +176,12 @@ router.get("/:grupoId/calificaciones-admin", authMiddleware, isAdmin, async (req
         const { alumnos } = grupo;
 
         // Usamos las asignaturas del grupo para saber qué materias esperar
-        const materiasAsignadas = [...new Set(grupo.profesoresAsignados.map(asig => asig.asignatura))];
+        // Combinamos las asignadas con las que están en el orden guardado (para no perder ninguna)
+        const materiasSet = new Set(grupo.profesoresAsignados.map(asig => asig.asignatura));
+        if (grupo.ordenMaterias && Array.isArray(grupo.ordenMaterias)) {
+            grupo.ordenMaterias.forEach(m => materiasSet.add(m));
+        }
+        const materiasAsignadas = [...materiasSet];
 
 
         // 2. Inicializar la estructura para cada alumno

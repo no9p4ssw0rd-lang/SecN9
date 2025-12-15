@@ -9,16 +9,13 @@ import './Calificaciones.css';
 import logoImage from './Logoescuela.png';
 
 // --- Sortable Header Component ---
-function SortableHeader({ id, children, enabled }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id,
-    disabled: !enabled
-  });
+function SortableHeader({ id, children, disabled }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled });
 
   const style = {
     transform: CSS.Translate.toString(transform),
     transition,
-    cursor: enabled ? (isDragging ? 'grabbing' : 'grab') : 'default',
+    cursor: disabled ? 'default' : (isDragging ? 'grabbing' : 'grab'),
     touchAction: 'none',
     backgroundColor: isDragging ? '#2c3e50' : undefined, // Color oscuro al arrastrar
     color: isDragging ? 'white' : undefined,
@@ -32,7 +29,7 @@ function SortableHeader({ id, children, enabled }) {
   return (
     <th ref={setNodeRef} style={style} {...attributes} {...listeners} colSpan="3">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-        {enabled && <span style={{ fontSize: '1.2em', opacity: 0.5, cursor: 'grab' }}>⋮⋮</span>}
+        {!disabled && <span style={{ fontSize: '1.2em', opacity: 0.5, cursor: 'grab' }}>⋮⋮</span>}
         <span style={{ whiteSpace: 'nowrap' }}>{children}</span>
       </div>
     </th>
@@ -67,14 +64,14 @@ function Calificaciones({ user }) {
   const [alumnos, setAlumnos] = useState([]);
   const [materias, setMaterias] = useState([]);
   const [calificaciones, setCalificaciones] = useState({});
-  // NEW: State to toggle edit mode for table columns
-  const [isEditingTable, setIsEditingTable] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modalPdf, setModalPdf] = useState({ visible: false, alumno: null });
   const [modalShare, setModalShare] = useState({ visible: false, alumno: null });
+
   const [notificacion, setNotificacion] = useState({ visible: false, mensaje: '', tipo: '' });
+  const [isEditing, setIsEditing] = useState(false); // Estado para controlar el modo edición
 
   // --- DnD Sensors ---
   const sensors = useSensors(
@@ -146,7 +143,12 @@ function Calificaciones({ user }) {
     const alumnosOrdenados = [...grupo.alumnos].sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno));
     setAlumnos(alumnosOrdenados);
 
-    const materiasAsignadas = [...new Set(grupo.profesoresAsignados.map(asig => asig.asignatura))];
+    // Combinar asignaturas asignadas y orden guardado
+    const materiasSet = new Set(grupo.profesoresAsignados.map(asig => asig.asignatura));
+    if (grupo.ordenMaterias) {
+      grupo.ordenMaterias.forEach(m => materiasSet.add(m));
+    }
+    const materiasAsignadas = [...materiasSet];
 
     // Si hay un orden guardado, ordenar las materias
     if (grupo.ordenMaterias && grupo.ordenMaterias.length > 0) {
@@ -185,9 +187,7 @@ function Calificaciones({ user }) {
     let count = 0;
     materias.forEach(materia => {
       if (alumnoCal[materia] && typeof alumnoCal[materia][bimestreIndex] === 'number') {
-        const nota = alumnoCal[materia][bimestreIndex];
-        // ENFORCE MIN 5: Si la nota es menor a 5, se toma como 5 para el promedio.
-        suma += Math.max(5, nota);
+        suma += alumnoCal[materia][bimestreIndex];
         count++;
       }
     });
@@ -443,110 +443,95 @@ function Calificaciones({ user }) {
 
           <div className="header-controls">
             <button onClick={handleBackToGrupos} className="back-button">&larr; Volver a Grupos</button>
-            <button
-              onClick={() => setIsEditingTable(!isEditingTable)}
-              className="btn-secondary"
-              style={{ marginLeft: '1rem', padding: '0.5rem 1rem', fontSize: '0.9rem' }}
-            >
-              {isEditingTable ? "Terminar Edición" : "Modificar Tabla"}
-            </button>
           </div>
 
           <div className="calificaciones-header">
             <h1 className="calificaciones-title">Calificaciones del Grupo {selectedGrupo.nombre}</h1>
+            <button
+              className="button"
+              onClick={() => setIsEditing(!isEditing)}
+              style={{ marginLeft: '20px', backgroundColor: isEditing ? '#27ae60' : '#f39c12' }}
+            >
+              {isEditing ? 'Terminar Edición' : 'Modificar Tabla'}
+            </button>
           </div>
 
           {loading ? <p>Cargando calificaciones...</p> : (
-            (() => {
-              // FILTRADO DE MATERIAS ACTIVAS: Solo mostramos materias que tengan al menos una calificación registrada
-              const materiasActivas = materias.filter(materia =>
-                alumnos.some(alumno =>
-                  [0, 1, 2].some(bim => calificaciones[alumno._id]?.[materia]?.[bim] != null)
-                )
-              );
-
-              return (
-                <div className="table-wrapper">
-                  <table className="calificaciones-table">
-                    <thead>
-                      <tr>
-                        <th rowSpan="2">Nombre del Alumno</th>
-                        <DndContext
-                          sensors={sensors}
-                          collisionDetection={closestCenter}
-                          onDragEnd={handleDragEnd}
-                        >
-                          <SortableContext
-                            items={materiasActivas}
-                            strategy={horizontalListSortingStrategy}
-                          >
-                            {materiasActivas.map(materia => (
-                              <SortableHeader key={materia} id={materia} enabled={isEditingTable}>
-                                {materia}
-                              </SortableHeader>
-                            ))}
-                          </SortableContext>
-                        </DndContext>
-                        <th colSpan="3" className="promedio-header">PROMEDIO TRIMESTRAL</th>
-                        <th rowSpan="2" className="promedio-header-final">FINAL</th>
-                        <th rowSpan="2" className="actions-header">Acciones</th>
-                      </tr>
-                      <tr>
-                        {materiasActivas.flatMap(materia => [<th key={`${materia}-b1`}>T1</th>, <th key={`${materia}-b2`}>T2</th>, <th key={`${materia}-b3`}>T3</th>])}
-                        <th className="promedio-header">T1</th>
-                        <th className="promedio-header">T2</th>
-                        <th className="promedio-header">T3</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {alumnos.map(alumno => {
-                        const promFinal = calcularPromedioFinal(alumno._id);
-                        return (
-                          <tr key={alumno._id}>
-                            <td>{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</td>
-                            {materiasActivas.map(materia => (
-                              <React.Fragment key={`${alumno._id}-${materia}`}>
-                                {[0, 1, 2].map(bimestreIndex => {
-                                  const rawCal = calificaciones[alumno._id]?.[materia]?.[bimestreIndex];
-                                  // MOSTRAR MINIMO 5: Si existe calificación y es menor a 5, mostrar 5.
-                                  const cal = (rawCal !== null && rawCal !== undefined) ? Math.max(5, rawCal) : null;
-
-                                  return (
-                                    <td key={`${materia}-b${bimestreIndex}`} className={typeof cal === 'number' ? (cal < 6 ? 'reprobado' : 'aprobado') : ''}>
-                                      {cal != null ? cal.toFixed(1) : '-'}
-                                    </td>
-                                  )
-                                })}
-                              </React.Fragment>
-                            ))}
+            <div className="table-wrapper">
+              <table className="calificaciones-table">
+                <thead>
+                  <tr>
+                    <th rowSpan="2">Nombre del Alumno</th>
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleDragEnd}
+                    >
+                      <SortableContext
+                        items={materias}
+                        strategy={horizontalListSortingStrategy}
+                      >
+                        {materias.map(materia => (
+                          <SortableHeader key={materia} id={materia} disabled={!isEditing}>
+                            {materia}
+                          </SortableHeader>
+                        ))}
+                      </SortableContext>
+                    </DndContext>
+                    <th colSpan="3" className="promedio-header">PROMEDIO TRIMESTRAL</th>
+                    <th rowSpan="2" className="promedio-header-final">FINAL</th>
+                    <th rowSpan="2" className="actions-header">Acciones</th>
+                  </tr>
+                  <tr>
+                    {materias.flatMap(materia => [<th key={`${materia}-b1`}>T1</th>, <th key={`${materia}-b2`}>T2</th>, <th key={`${materia}-b3`}>T3</th>])}
+                    <th className="promedio-header">T1</th>
+                    <th className="promedio-header">T2</th>
+                    <th className="promedio-header">T3</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {alumnos.map(alumno => {
+                    const promFinal = calcularPromedioFinal(alumno._id);
+                    return (
+                      <tr key={alumno._id}>
+                        <td>{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</td>
+                        {materias.map(materia => (
+                          <React.Fragment key={`${alumno._id}-${materia}`}>
                             {[0, 1, 2].map(bimestreIndex => {
-                              const promedio = calcularPromedioBimestre(alumno._id, bimestreIndex);
+                              const cal = calificaciones[alumno._id]?.[materia]?.[bimestreIndex];
                               return (
-                                <td key={`prom-${bimestreIndex}`} className={`promedio-cell ${promedio > 0 && promedio < 6 ? 'reprobado' : 'aprobado'}`}>
-                                  <strong>{promedio > 0 ? promedio.toFixed(1) : '-'}</strong>
+                                <td key={`${materia}-b${bimestreIndex}`} className={typeof cal === 'number' ? (cal < 6 ? 'reprobado' : 'aprobado') : ''}>
+                                  {cal != null ? cal.toFixed(1) : '-'}
                                 </td>
                               )
                             })}
-                            <td className={`promedio-final-cell ${promFinal > 0 && promFinal < 6 ? 'reprobado' : 'aprobado'}`}>
-                              <strong>{promFinal > 0 ? promFinal.toFixed(2) : '-'}</strong>
+                          </React.Fragment>
+                        ))}
+                        {[0, 1, 2].map(bimestreIndex => {
+                          const promedio = calcularPromedioBimestre(alumno._id, bimestreIndex);
+                          return (
+                            <td key={`prom-${bimestreIndex}`} className={`promedio-cell ${promedio > 0 && promedio < 6 ? 'reprobado' : 'aprobado'}`}>
+                              <strong>{promedio > 0 ? promedio.toFixed(1) : '-'}</strong>
                             </td>
-                            <td className="actions-cell">
-                              <button onClick={() => setModalPdf({ visible: true, alumno })} title="Descargar Boleta Individual">📄</button>
-                              <button onClick={() => setModalShare({ visible: true, alumno: alumno })} title="Compartir Boleta">🔗</button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              );
-            })())
-          }
+                          )
+                        })}
+                        <td className={`promedio-final-cell ${promFinal > 0 && promFinal < 6 ? 'reprobado' : 'aprobado'}`}>
+                          <strong>{promFinal > 0 ? promFinal.toFixed(2) : '-'}</strong>
+                        </td>
+                        <td className="actions-cell">
+                          <button onClick={() => setModalPdf({ visible: true, alumno })} title="Descargar Boleta Individual">📄</button>
+                          <button onClick={() => setModalShare({ visible: true, alumno: alumno })} title="Compartir Boleta">🔗</button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </>
-      )
-      }
-    </div >
+      )}
+    </div>
   );
 }
 
