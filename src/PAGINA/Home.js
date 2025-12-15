@@ -324,21 +324,20 @@ function Home({ user }) {
 
               {/* Columna Derecha: Gestión de Asignaturas */}
               <div className="modal-right-column">
-                <p className="asignaturas-title"><b>Gestión de Asignaturas:</b></p>
+                <p className="asignaturas-title"><b>CATÁLOGO DE MATERIAS</b></p>
+                <p style={{ marginBottom: '10px', fontSize: '0.9rem', color: '#555' }}>Selecciona las materias que imparte este profesor:</p>
 
                 {/* NUEVO: Gestión de Materias (Agregar) */}
-                <div className="manage-materias-container" style={{ marginBottom: '10px', display: 'flex', gap: '5px' }}>
+                <div className="manage-materias-container">
                   <input
                     type="text"
-                    placeholder="Nueva Materia"
+                    placeholder="Nueva Materia..."
                     value={nuevaMateria}
                     onChange={(e) => setNuevaMateria(e.target.value)}
-                    style={{ flex: 1, padding: '5px' }}
                   />
                   <button
                     className="btn-add-materia"
                     onClick={handleAddMateria}
-                    style={{ padding: '5px 10px', background: '#28a745', color: 'white', border: 'none', cursor: 'pointer' }}
                     title="Agregar Materia"
                   >
                     +
@@ -347,7 +346,7 @@ function Home({ user }) {
 
                 <div className="checkbox-group">
                   {materiasDb.length > 0 ? materiasDb.map((m) => (
-                    <div key={m._id} className="checkbox-item" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginRight: '10px' }}>
+                    <div key={m._id} className="checkbox-item">
                       {/* Si se está editando ESTA materia, mostrar input */}
                       {materiaToEdit && materiaToEdit._id === m._id ? (
                         <div style={{ display: 'flex', flex: 1, gap: '5px' }}>
@@ -363,20 +362,22 @@ function Home({ user }) {
                         </div>
                       ) : (
                         <>
-                          <label className="checkbox-label" style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                          <label className="checkbox-label" style={{ flex: 1, display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                             <input
                               type="checkbox"
                               value={m.nombre}
                               checked={asignaturasSelect.includes(m.nombre)}
                               onChange={() => handleAsignaturasChange(m.nombre)}
+                              style={{ transform: 'scale(1.2)', marginRight: '10px' }}
                             />
-                            <span style={{ marginLeft: '5px' }}>{m.nombre}</span>
+                            <span style={{ fontSize: '0.95rem' }}>{m.nombre}</span>
                           </label>
-                          <div className="materia-actions" style={{ display: 'flex', gap: '5px' }}>
+                          <div className="materia-actions" style={{ display: 'flex', gap: '8px' }}>
                             <button
                               className="btn-edit-materia"
                               onClick={() => openEditMateria(m)}
                               title="Editar nombre"
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem' }}
                             >
                               ✏️
                             </button>
@@ -384,6 +385,7 @@ function Home({ user }) {
                               className="btn-delete-materia-icon"
                               onClick={() => requestDeleteMateria(m)}
                               title="Eliminar Materia"
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem' }}
                             >
                               🗑️
                             </button>
@@ -392,7 +394,10 @@ function Home({ user }) {
                       )}
                     </div>
                   )) : (
-                    <p style={{ fontStyle: 'italic', color: '#666' }}>No hay materias registradas.</p>
+                    <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
+                      <p>No hay materias registradas en el sistema.</p>
+                      <p>Usa el botón "Agregar" para crear una nueva.</p>
+                    </div>
                   )}
                 </div>
               </div>

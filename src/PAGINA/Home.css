@@ -343,6 +343,8 @@ button {
     /* Evita scroll en el grid principal */
     height: 100%;
     /* Asegurar altura completa */
+    min-height: 0;
+    /* CRÍTICO para que el scroll anidado funcione */
 }
 
 .modal-left-column {
@@ -363,6 +365,30 @@ button {
     /* Contenedor fijo */
     height: 100%;
     padding-right: 10px;
+    min-height: 0;
+    /* CRÍTICO */
+}
+
+.manage-materias-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1rem;
+}
+
+.manage-materias-container input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.btn-add-materia {
+    padding: 10px 15px;
+    background-color: var(--success-color);
+    color: white;
+    border-radius: 5px;
+    font-weight: bold;
+    font-size: 1.2rem;
 }
 
 .checkbox-group {
@@ -370,10 +396,25 @@ button {
     /* Ocupar todo el espacio vertical restante */
     overflow-y: auto;
     /* Scroll para la lista de materias */
-    border: 1px solid #eee;
+    border: 1px solid #ccc;
     padding: 15px;
     border-radius: 8px;
-    background: #f9f9f9;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.checkbox-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.checkbox-item:last-child {
+    border-bottom: none;
 }
 
 /* Ajustes responsivos para móvil */
@@ -396,16 +437,6 @@ button {
 }
 
 
-.modal-close {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    background: none;
-    border: none;
-    font-size: 1.8rem;
-    cursor: pointer;
-    color: #888;
-}
 
 .profile-img-modal {
     width: 120px;
