@@ -223,7 +223,8 @@ function Calificaciones({ user }) {
     return bimestresConCalificacion > 0 ? Math.round(sumaDePromedios / bimestresConCalificacion) : 0;
   };
 
-  const generatePdfIndividual = async (alumno, bimestresSeleccionados, outputType = 'save') => {
+  const generatePdfIndividual = async (alumno, bimestresSeleccionados, outputType = 'save', datosFirmas = {}) => {
+    const { nombreDirector = '', nombreDocente = '' } = datosFirmas;
     const doc = new jsPDF();
     const nombreCompleto = `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`;
 
@@ -305,6 +306,85 @@ function Calificaciones({ user }) {
         }
       }
     });
+
+    // --- SECCIÓN DE FIRMAS Y PIE DE PÁGINA ---
+    // Usamos finalY de la última tabla dibujada
+    let finalY = doc.lastAutoTable.finalY + 20; // Espacio de separación (20mm)
+
+    // 1. Tabla de Firmas de Padres (3 columnas)
+    // Usamos autoTable para facilitar las celdas
+    autoTable(doc, {
+      startY: finalY,
+      head: [[{ content: 'FIRMA DE LA MADRE O PADRE DE FAMILIA O PERSONA TUTORA', colSpan: 3 }]],
+      body: [
+        ['1er periodo', '2º periodo', '3er periodo'],
+        ['\n\n\n\n', '\n\n\n\n', '\n\n\n\n'] // Espacio vacío para firmar (altura aprox)
+      ],
+      theme: 'plain', // Sin colores de fondo por defecto, lo personalizamos
+      styles: {
+        lineColor: [0, 0, 0],
+        lineWidth: 0.1,
+        halign: 'left',
+        valign: 'top',
+        fontSize: 8,
+        cellPadding: 2
+      },
+      headStyles: {
+        halign: 'center',
+        fontStyle: 'bold',
+        fillColor: [240, 240, 240], // Gris muy claro para el encabezado
+        textColor: [0, 0, 0],
+        lineWidth: 0.1,
+        lineColor: [0, 0, 0]
+      },
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { cellWidth: 'auto' },
+        2: { cellWidth: 'auto' }
+      }
+    });
+
+    // Actualizamos Y para los siguientes elementos
+    finalY = doc.lastAutoTable.finalY + 20;
+
+    // 2. Firmas de Docente y Director (Lado a Lado)
+    // Definimos posiciones
+    // pageWidth y margin ya están definidos arriba
+    const availableWidth = pageWidth - (margin * 2);
+    const colWidth = availableWidth / 2;
+
+    doc.setFontSize(9);
+    doc.setTextColor(0, 0, 0);
+
+    // Columna Izquierda: Docente
+    const xDocente = margin;
+    doc.text("NOMBRE Y FIRMA DE LA DOCENTE O DEL DOCENTE:", xDocente, finalY);
+    if (nombreDocente) {
+      doc.setFont(undefined, 'bold');
+      doc.text(nombreDocente.toUpperCase(), xDocente, finalY + 15); // Nombre un poco más abajo
+      doc.setFont(undefined, 'normal');
+    }
+    doc.line(xDocente, finalY + 16, xDocente + 70, finalY + 16); // Línea de firma (longitud fija 70)
+
+
+    // Columna Derecha: Director
+    const xDirector = margin + colWidth; // Empezamos en la mitad
+    doc.text("NOMBRE Y FIRMA DE LA DIRECTORA O DEL DIRECTOR:", xDirector, finalY);
+    if (nombreDirector) {
+      doc.setFont(undefined, 'bold');
+      doc.text(nombreDirector.toUpperCase(), xDirector, finalY + 15);
+      doc.setFont(undefined, 'normal');
+    }
+    doc.line(xDirector, finalY + 16, xDirector + 70, finalY + 16); // Línea de firma
+
+
+    // 3. Lugar de Expedición (Al final, centrado)
+    // Calculamos una posición Y segura, o usamos el final de la página menos margen
+    const pageHeight = doc.internal.pageSize.height;
+    const footerY = pageHeight - 15;
+
+    doc.setFontSize(8);
+    doc.text("LUGAR DE EXPEDICIÓN:     AGUASCALIENTES, AGUASCALIENTES", pageWidth / 2, footerY, { align: 'center' });
 
     if (outputType === 'save') {
       doc.save(`Boleta_${nombreCompleto.replace(/\s/g, '_')}.pdf`);
@@ -432,14 +512,33 @@ function Calificaciones({ user }) {
                     mostrarNotificacion("Debes seleccionar al menos un Trimestre.", "error");
                     return;
                   }
-                  generatePdfIndividual(modalPdf.alumno, bimestresSeleccionados, 'save');
+                  // Capturamos los datos del formulario de firmas
+                  const datosFirmas = {
+                    nombreDirector: e.target.nombreDirector.value,
+                    nombreDocente: e.target.nombreDocente.value
+                  };
+                  generatePdfIndividual(modalPdf.alumno, bimestresSeleccionados, 'save', datosFirmas);
                 }}>
                   <div className="checkbox-group">
                     <label><input type="checkbox" name="b1" defaultChecked /> Trimestre 1</label>
                     <label><input type="checkbox" name="b2" defaultChecked /> Trimestre 2</label>
                     <label><input type="checkbox" name="b3" defaultChecked /> Trimestre 3</label>
                   </div>
-                  <div className="modal-actions">
+
+                  {/* INPUTS PARA FIRMAS */}
+                  <div style={{ marginTop: '15px', borderTop: '1px solid #444', paddingTop: '10px' }}>
+                    <h4 style={{ marginBottom: '10px', fontSize: '0.9rem', color: '#ccc' }}>Datos para Firmas (Opcional):</h4>
+                    <div className="input-group" style={{ marginBottom: '10px' }}>
+                      <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '3px' }}>Nombre del Docente:</label>
+                      <input type="text" name="nombreDocente" placeholder="Escribe el nombre..." style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #555', background: '#333', color: 'white' }} />
+                    </div>
+                    <div className="input-group">
+                      <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '3px' }}>Nombre del Director(a):</label>
+                      <input type="text" name="nombreDirector" placeholder="Escribe el nombre..." style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #555', background: '#333', color: 'white' }} />
+                    </div>
+                  </div>
+
+                  <div className="modal-actions" style={{ marginTop: '20px' }}>
                     <button type="submit" className="button">Descargar Boleta</button>
                     <button type="button" className="button-secondary" onClick={() => setModalPdf({ visible: false, alumno: null })}>Cancelar</button>
                   </div>
