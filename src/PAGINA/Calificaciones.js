@@ -307,75 +307,80 @@ function Calificaciones({ user }) {
       }
     });
 
-    // --- SECCIÓN DE FIRMAS Y PIE DE PÁGINA ---
+    // --- SECCIÓN DE FIRMAS Y PIE DE PÁGINA (LAYOUT DIVIDIDO) ---
     // Usamos finalY de la última tabla dibujada
-    let finalY = doc.lastAutoTable.finalY + 20; // Espacio de separación (20mm)
+    let finalY = doc.lastAutoTable.finalY + 15; // Espacio de separación (15mm)
 
-    // 1. Tabla de Firmas de Padres (3 columnas)
-    // Usamos autoTable para facilitar las celdas
+    // pageWidth y margin ya están definidos al inicio de la función
+    const availableWidth = pageWidth - (margin * 2);
+    const halfWidth = availableWidth / 2 - 5; // Ancho de columna (menos un pequeño gap)
+    const rightColX = margin + halfWidth + 10; // Posición X para columna derecha (más gap)
+
+    // --- COLUMNA IZQUIERDA: Docente y Director (Apilados) ---
+    let ySignatures = finalY;
+
+    doc.setFontSize(8);
+    doc.setTextColor(0, 0, 0);
+
+    // 1. Docente
+    doc.text("NOMBRE Y FIRMA DE LA DOCENTE O DEL DOCENTE:", margin, ySignatures);
+    ySignatures += 10; // Espacio para firma
+    // Nombre (si existe)
+    if (nombreDocente) {
+      doc.setFont(undefined, 'bold');
+      doc.text(nombreDocente.toUpperCase(), margin, ySignatures);
+      doc.setFont(undefined, 'normal');
+    }
+    // Línea de firma
+    doc.line(margin, ySignatures + 1, margin + 80, ySignatures + 1); // Línea de 80mm
+
+    // 2. Director (Más abajo)
+    ySignatures += 25; // Separación vertical entre firmas
+    doc.text("NOMBRE Y FIRMA DE LA DIRECTORA O DEL DIRECTOR:", margin, ySignatures);
+    ySignatures += 10;
+    if (nombreDirector) {
+      doc.setFont(undefined, 'bold');
+      doc.text(nombreDirector.toUpperCase(), margin, ySignatures);
+      doc.setFont(undefined, 'normal');
+    }
+    doc.line(margin, ySignatures + 1, margin + 80, ySignatures + 1);
+
+
+    // --- COLUMNA DERECHA: Tabla de Firmas de Padres ---
+    // Usamos autoTable pero lo posicionamos a la derecha
     autoTable(doc, {
-      startY: finalY,
+      startY: finalY - 4, // Alineado un poco más arriba para compensar header
+      margin: { left: rightColX }, // IMPORTANTE: Margen izquierdo para empujar la tabla
+      tableWidth: halfWidth, // Ancho restringido a la mitad
       head: [[{ content: 'FIRMA DE LA MADRE O PADRE DE FAMILIA O PERSONA TUTORA', colSpan: 3 }]],
       body: [
         ['1er periodo', '2º periodo', '3er periodo'],
-        ['\n\n\n\n', '\n\n\n\n', '\n\n\n\n'] // Espacio vacío para firmar (altura aprox)
+        ['\n\n\n\n', '\n\n\n\n', '\n\n\n\n'] // Espacio vertical para firmar
       ],
-      theme: 'plain', // Sin colores de fondo por defecto, lo personalizamos
+      theme: 'plain',
       styles: {
         lineColor: [0, 0, 0],
         lineWidth: 0.1,
-        halign: 'left',
-        valign: 'top',
-        fontSize: 8,
+        halign: 'center', // Centrado dentro de las celdas
+        valign: 'middle',
+        fontSize: 7, // Letra un poco más pequeña para que quepa
         cellPadding: 2
       },
       headStyles: {
         halign: 'center',
         fontStyle: 'bold',
-        fillColor: [240, 240, 240], // Gris muy claro para el encabezado
+        fillColor: [240, 240, 240],
         textColor: [0, 0, 0],
         lineWidth: 0.1,
-        lineColor: [0, 0, 0]
+        lineColor: [0, 0, 0],
+        fontSize: 7
       },
       columnStyles: {
-        0: { cellWidth: 'auto' },
+        0: { cellWidth: 'auto' }, // Distribución automática
         1: { cellWidth: 'auto' },
         2: { cellWidth: 'auto' }
       }
     });
-
-    // Actualizamos Y para los siguientes elementos
-    finalY = doc.lastAutoTable.finalY + 20;
-
-    // 2. Firmas de Docente y Director (Lado a Lado)
-    // Definimos posiciones
-    // pageWidth y margin ya están definidos arriba
-    const availableWidth = pageWidth - (margin * 2);
-    const colWidth = availableWidth / 2;
-
-    doc.setFontSize(9);
-    doc.setTextColor(0, 0, 0);
-
-    // Columna Izquierda: Docente
-    const xDocente = margin;
-    doc.text("NOMBRE Y FIRMA DE LA DOCENTE O DEL DOCENTE:", xDocente, finalY);
-    if (nombreDocente) {
-      doc.setFont(undefined, 'bold');
-      doc.text(nombreDocente.toUpperCase(), xDocente, finalY + 15); // Nombre un poco más abajo
-      doc.setFont(undefined, 'normal');
-    }
-    doc.line(xDocente, finalY + 16, xDocente + 70, finalY + 16); // Línea de firma (longitud fija 70)
-
-
-    // Columna Derecha: Director
-    const xDirector = margin + colWidth; // Empezamos en la mitad
-    doc.text("NOMBRE Y FIRMA DE LA DIRECTORA O DEL DIRECTOR:", xDirector, finalY);
-    if (nombreDirector) {
-      doc.setFont(undefined, 'bold');
-      doc.text(nombreDirector.toUpperCase(), xDirector, finalY + 15);
-      doc.setFont(undefined, 'normal');
-    }
-    doc.line(xDirector, finalY + 16, xDirector + 70, finalY + 16); // Línea de firma
 
 
     // 3. Lugar de Expedición (Al final, centrado)
