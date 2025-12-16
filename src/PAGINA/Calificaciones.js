@@ -583,16 +583,30 @@ function Calificaciones({ user }) {
             <button onClick={handleBackToGrupos} className="back-button">&larr; Volver a Grupos</button>
 
             {/* 🌟 BOTÓN DIRECTOR GLOBAL */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ color: '#aaa', fontSize: '0.9rem' }}>
-                Director Actual: <strong>{localStorage.getItem('current_director_name') || 'No Asignado'}</strong>
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', background: '#2c3e50', padding: '8px 15px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ color: '#aaa', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Director Actual</span>
+                <span style={{ color: 'white', fontWeight: 'bold', fontSize: '0.95rem' }}>
+                  {localStorage.getItem('current_director_name') || 'No Asignado'}
+                </span>
+              </div>
               <button
                 className="button-secondary"
                 onClick={() => setModalDirector(true)}
-                style={{ padding: '5px 10px', fontSize: '0.9rem' }}
+                style={{
+                  padding: '6px 12px',
+                  fontSize: '0.85rem',
+                  backgroundColor: '#3498db',
+                  border: 'none',
+                  color: 'white',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s'
+                }}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#2980b9'}
+                onMouseOut={(e) => e.target.style.backgroundColor = '#3498db'}
               >
-                Asignar Director
+                Cambiar / Asignar
               </button>
             </div>
           </div>

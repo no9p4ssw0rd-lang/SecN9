@@ -25,7 +25,7 @@ router.post("/", authMiddleware, isAdmin, async (req, res) => {
             return alumno;
         });
 
-        const nuevoGrupo = new Grupo({ nombre, alumnos: alumnosProcesados });
+        const nuevoGrupo = new Grupo({ nombre, asesor: req.body.asesor || '', alumnos: alumnosProcesados });
         await nuevoGrupo.save();
 
         res.status(201).json(nuevoGrupo);
@@ -96,6 +96,7 @@ router.put("/:id", authMiddleware, isAdmin, async (req, res) => {
         }
 
         grupo.nombre = nombre || grupo.nombre;
+        grupo.asesor = req.body.asesor !== undefined ? req.body.asesor : grupo.asesor;
         // grupo.alumnos assigned above if present
         if (req.body.ordenMaterias) {
             grupo.ordenMaterias = req.body.ordenMaterias;
