@@ -646,6 +646,51 @@ function Calificaciones({ user }) {
                       ))}
                     </datalist>
                   </div>
+
+                  {/* Lista de directores guardados con opción de eliminar */}
+                  <div style={{ marginTop: '15px' }}>
+                    <p style={{ fontSize: '0.85rem', color: '#ccc', marginBottom: '5px' }}>Historial:</p>
+                    <ul style={{ listStyle: 'none', padding: 0, maxHeight: '100px', overflowY: 'auto', border: '1px solid #444', borderRadius: '4px' }}>
+                      {savedDirectores.map((dir, idx) => (
+                        <li key={idx} style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '5px 10px',
+                          borderBottom: '1px solid #555',
+                          backgroundColor: '#2c3e50'
+                        }}>
+                          <span
+                            style={{ cursor: 'pointer', fontSize: '0.9rem' }}
+                            onClick={() => {
+                              // Al hacer click en el nombre, lo ponemos en el input (via state o DOM, aquí DOM para simpleza si input tiene id)
+                              const input = document.querySelector('input[name="directorGlobal"]');
+                              if (input) input.value = dir;
+                            }}
+                          >
+                            {dir}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = savedDirectores.filter(d => d !== dir);
+                              setSavedDirectores(updated);
+                              localStorage.setItem('saved_directores', JSON.stringify(updated));
+                              // Si eliminamos el actual, limpiamos también
+                              if (localStorage.getItem('current_director_name') === dir) {
+                                localStorage.removeItem('current_director_name');
+                              }
+                            }}
+                            style={{ background: 'none', border: 'none', color: '#e74c3c', cursor: 'pointer', fontWeight: 'bold' }}
+                            title="Eliminar del historial"
+                          >
+                            ✕
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
                   <div className="modal-actions" style={{ marginTop: '20px' }}>
                     <button type="submit" className="button">Guardar</button>
                     <button type="button" className="button-secondary" onClick={() => setModalDirector(false)}>Cancelar</button>
