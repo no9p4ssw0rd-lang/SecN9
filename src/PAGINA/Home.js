@@ -131,6 +131,23 @@ function Home({ user }) {
       })
       .catch((err) => mostrarAlerta("Error al eliminar materia.", "error"));
   };
+  // --- Novedades Carousel ---
+  const novedadesList = [
+    { icon: "📅", text: "Asignación de Asesores: Ahora puedes asignar un asesor a cada grupo." },
+    { icon: "🎓", text: "Director Global: Configura el director una vez para todas las boletas." },
+    { icon: "📄", text: "Boletas PDF: Firmas automáticas y diseño mejorado." },
+    { icon: "✨", text: "Interfaz Renovada: Botones y controles más intuitivos." }
+  ];
+
+  const [currentNovedad, setCurrentNovedad] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentNovedad((prev) => (prev + 1) % novedadesList.length);
+    }, 20000); // 20 segundos
+    return () => clearInterval(interval);
+  }, []);
+
   // --- Dentro del componente Home ---
   const [showSubjects, setShowSubjects] = useState(false); // Estado para expandir modal
 
@@ -225,10 +242,10 @@ function Home({ user }) {
         <section className="novedades section" id="novedades">
           <h2 className="section-title">Últimas Actualizaciones</h2>
           <div className="novedades-container container">
-            <div className="novedad-item"><span className="novedad-icon">📅</span><p>Edición de Asistencia: Fechas y Justificaciones</p></div>
-            <div className="novedad-item"><span className="novedad-icon">📊</span><p>Gestión de Calificaciones: Redondeo y PDF</p></div>
-            <div className="novedad-item"><span className="novedad-icon">🗑️</span><p>Limpieza de Datos: Reinicio seguro</p></div>
-            <div className="novedad-item"><span className="novedad-icon">🎨</span><p>Interfaz Mejorada: Tooltips y Modales</p></div>
+            <div className="novedad-item fade-in" key={currentNovedad} style={{ maxWidth: '100%', justifyContent: 'center' }}>
+              <span className="novedad-icon">{novedadesList[currentNovedad].icon}</span>
+              <p style={{ fontSize: '1.2rem', fontWeight: '500' }}>{novedadesList[currentNovedad].text}</p>
+            </div>
           </div>
         </section>
       )}
