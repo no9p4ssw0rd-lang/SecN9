@@ -535,22 +535,8 @@ function Calificaciones({ user }) {
                     mostrarNotificacion("Debes seleccionar al menos un Trimestre.", "error");
                     return;
                   }
-                  // Capturamos los datos del formulario de firmas
-                  const nombreDirector = e.target.nombreDirector.value;
-                  const nombreDocente = e.target.nombreDocente.value;
-
-                  // Guardar nuevo director si no existe
-                  if (nombreDirector && !savedDirectores.includes(nombreDirector)) {
-                    const newDirectores = [...savedDirectores, nombreDirector];
-                    setSavedDirectores(newDirectores);
-                    localStorage.setItem('saved_directores', JSON.stringify(newDirectores));
-                  }
-
-                  const datosFirmas = {
-                    nombreDirector: nombreDirector,
-                    nombreDocente: nombreDocente
-                  };
-                  generatePdfIndividual(modalPdf.alumno, bimestresSeleccionados, 'save', datosFirmas);
+                  // Ya no leemos inputs del form, generatePdfIndividual usa localStorage/grupo
+                  generatePdfIndividual(modalPdf.alumno, bimestresSeleccionados, 'save');
                 }}>
                   <div className="checkbox-group">
                     <label><input type="checkbox" name="b1" defaultChecked /> Trimestre 1</label>
