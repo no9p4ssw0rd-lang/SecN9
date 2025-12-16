@@ -72,6 +72,7 @@ function Calificaciones({ user }) {
   const [error, setError] = useState(null);
   const [modalPdf, setModalPdf] = useState({ visible: false, alumno: null });
   const [modalShare, setModalShare] = useState({ visible: false, alumno: null });
+  const [modalDirector, setModalDirector] = useState(false); // Modal para asignar director global
   const [notificacion, setNotificacion] = useState({ visible: false, mensaje: '', tipo: '' });
   const [isEditing, setIsEditing] = useState(false); // Estado para controlar el modo edición
   const [savedDirectores, setSavedDirectores] = useState([]); // Estado para directores guardados
@@ -132,7 +133,7 @@ function Calificaciones({ user }) {
 
   useEffect(() => {
     fetchGrupos();
-    // Cargar directores guardados
+    // Cargar directores guardados y el director actual
     const saved = localStorage.getItem('saved_directores');
     if (saved) {
       setSavedDirectores(JSON.parse(saved));
@@ -230,7 +231,18 @@ function Calificaciones({ user }) {
   };
 
   const generatePdfIndividual = async (alumno, bimestresSeleccionados, outputType = 'save', datosFirmas = {}) => {
-    const { nombreDirector = '', nombreDocente = '' } = datosFirmas;
+    // Si no vienen datosFirmas (ej: uso directo), intentamos sacar del localStorage o del grupo
+    let { nombreDirector = '', nombreDocente = '' } = datosFirmas;
+
+    if (!nombreDirector) {
+      // Intentar leer el director global "current" (si implementamos esa lógica) o el último usado
+      // Para simplificar, usamos el último seleccionado en el modal global o localStorage
+      nombreDirector = localStorage.getItem('current_director_name') || '';
+    }
+    if (!nombreDocente) {
+      // Usar el asesor del grupo
+      nombreDocente = selectedGrupo?.asesor || '';
+    }
     const doc = new jsPDF();
     const nombreCompleto = `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`;
 
@@ -546,22 +558,8 @@ function Calificaciones({ user }) {
                     <label><input type="checkbox" name="b3" defaultChecked /> Trimestre 3</label>
                   </div>
 
-                  {/* INPUTS PARA FIRMAS */}
-                  <div style={{ marginTop: '15px', borderTop: '1px solid #444', paddingTop: '10px' }}>
-                    <h4 style={{ marginBottom: '10px', fontSize: '0.9rem', color: '#ccc' }}>Datos para Firmas (Opcional):</h4>
-                    <div className="input-group" style={{ marginBottom: '10px' }}>
-                      <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '3px' }}>Nombre del Docente (Asesor):</label>
-                      <input type="text" name="nombreDocente" defaultValue={selectedGrupo?.asesor || ''} placeholder="Escribe el nombre..." style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #555', background: '#333', color: 'white' }} />
-                    </div>
-                    <div className="input-group">
-                      <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '3px' }}>Nombre del Director(a):</label>
-                      <input list="directores-list" name="nombreDirector" placeholder="Selecciona o escribe..." style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #555', background: '#333', color: 'white' }} />
-                      <datalist id="directores-list">
-                        {savedDirectores.map((dir, idx) => (
-                          <option key={idx} value={dir} />
-                        ))}
-                      </datalist>
-                    </div>
+                  <div style={{ marginTop: '15px', color: '#ccc', fontSize: '0.9rem' }}>
+                    <p><strong>Nota:</strong> Se usará el Director asignado globalmente y el Asesor del grupo.</p>
                   </div>
 
                   <div className="modal-actions" style={{ marginTop: '20px' }}>
@@ -581,8 +579,22 @@ function Calificaciones({ user }) {
             />
           )}
 
-          <div className="header-controls">
+          <div className="header-controls" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <button onClick={handleBackToGrupos} className="back-button">&larr; Volver a Grupos</button>
+
+            {/* 🌟 BOTÓN DIRECTOR GLOBAL */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ color: '#aaa', fontSize: '0.9rem' }}>
+                Director Actual: <strong>{localStorage.getItem('current_director_name') || 'No Asignado'}</strong>
+              </span>
+              <button
+                className="button-secondary"
+                onClick={() => setModalDirector(true)}
+                style={{ padding: '5px 10px', fontSize: '0.9rem' }}
+              >
+                Asignar Director
+              </button>
+            </div>
           </div>
 
           <div className="calificaciones-header">
@@ -595,6 +607,53 @@ function Calificaciones({ user }) {
               {isEditing ? 'Terminar Edición' : 'Modificar Tabla'}
             </button>
           </div>
+
+          {/* 🌟 MODAL ASIGNAR DIRECTOR GLOBAL */}
+          {modalDirector && (
+            <div className="modal-overlay" onClick={() => setModalDirector(false)}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+                <h3>Asignar Director(a)</h3>
+                <p>Este nombre aparecerá en todas las boletas que generes.</p>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const nuevoDirector = e.target.directorGlobal.value;
+                  if (nuevoDirector) {
+                    localStorage.setItem('current_director_name', nuevoDirector);
+
+                    // Guardar en historial
+                    if (!savedDirectores.includes(nuevoDirector)) {
+                      const updated = [...savedDirectores, nuevoDirector];
+                      setSavedDirectores(updated);
+                      localStorage.setItem('saved_directores', JSON.stringify(updated));
+                    }
+                    mostrarNotificacion("Director asignado correctamente.");
+                    setModalDirector(false);
+                  }
+                }}>
+                  <div className="input-group">
+                    <label>Nombre del Director(a):</label>
+                    <input
+                      list="directores-list-global"
+                      name="directorGlobal"
+                      defaultValue={localStorage.getItem('current_director_name') || ''}
+                      placeholder="Escribe o selecciona..."
+                      style={{ width: '100%', padding: '10px', marginTop: '5px' }}
+                      autoFocus
+                    />
+                    <datalist id="directores-list-global">
+                      {savedDirectores.map((dir, idx) => (
+                        <option key={idx} value={dir} />
+                      ))}
+                    </datalist>
+                  </div>
+                  <div className="modal-actions" style={{ marginTop: '20px' }}>
+                    <button type="submit" className="button">Guardar</button>
+                    <button type="button" className="button-secondary" onClick={() => setModalDirector(false)}>Cancelar</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
 
           {loading ? <p>Cargando calificaciones...</p> : (
             <div className="table-wrapper">
