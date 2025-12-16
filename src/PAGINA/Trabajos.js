@@ -1026,7 +1026,6 @@ const PanelCalificaciones = ({
     setModalCriterios,
     criteriosPorBimestre,
     setCriteriosPorBimestre,
-    setCriteriosPorBimestre,
     setNotificacion,
     user, // ✅ CORRECCIÓN: Recibir la prop user
     modalCriterios // 🌟 Recibimos el estado de visibilidad del modal
