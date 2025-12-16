@@ -655,7 +655,7 @@ function Trabajos({ user }) {
 
                 .grupo-componente .asistencia-row {
                     display: grid;
-                    grid-template-columns: 450px 1fr 120px;
+                    grid-template-columns: 350px 1fr 100px; /* Reduced first column width */
                     align-items: center;
                     padding: 10px 20px;
                     background-color: var(--dark-color);
@@ -681,6 +681,7 @@ function Trabajos({ user }) {
                     flex-grow: 1;
                     justify-content: flex-start;
                     gap: 10px;
+                    flex-wrap: wrap; /* Allow wrapping */
                 }
 
                 .grupo-componente .bimestre-header-btn {
@@ -847,8 +848,21 @@ function Trabajos({ user }) {
                 .grupo-componente .modal-content {
                     background-color: var(--dark-color-alt);
                     padding: 2.5rem; border-radius: 12px; width: 90%;
-                    max-width: 650px;
+                    max-width: 900px; /* Wider for PC */
                     box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+                }
+                /* New Grid Layout for Modal Content */
+                .grupo-componente .modal-grid-layout {
+                    display: grid;
+                    grid-template-columns: 1.2fr 0.8fr;
+                    gap: 2rem;
+                    margin-top: 1rem;
+                }
+                @media (max-width: 768px) {
+                    .grupo-componente .modal-grid-layout {
+                        grid-template-columns: 1fr;
+                        gap: 1rem;
+                    }
                 }
                 .grupo-componente .modal-content h2 {
                     text-align: center;
@@ -1712,84 +1726,99 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
                         ))}
                     </div>
 
-                    <div style={{ textAlign: 'center', marginTop: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid #444', paddingBottom: '1.5rem' }}>
-                        {bimestreActivo > 1 && (
-                            <button
-                                className="btn btn-secondary"
-                                onClick={() => handleCopiarCriterios(bimestreActivo - 1, bimestreActivo)}
-                                disabled={criteriosDelBimestre.length > 0 || criteriosLocales[bimestreActivo - 1]?.length === 0}
-                                title={criteriosDelBimestre.length > 0 ? "Elimina los criterios actuales para copiar." : `Copia criterios de Bimestre ${bimestreActivo - 1}`}
+                    {/* 🌟 LAYOUT HORIZONTAL (GRID) */}
+                    <div className="modal-grid-layout">
+                        {/* COLUMNA IZQUIERDA: LISTA DE CRITERIOS */}
+                        <div className="modal-col-left">
+                            <h3 style={{ marginTop: 0 }}>Criterios para Trimestre {bimestreActivo}</h3>
+                            <div style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '5px' }}>
+                                {criteriosDelBimestre.map((c, index) => (
+                                    <div key={index} className="criterio-item">
+                                        <span>{c.nombre} - <strong>{c.porcentaje}%</strong></span>
+                                        <button
+                                            onClick={() => removeCriterio(index)}
+                                            style={{
+                                                background: 'none',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                marginLeft: '15px',
+                                                lineHeight: 1
+                                            }}
+                                        >
+                                            <span role="img" aria-label="eliminar">🗑️</span>
+                                        </button>
+                                    </div>
+                                ))}
+                                {criteriosDelBimestre.length === 0 && <p style={{ textAlign: 'center', color: '#999', marginTop: '20px' }}>No hay criterios definidos para este Trimestre.</p>}
+                            </div>
+                        </div>
+
+                        {/* COLUMNA DERECHA: ACCIONES Y FORMULARIO */}
+                        <div className="modal-col-right">
+                            <div style={{ textAlign: 'center', marginBottom: '1.5rem', borderBottom: '1px solid #444', paddingBottom: '1rem' }}>
+                                {bimestreActivo > 1 && (
+                                    <button
+                                        className="btn btn-secondary"
+                                        onClick={() => handleCopiarCriterios(bimestreActivo - 1, bimestreActivo)}
+                                        disabled={criteriosDelBimestre.length > 0 || criteriosLocales[bimestreActivo - 1]?.length === 0}
+                                        title={criteriosDelBimestre.length > 0 ? "Elimina los criterios actuales para copiar." : `Copia criterios de Bimestre ${bimestreActivo - 1}`}
+                                        style={{ width: '100%', fontSize: '0.9rem' }}
+                                    >
+                                        <span role="img" aria-label="copiar">📋</span> Copiar del T{bimestreActivo - 1}
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="criterio-form" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                                <label style={{ fontSize: '0.9rem', marginBottom: '5px', color: '#aaa' }}>Nuevo Criterio:</label>
+                                <input type="text" placeholder="Nombre (Ej: Tareas)" value={nombre} onChange={e => setNombre(e.target.value)} style={{ marginBottom: '10px' }} />
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <div className="porcentaje-wrapper" style={{ flexGrow: 1 }}>
+                                        <input type="number" placeholder="%" min="1" max="100" value={porcentaje} onChange={e => setPorcentaje(e.target.value)} />
+                                    </div>
+                                    <button
+                                        className="btn"
+                                        onClick={addCriterio}
+                                        disabled={totalPorcentaje >= 100 || !nombre.trim() || !porcentaje}
+                                        style={{ flexGrow: 1 }}
+                                    >
+                                        Añadir
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className={`criterio-total ${totalPorcentaje !== 100 ? 'error' : 'success'}`}
+                                style={{
+                                    padding: '15px',
+                                    marginTop: '20px',
+                                    borderRadius: '8px',
+                                    backgroundColor: totalPorcentaje === 100 ? 'rgba(39, 174, 96, 0.1)' : 'rgba(231, 76, 60, 0.1)',
+                                    border: `1px solid ${totalPorcentaje === 100 ? '#27ae60' : '#e74c3c'}`,
+                                    color: totalPorcentaje === 100 ? '#27ae60' : '#e74c3c',
+                                    textAlign: 'center'
+                                }}
                             >
-                                <span role="img" aria-label="copiar">📋</span> Copiar Criterios de Trimestre {bimestreActivo - 1}
-                            </button>
-                        )}
-                    </div>
+                                <div style={{ fontSize: '1.2rem', marginBottom: '5px' }}>Total T{bimestreActivo}</div>
+                                <strong style={{ fontSize: '1.5rem' }}>{totalPorcentaje}%</strong>
+                                <span style={{ fontSize: '1rem', color: '#888' }}> / 100%</span>
+                                {totalPorcentaje !== 100 && (
+                                    <div style={{ fontSize: '0.9em', marginTop: '10px', fontWeight: '500' }}>
+                                        {totalPorcentaje < 100 ? `Falta asignar: ${100 - totalPorcentaje}%` : `Excede por: ${totalPorcentaje - 100}%`}
+                                    </div>
+                                )}
+                            </div>
 
-
-                    <h3>Criterios para Trimestre {bimestreActivo}</h3>
-                    <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                        {criteriosDelBimestre.map((c, index) => (
-                            <div key={index} className="criterio-item">
-                                <span>{c.nombre} - <strong>{c.porcentaje}%</strong></span>
+                            <div className="modal-actions" style={{ marginTop: 'auto', paddingTop: '20px' }}>
+                                <button className="btn btn-cancel" onClick={onClose} style={{ marginRight: '10px' }}>Cancelar</button>
                                 <button
-                                    onClick={() => removeCriterio(index)}
-                                    style={{
-                                        background: 'none',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        marginLeft: '15px',
-                                        lineHeight: 1
-                                    }}
+                                    className="btn btn-primary"
+                                    onClick={handleGuardar}
+                                    disabled={criteriosDelBimestre.length > 0 && totalPorcentaje !== 100}
                                 >
-                                    <span role="img" aria-label="eliminar">🗑️</span>
+                                    Guardar Todos
                                 </button>
                             </div>
-                        ))}
-                        {criteriosDelBimestre.length === 0 && <p style={{ textAlign: 'center', color: '#999' }}>No hay criterios definidos para este Trimestre.</p>}
-                    </div>
-
-                    <div className="criterio-form">
-                        <input type="text" placeholder="Nombre (Ej: Tareas)" value={nombre} onChange={e => setNombre(e.target.value)} />
-                        <div className="porcentaje-wrapper">
-                            <input type="number" placeholder="Porcentaje" min="1" max="100" value={porcentaje} onChange={e => setPorcentaje(e.target.value)} />
                         </div>
-                        <button
-                            className="btn"
-                            onClick={addCriterio}
-                            disabled={totalPorcentaje >= 100 || !nombre.trim() || !porcentaje}
-                        >
-                            Añadir
-                        </button>
-                    </div>
-
-                    <div className={`criterio-total ${totalPorcentaje !== 100 ? 'error' : 'success'}`}
-                        style={{
-                            padding: '10px',
-                            margin: '10px 0',
-                            borderRadius: '5px',
-                            backgroundColor: totalPorcentaje === 100 ? 'rgba(39, 174, 96, 0.1)' : 'rgba(231, 76, 60, 0.1)',
-                            border: `1px solid ${totalPorcentaje === 100 ? '#27ae60' : '#e74c3c'}`,
-                            color: totalPorcentaje === 100 ? '#27ae60' : '#e74c3c',
-                            textAlign: 'center'
-                        }}
-                    >
-                        <strong>Total del Trimestre {bimestreActivo}: {totalPorcentaje}% / 100%</strong>
-                        {totalPorcentaje !== 100 && (
-                            <div style={{ fontSize: '0.9em', marginTop: '5px' }}>
-                                {totalPorcentaje < 100 ? `Falta asignar: ${100 - totalPorcentaje}%` : `Excede por: ${totalPorcentaje - 100}%`}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="modal-actions">
-                        <button className="btn btn-cancel" onClick={onClose}>Cancelar</button>
-                        <button
-                            className="btn btn-primary"
-                            onClick={handleGuardar}
-                            disabled={criteriosDelBimestre.length > 0 && totalPorcentaje !== 100}
-                        >
-                            Guardar Todos los Criterios
-                        </button>
                     </div>
                 </div>
             </div>
