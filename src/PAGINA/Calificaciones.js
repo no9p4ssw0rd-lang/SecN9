@@ -661,7 +661,7 @@ function Calificaciones({ user }) {
                           backgroundColor: '#2c3e50'
                         }}>
                           <span
-                            style={{ cursor: 'pointer', fontSize: '0.9rem' }}
+                            style={{ cursor: 'pointer', fontSize: '0.9rem', color: 'white' }}
                             onClick={() => {
                               // Al hacer click en el nombre, lo ponemos en el input (via state o DOM, aquí DOM para simpleza si input tiene id)
                               const input = document.querySelector('input[name="directorGlobal"]');

@@ -144,7 +144,7 @@ function Home({ user }) {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentNovedad((prev) => (prev + 1) % novedadesList.length);
-    }, 20000); // 20 segundos
+    }, 7000); // 7 segundos (Updated)
     return () => clearInterval(interval);
   }, []);
 
