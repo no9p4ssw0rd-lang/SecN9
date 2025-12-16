@@ -74,6 +74,7 @@ function Calificaciones({ user }) {
   const [modalShare, setModalShare] = useState({ visible: false, alumno: null });
   const [notificacion, setNotificacion] = useState({ visible: false, mensaje: '', tipo: '' });
   const [isEditing, setIsEditing] = useState(false); // Estado para controlar el modo edición
+  const [savedDirectores, setSavedDirectores] = useState([]); // Estado para directores guardados
 
   // --- DnD Sensors ---
   const sensors = useSensors(
@@ -131,6 +132,11 @@ function Calificaciones({ user }) {
 
   useEffect(() => {
     fetchGrupos();
+    // Cargar directores guardados
+    const saved = localStorage.getItem('saved_directores');
+    if (saved) {
+      setSavedDirectores(JSON.parse(saved));
+    }
   }, []);
 
   const handleBackToGrupos = () => {
@@ -518,9 +524,19 @@ function Calificaciones({ user }) {
                     return;
                   }
                   // Capturamos los datos del formulario de firmas
+                  const nombreDirector = e.target.nombreDirector.value;
+                  const nombreDocente = e.target.nombreDocente.value;
+
+                  // Guardar nuevo director si no existe
+                  if (nombreDirector && !savedDirectores.includes(nombreDirector)) {
+                    const newDirectores = [...savedDirectores, nombreDirector];
+                    setSavedDirectores(newDirectores);
+                    localStorage.setItem('saved_directores', JSON.stringify(newDirectores));
+                  }
+
                   const datosFirmas = {
-                    nombreDirector: e.target.nombreDirector.value,
-                    nombreDocente: e.target.nombreDocente.value
+                    nombreDirector: nombreDirector,
+                    nombreDocente: nombreDocente
                   };
                   generatePdfIndividual(modalPdf.alumno, bimestresSeleccionados, 'save', datosFirmas);
                 }}>
@@ -534,12 +550,17 @@ function Calificaciones({ user }) {
                   <div style={{ marginTop: '15px', borderTop: '1px solid #444', paddingTop: '10px' }}>
                     <h4 style={{ marginBottom: '10px', fontSize: '0.9rem', color: '#ccc' }}>Datos para Firmas (Opcional):</h4>
                     <div className="input-group" style={{ marginBottom: '10px' }}>
-                      <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '3px' }}>Nombre del Docente:</label>
-                      <input type="text" name="nombreDocente" placeholder="Escribe el nombre..." style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #555', background: '#333', color: 'white' }} />
+                      <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '3px' }}>Nombre del Docente (Asesor):</label>
+                      <input type="text" name="nombreDocente" defaultValue={selectedGrupo?.asesor || ''} placeholder="Escribe el nombre..." style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #555', background: '#333', color: 'white' }} />
                     </div>
                     <div className="input-group">
                       <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '3px' }}>Nombre del Director(a):</label>
-                      <input type="text" name="nombreDirector" placeholder="Escribe el nombre..." style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #555', background: '#333', color: 'white' }} />
+                      <input list="directores-list" name="nombreDirector" placeholder="Selecciona o escribe..." style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #555', background: '#333', color: 'white' }} />
+                      <datalist id="directores-list">
+                        {savedDirectores.map((dir, idx) => (
+                          <option key={idx} value={dir} />
+                        ))}
+                      </datalist>
                     </div>
                   </div>
 

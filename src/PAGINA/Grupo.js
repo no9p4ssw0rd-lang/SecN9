@@ -26,7 +26,7 @@ function Grupo({ user }) {
   const [error, setError] = useState(null);
   const [modalVisible, setModalVisible] = useState(null);
   const [grupoSeleccionado, setGrupoSeleccionado] = useState(null);
-  const [nuevoGrupo, setNuevoGrupo] = useState({ nombre: '', alumnos: [] });
+  const [nuevoGrupo, setNuevoGrupo] = useState({ nombre: '', asesor: '', alumnos: [] });
   const [alumnoInput, setAlumnoInput] = useState({ nombre: '', apellidoPaterno: '', apellidoMaterno: '' });
   const [asistencia, setAsistencia] = useState({});
   const [diasPorBimestre, setDiasPorBimestre] = useState({});
@@ -81,7 +81,7 @@ function Grupo({ user }) {
     if (tipo === 'gestionarGrupo') {
       setGrupoSeleccionado(data);
       if (data) { setNuevoGrupo(structuredClone(data)); }
-      else { setNuevoGrupo({ nombre: '', alumnos: [] }); }
+      else { setNuevoGrupo({ nombre: '', asesor: '', alumnos: [] }); }
       setModalVisible('gestionarGrupo');
     } else if (tipo === 'asignar') {
       setGrupoSeleccionado(data);
@@ -143,7 +143,7 @@ function Grupo({ user }) {
   const cerrarModal = () => {
     setModalVisible(null);
     setGrupoSeleccionado(null);
-    setNuevoGrupo({ nombre: '', alumnos: [] });
+    setNuevoGrupo({ nombre: '', asesor: '', alumnos: [] });
     setAlumnoInput({ nombre: '', apellidoPaterno: '', apellidoMaterno: '' });
     setBimestreAbierto({});
     setAsignaciones({});
@@ -641,6 +641,7 @@ function Grupo({ user }) {
               <thead>
                 <tr>
                   <th>Nombre del Grupo</th>
+                  <th>Asesor</th>
                   <th>N° Alumnos</th>
                   <th>Profesores y Asignaturas</th>
                   <th>Acciones</th>
@@ -650,6 +651,7 @@ function Grupo({ user }) {
                 {grupos.map(grupo => (
                   <tr key={grupo._id}>
                     <td data-label="Grupo">{grupo.nombre}</td>
+                    <td data-label="Asesor">{grupo.asesor || 'Sin Asignar'}</td>
                     <td data-label="Alumnos">{grupo.alumnos?.length || 0}</td>
                     <td data-label="Asignaciones">
                       {grupo.profesoresAsignados && grupo.profesoresAsignados.length > 0
@@ -716,7 +718,8 @@ function Grupo({ user }) {
           <div className="modal-backdrop">
             <div className="modal-content">
               <h2>{grupoSeleccionado ? 'Editar Grupo' : 'Crear Nuevo Grupo'}</h2>
-              <input type="text" placeholder="Nombre del Grupo (Ej: 1A)" value={nuevoGrupo.nombre} onChange={(e) => setNuevoGrupo({ ...nuevoGrupo, nombre: e.target.value })} />
+              <input type="text" placeholder="Nombre del Grupo (Ej: 1A)" value={nuevoGrupo.nombre} onChange={(e) => setNuevoGrupo({ ...nuevoGrupo, nombre: e.target.value })} style={{ marginBottom: '10px' }} />
+              <input type="text" placeholder="Nombre del Asesor (Opcional)" value={nuevoGrupo.asesor || ''} onChange={(e) => setNuevoGrupo({ ...nuevoGrupo, asesor: e.target.value })} />
               <div className="alumno-form">
                 <h4 className="form-subtitle">Agregar Nuevo Alumno</h4>
                 <div className="alumno-form-inputs">
