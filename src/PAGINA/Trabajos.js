@@ -1003,21 +1003,14 @@ function Trabajos({ user }) {
                         setCriteriosPorBimestre={setCriteriosPorBimestre} // Pasa la función para actualizar
                         setNotificacion={setNotificacion} // Pasa la función para notificar
                         user={user} // ✅ CORRECCIÓN: Pasar la prop user para eliminar el error de compilación
+                        modalCriterios={modalCriterios} // 🌟 PASAMOS EL ESTADO DEL MODAL AL HIJO
                     />
                 )}
             </div>
             {/* 1. Notificación en el nivel superior */}
             <Notificacion mensaje={notificacion.mensaje} tipo={notificacion.tipo} onClose={() => setNotificacion({ mensaje: null, tipo: '' })} />
 
-            {/* 2. Modal de Criterios en el nivel superior (para evitar problemas de z-index) */}
-            {modalCriterios && (
-                <ModalCriterios
-                    criteriosPorBimestre={criteriosPorBimestre}
-                    onGuardar={setCriteriosPorBimestre}
-                    onClose={() => setModalCriterios(false)}
-                    setNotificacion={setNotificacion}
-                />
-            )}
+            {/* 2. El Modal de Criterios ahora se maneja dentro de PanelCalificaciones para tener acceso a los datos */}
         </>
     );
 }
@@ -1033,8 +1026,10 @@ const PanelCalificaciones = ({
     setModalCriterios,
     criteriosPorBimestre,
     setCriteriosPorBimestre,
+    setCriteriosPorBimestre,
     setNotificacion,
-    user // ✅ CORRECCIÓN: Recibir la prop user
+    user, // ✅ CORRECCIÓN: Recibir la prop user
+    modalCriterios // 🌟 Recibimos el estado de visibilidad del modal
 }) => {
     const [bimestreActivo, setBimestreActivo] = useState(1);
     const [calificaciones, setCalificaciones] = useState({});
@@ -1049,6 +1044,28 @@ const PanelCalificaciones = ({
 
     // Obtener los criterios del bimestre activo
     const criteriosActivos = criteriosPorBimestre[bimestreActivo] || [];
+
+    // 🌟 Manejador para guardar criterios que viene del Modal (Auto-save)
+    const handleGuardarCriterios = useCallback(async (nuevosCriterios) => {
+        setCriteriosPorBimestre(nuevosCriterios);
+        setModalCriterios(false);
+        setNotificacion({ mensaje: 'Guardando nuevos criterios...', tipo: 'info' });
+
+        // AUTO-SAVE: Invocamos guardarCalificaciones inmediatamente con los nuevos criterios
+        // Reutilizamos la lógica de guardarCalificaciones pero pasamos los criterios explícitamente
+        // ya que el estado criteriosPorBimestre podría no haberse actualizado aún en este closure.
+        const token = localStorage.getItem('token');
+        const config = { headers: { Authorization: `Bearer ${token}` } };
+        const payload = { grupoId: grupo._id, asignatura, criterios: nuevosCriterios, calificaciones };
+
+        try {
+            await axios.post(`${API_URL}/calificaciones`, payload, config);
+            setNotificacion({ mensaje: 'Criterios actualizados y guardados correctamente.', tipo: 'exito' });
+        } catch (error) {
+            console.error("Error auto-guardando criterios:", error);
+            setNotificacion({ mensaje: 'Criterios actualizados localmente, pero error al guardar en servidor.', tipo: 'warning' });
+        }
+    }, [grupo._id, asignatura, calificaciones, setCriteriosPorBimestre, setModalCriterios, setNotificacion]);
 
 
     useEffect(() => {
@@ -1520,6 +1537,16 @@ const PanelCalificaciones = ({
                 <div className="modal-actions" style={{ padding: '0 20px' }}>
                     <button className="btn btn-primary" onClick={guardarCalificaciones} disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar Calificaciones'}</button>
                 </div>
+
+                {/* 🌟 Modal de Criterios RENDERIZADO AQUÍ para tener acceso al contexto de guardado */}
+                {modalCriterios && (
+                    <ModalCriterios
+                        criteriosPorBimestre={criteriosPorBimestre}
+                        onGuardar={handleGuardarCriterios} // Usamos la nueva función de auto-save
+                        onClose={() => setModalCriterios(false)}
+                        setNotificacion={setNotificacion}
+                    />
+                )}
             </div>
         </div>
     );
@@ -1582,15 +1609,8 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
     const criteriosDelBimestre = criteriosLocales[bimestreActivo] || [];
     const totalPorcentaje = criteriosDelBimestre.reduce((acc, curr) => acc + (Number(curr.porcentaje) || 0), 0);
 
-    // Función para cambiar de bimestre y verificar si el actual suma 100%
+    // Función para cambiar de bimestre SIN validar el actual (navegación libre)
     const handleSetBimestre = (bim) => {
-        if (criteriosDelBimestre.length > 0 && totalPorcentaje !== 100) {
-            setNotificacion({
-                mensaje: `El Trimestre ${bimestreActivo} tiene criterios definidos (${totalPorcentaje}%). Por favor, ajústalo a 100% antes de cambiar.`,
-                tipo: 'error'
-            });
-            return;
-        }
         setBimestreActivo(bim);
     };
 
@@ -1743,8 +1763,23 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
                         </button>
                     </div>
 
-                    <div className={`criterio-total ${totalPorcentaje !== 100 ? 'error' : ''}`}>
+                    <div className={`criterio-total ${totalPorcentaje !== 100 ? 'error' : 'success'}`}
+                        style={{
+                            padding: '10px',
+                            margin: '10px 0',
+                            borderRadius: '5px',
+                            backgroundColor: totalPorcentaje === 100 ? 'rgba(39, 174, 96, 0.1)' : 'rgba(231, 76, 60, 0.1)',
+                            border: `1px solid ${totalPorcentaje === 100 ? '#27ae60' : '#e74c3c'}`,
+                            color: totalPorcentaje === 100 ? '#27ae60' : '#e74c3c',
+                            textAlign: 'center'
+                        }}
+                    >
                         <strong>Total del Trimestre {bimestreActivo}: {totalPorcentaje}% / 100%</strong>
+                        {totalPorcentaje !== 100 && (
+                            <div style={{ fontSize: '0.9em', marginTop: '5px' }}>
+                                {totalPorcentaje < 100 ? `Falta asignar: ${100 - totalPorcentaje}%` : `Excede por: ${totalPorcentaje - 100}%`}
+                            </div>
+                        )}
                     </div>
 
                     <div className="modal-actions">
