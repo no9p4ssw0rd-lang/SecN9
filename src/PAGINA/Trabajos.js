@@ -1335,6 +1335,10 @@ const PanelCalificaciones = ({
         doc.text(`Grupo: ${grupo.nombre}`, margin, yPos);
         yPos += 7;
         doc.text(`Asignatura: ${asignatura}`, margin, yPos);
+        yPos += 7;
+        // 🌟 AGREGADO: Nombre del docente
+        const nombreDocente = user ? `${user.nombre} ${user.apellidoPaterno || ''} ${user.apellidoMaterno || ''}`.trim() : 'Docente';
+        doc.text(`Docente: ${nombreDocente}`, margin, yPos);
         yPos += 5;
 
         // --- TABLA ---
