@@ -344,8 +344,8 @@ function Calificaciones({ user }) {
     doc.setFontSize(8);
     doc.setTextColor(0, 0, 0);
 
-    // 1. Docente
-    doc.text("NOMBRE Y FIRMA DE LA DOCENTE O DEL DOCENTE:", margin, ySignatures);
+    // 1. Docente (Ahora Asesor)
+    doc.text("Nombre y firma del asesor (a)", margin, ySignatures);
     ySignatures += 10; // Espacio para firma
     // Nombre (si existe)
     if (nombreDocente) {
@@ -358,7 +358,7 @@ function Calificaciones({ user }) {
 
     // 2. Director (Más abajo)
     ySignatures += 25; // Separación vertical entre firmas
-    doc.text("NOMBRE Y FIRMA DE LA DIRECTORA O DEL DIRECTOR:", margin, ySignatures);
+    doc.text("Nombre y firma del director (a)", margin, ySignatures);
     ySignatures += 10;
     if (nombreDirector) {
       doc.setFont(undefined, 'bold');
