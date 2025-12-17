@@ -296,7 +296,11 @@ function Calificaciones({ user }) {
       const cals = alumnoCal[materia] || [null, null, null];
       const row = [materia];
       cals.forEach((cal, index) => {
-        if (bimestresSeleccionados[index]) row.push(cal !== null ? cal.toFixed(1) : '-');
+        if (bimestresSeleccionados[index]) {
+          // APLICAR CLAMPGRADE TAMBIÉN AL PDF
+          const clampedCal = clampGrade(cal);
+          row.push(clampedCal !== null ? clampedCal.toFixed(1) : '-');
+        }
       });
       return row;
     });
